@@ -13,7 +13,7 @@ public class StudentProfileRequest {
     private String firstName;
     private String lastName;
 
-    @Email(message = "Please enter a valid email")
+    @Email(message = "Please enter a valid email", regexp = "|[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}")
     private String email;
 
     private String phone;

@@ -45,7 +45,9 @@ export default function ProfilePage() {
       setSuccess('Profile saved successfully');
       fetchProfile();
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to save profile');
+      const data = err.response?.data;
+      const msg = data?.message || (data && Object.values(data)[0]) || 'Unable to save profile';
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
