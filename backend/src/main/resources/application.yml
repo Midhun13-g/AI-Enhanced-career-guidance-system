@@ -1,9 +1,13 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}?sslmode=require
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://db.yfjzozcvawtmzmybhycx.supabase.co:5432/postgres?sslmode=require
+    username: postgres
+    password: Midhun@G2006
     driver-class-name: org.postgresql.Driver
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
 
   jpa:
     hibernate:
@@ -17,9 +21,9 @@ spring:
             non_contextual_creation: true
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 careerguidance:
   app:
-    jwtSecret: ${JWT_SECRET}
+    jwtSecret: ${JWT_SECRET:careerguidancesecretkey2024supersecureandlongenoughforhs256algorithm}
     jwtExpirationMs: ${JWT_EXPIRATION_MS:86400000}
