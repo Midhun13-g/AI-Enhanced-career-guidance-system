@@ -1,19 +1,39 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiCamera, FiMail, FiPhone, FiBook, FiTarget, FiMapPin, FiCalendar } from 'react-icons/fi';
+import { HiSparkles } from 'react-icons/hi2';
 import api from '../services/api';
+import AppLayout from '../components/layout/AppLayout';
 import ProfileCard from '../components/profile/ProfileCard';
 import ProfileForm from '../components/profile/ProfileForm';
 import ProgressCard from '../components/profile/ProgressCard';
+import { Alert, Badge, SkeletonCard, Skeleton, Button } from '../components/ui/index';
+import { useToast } from '../context/ToastContext';
+
+function DetailItem({ icon: Icon, label, value }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+      <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+        <Icon size={14} className="text-slate-500" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{label}</p>
+        <p className="text-sm font-semibold text-slate-800 mt-0.5 break-words">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile]       = useState(null);
   const [completion, setCompletion] = useState({ profileCompletion: 0, missingFields: [] });
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
+  const [loading, setLoading]       = useState(true);
+  const [editing, setEditing]       = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const navigate = useNavigate();
+  const [error, setError]           = useState('');
+  const [success, setSuccess]       = useState('');
+  const toast = useToast();
 
   const fetchProfile = async () => {
     try {
@@ -30,24 +50,22 @@ export default function ProfilePage() {
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  useEffect(() => { fetchProfile(); }, []);
 
   const handleSubmit = async (payload) => {
-    setSubmitting(true);
-    setError('');
-    setSuccess('');
+    setSubmitting(true); setError(''); setSuccess('');
     try {
       const res = await api.put('/api/profile', payload);
       setProfile(res.data);
       setEditing(false);
       setSuccess('Profile saved successfully');
+      toast?.('Profile saved successfully!', 'success');
       fetchProfile();
     } catch (err) {
       const data = err.response?.data;
       const msg = data?.message || (data && Object.values(data)[0]) || 'Unable to save profile';
       setError(msg);
+      toast?.(msg, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -62,52 +80,180 @@ export default function ProfilePage() {
       const res = await api.post('/api/profile/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       setProfile(res.data);
       setSuccess('Profile image uploaded');
+      toast?.('Profile photo updated!', 'success');
     } catch (err) {
-      setError(err.response?.data?.message || 'Image upload failed');
+      const msg = err.response?.data?.message || 'Image upload failed';
+      setError(msg);
+      toast?.(msg, 'error');
     }
   };
 
-  if (loading) {
-    return <div className="p-6 text-slate-600">Loading profile...</div>;
-  }
-
   return (
-    <div className="min-h-screen bg-slate-100 p-4 sm:p-6">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <div className="flex items-center justify-between rounded-2xl bg-white p-6 shadow-sm">
+    <AppLayout>
+      <div className="space-y-6">
+
+        {/* Page header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Student Profile</h2>
-            <p className="text-slate-500">Complete your profile to get better career recommendations.</p>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">My Profile</h1>
+            <p className="text-sm text-slate-500 mt-0.5">Manage your information and career preferences</p>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => navigate('/dashboard')} className="rounded-lg border px-4 py-2 text-sm font-medium text-slate-700">Back to Dashboard</button>
-            <label className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">
-              Upload Photo
-              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-            </label>
+          <div className="flex items-center gap-3">
+            {!editing && (
+              <label className="cursor-pointer">
+                <Button variant="outline" size="sm" className="flex items-center gap-2 pointer-events-none">
+                  <FiCamera size={14} /> Upload Photo
+                </Button>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              </label>
+            )}
           </div>
         </div>
 
-        <ProgressCard completion={completion} />
-        {!editing ? (
-          <div className="space-y-6">
-            <ProfileCard profile={profile} onEdit={() => setEditing(true)} />
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Profile Details</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div><span className="text-sm text-slate-500">Email</span><p className="font-medium">{profile?.email || '—'}</p></div>
-                <div><span className="text-sm text-slate-500">Phone</span><p className="font-medium">{profile?.phone || '—'}</p></div>
-                <div><span className="text-sm text-slate-500">College</span><p className="font-medium">{profile?.collegeName || '—'}</p></div>
-                <div><span className="text-sm text-slate-500">Department</span><p className="font-medium">{profile?.department || '—'}</p></div>
-                <div><span className="text-sm text-slate-500">Skills</span><p className="font-medium">{profile?.skills?.join(', ') || '—'}</p></div>
-                <div><span className="text-sm text-slate-500">Interests</span><p className="font-medium">{profile?.interests?.join(', ') || '—'}</p></div>
+        {/* Global alerts */}
+        {error   && !editing && <Alert variant="error">{error}</Alert>}
+        {success && !editing && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+            <Alert variant="success">{success}</Alert>
+          </motion.div>
+        )}
+
+        {loading ? (
+          /* Skeleton loading */
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="space-y-4">
+              <SkeletonCard />
+              <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-3">
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
               </div>
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              <SkeletonCard />
+              <SkeletonCard />
             </div>
           </div>
         ) : (
-          <ProfileForm profile={profile} onSubmit={handleSubmit} submitting={submitting} error={error} success={success} />
+          <AnimatePresence mode="wait">
+            {!editing ? (
+              /* ── View mode ── */
+              <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="grid gap-6 lg:grid-cols-3">
+
+                {/* Left column */}
+                <div className="space-y-5">
+                  <ProfileCard profile={profile} onEdit={() => setEditing(true)} />
+                  <ProgressCard completion={completion} />
+                </div>
+
+                {/* Right column */}
+                <div className="lg:col-span-2 space-y-5">
+
+                  {/* AI insight banner */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-white">
+                    <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+                    <div className="relative flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                        <HiSparkles size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold">AI Career Intelligence</p>
+                        <p className="text-xs text-blue-100 mt-0.5">
+                          {completion.profileCompletion < 80
+                            ? 'Complete your profile to unlock personalised AI career recommendations.'
+                            : 'Your profile is strong! AI recommendations are fully personalised.'}
+                        </p>
+                      </div>
+                      <Badge className="ml-auto bg-white/20 text-white border border-white/30 shrink-0">
+                        {completion.profileCompletion}%
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Details grid */}
+                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-600 inline-block" />
+                      Contact & Personal
+                    </h3>
+                    <div className="grid sm:grid-cols-2 gap-1">
+                      <DetailItem icon={FiMail}     label="Email"         value={profile?.email} />
+                      <DetailItem icon={FiPhone}    label="Phone"         value={profile?.phone} />
+                      <DetailItem icon={FiCalendar} label="Date of Birth" value={profile?.dateOfBirth ? (Array.isArray(profile.dateOfBirth) ? profile.dateOfBirth.join('-') : profile.dateOfBirth) : null} />
+                      <DetailItem icon={FiMapPin}   label="Location"      value={[profile?.city, profile?.state, profile?.country].filter(Boolean).join(', ') || null} />
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 inline-block" />
+                      Education & Career
+                    </h3>
+                    <div className="grid sm:grid-cols-2 gap-1">
+                      <DetailItem icon={FiBook}   label="College"      value={profile?.collegeName} />
+                      <DetailItem icon={FiBook}   label="Department"   value={profile?.department} />
+                      <DetailItem icon={FiBook}   label="Degree"       value={profile?.degree} />
+                      <DetailItem icon={FiBook}   label="Year"         value={profile?.yearOfStudy} />
+                      <DetailItem icon={FiBook}   label="CGPA"         value={profile?.cgpa?.toString()} />
+                      <DetailItem icon={FiTarget} label="Career Goal"  value={profile?.careerGoal} />
+                    </div>
+                  </div>
+
+                  {/* Skills & Interests */}
+                  {(profile?.skills?.length > 0 || profile?.interests?.length > 0) && (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                      <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-teal-500 inline-block" />
+                        Skills & Interests
+                      </h3>
+                      {profile?.skills?.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Skills</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {profile.skills.map(s => <Badge key={s} variant="primary">{s}</Badge>)}
+                          </div>
+                        </div>
+                      )}
+                      {profile?.interests?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Interests</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {profile.interests.map(i => <Badge key={i} variant="teal">{i}</Badge>)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bio */}
+                  {profile?.bio && (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                      <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-500 inline-block" />
+                        Bio
+                      </h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">{profile.bio}</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ) : (
+              /* ── Edit mode ── */
+              <motion.div key="edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                <ProfileForm
+                  profile={profile}
+                  onSubmit={handleSubmit}
+                  submitting={submitting}
+                  error={error}
+                  success={success}
+                  onCancel={() => { setEditing(false); setError(''); setSuccess(''); }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 }
