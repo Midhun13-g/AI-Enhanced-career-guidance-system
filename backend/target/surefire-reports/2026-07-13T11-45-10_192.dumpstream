@@ -1,5 +1,0 @@
-# Created at 2026-07-13T11:45:10.908
-Boot Manifest-JAR contains absolute paths in classpath 'D:\github projects\AI-Enhanced Career Guidance System\backend\target\test-classes'
-Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
-'other' has different root
-
