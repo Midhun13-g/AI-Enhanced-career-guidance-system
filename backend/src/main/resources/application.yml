@@ -1,24 +1,47 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}?sslmode=require
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require&tcpKeepAlive=true&socketTimeout=30&connectTimeout=10
+    username: postgres.yfjzozcvawtmzmybhycx
+    password: Midhun@G2006
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      minimum-idle: 2
+      maximum-pool-size: 5
+      idle-timeout: 300000
+      max-lifetime: 600000
+      keepalive-time: 60000
+      validation-timeout: 5000
+      connection-test-query: SELECT 1
+      auto-commit: true
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         jdbc:
           lob:
             non_contextual_creation: true
+        connection:
+          provider_disables_autocommit: false
 
 server:
   port: 8080
 
 careerguidance:
   app:
-    jwtSecret: ${JWT_SECRET}
+    jwtSecret: ${JWT_SECRET:careerguidancesecretkey2024supersecureandlongenoughforhs256algorithm}
     jwtExpirationMs: ${JWT_EXPIRATION_MS:86400000}

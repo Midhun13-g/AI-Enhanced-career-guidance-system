@@ -177,9 +177,9 @@ export default function DashboardPage() {
               <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Quick Actions</p>
               <div className="grid sm:grid-cols-2 gap-3">
                 <QuickAction icon={FiUser}      label="Complete Profile"       desc="Add skills, goals & education"    to="/profile"  color="blue"   />
-                <QuickAction icon={FiZap}       label="Career Recommendations" desc="Discover AI-matched careers"      to="/profile"  color="purple" />
+                <QuickAction icon={FiZap}       label="Start Assessment"        desc="Measure skills and interests"    to="/assessment" color="purple" />
                 <QuickAction icon={FiBookOpen}  label="Learning Roadmap"       desc="Personalised skill-building plan" to="/profile"  color="teal"   />
-                <QuickAction icon={FiTrendingUp} label="Skill Gap Analysis"    desc="See what skills you're missing"   to="/profile"  color="amber"  />
+                <QuickAction icon={FiTrendingUp} label="Skill Gap Analysis"    desc="See what skills you're missing"   to="/assessment/result" color="amber"  />
               </div>
             </motion.div>
 
