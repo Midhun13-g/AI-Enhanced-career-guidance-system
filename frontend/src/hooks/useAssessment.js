@@ -1,6 +1,30 @@
 import { useCallback, useEffect, useState } from 'react';
 import assessmentService from '../services/assessmentService';
 import { useAssessmentContext } from '../context/AssessmentContext';
+function normalizeQuestions(data) {
+  const payload = data?.questions || data || [];
+
+  if (!Array.isArray(payload)) return [];
+
+  // The local fallback already uses the quiz shape. The API groups questions
+  // by category and uses backend field names, so flatten and adapt it here.
+  if (!payload.some((item) => Array.isArray(item.questions))) return payload;
+
+  return payload.flatMap((category) =>
+    (category.questions || []).map((question) => ({
+      id: String(question.id),
+      sectionId: String(category.categoryId || category.categoryName || 'assessment').toLowerCase(),
+      category: category.categoryName,
+      title: question.question,
+      type: question.questionType?.toLowerCase() === 'multiple_choice' ? 'mcq' : question.questionType?.toLowerCase() || 'mcq',
+      required: true,
+      options: (question.options || []).map((option) => ({
+        value: String(option.id),
+        label: option.optionText,
+      })),
+    })),
+  );
+}
 
 export default function useAssessment() {
   const context = useAssessmentContext();
@@ -15,7 +39,7 @@ export default function useAssessment() {
     setError('');
     try {
       const data = await assessmentService.getQuestions();
-      setQuestions(data.questions || data || []);
+      setQuestions(normalizeQuestions(data));
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to load assessment questions');
     } finally {
