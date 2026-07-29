@@ -23,7 +23,9 @@ export default function AssessmentQuiz() {
   const assessment = useAssessment();
   const questions = assessment.questions.length ? assessment.questions : [];
   const currentQuestion = questions[assessment.currentQuestionIndex];
-  const currentSection = currentQuestion ? getQuestionSection(currentQuestion) : assessmentSections[0];
+  const currentSection = currentQuestion
+    ? getQuestionSection(currentQuestion) || assessmentSections.find((section) => section.id === currentQuestion.sectionId) || assessmentSections[0]
+    : assessmentSections[0];
   const methods = useForm({ defaultValues: { answers: assessment.answers }, mode: 'onChange' });
   const Icon = icons[currentSection?.id] || Code2;
 
@@ -63,7 +65,7 @@ export default function AssessmentQuiz() {
             <Timer minutes={45} />
           </div>
           <CategoryHeader
-            eyebrow={`${currentSection.eyebrow} - ${sectionPosition} of ${sectionQuestions.length}`}
+            eyebrow={`${currentSection?.eyebrow || 'Section'} - ${sectionPosition} of ${sectionQuestions.length}`}
             title={currentSection.title}
             description={currentSection.description}
             icon={Icon}
