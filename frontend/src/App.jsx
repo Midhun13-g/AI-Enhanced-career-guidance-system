@@ -13,6 +13,13 @@ import AssessmentInstructions from './pages/assessment/AssessmentInstructions';
 import AssessmentQuiz from './pages/assessment/AssessmentQuiz';
 import AssessmentReview from './pages/assessment/AssessmentReview';
 import AssessmentResult from './pages/assessment/AssessmentResult';
+import ResumeDashboard from './pages/resume/ResumeDashboard';
+import ResumeUpload from './pages/resume/ResumeUpload';
+import ResumePreview from './pages/resume/ResumePreview';
+import ResumeParsing from './pages/resume/ResumeParsing';
+import ResumeEditor from './pages/resume/ResumeEditor';
+import ResumeAnalysis from './pages/resume/ResumeAnalysis';
+import ResumeHistory from './pages/resume/ResumeHistory';
 
 function App() {
   return (
@@ -31,6 +38,13 @@ function App() {
               <Route path="/assessment/quiz" element={<ProtectedRoute><AssessmentQuiz /></ProtectedRoute>} />
               <Route path="/assessment/review" element={<ProtectedRoute><AssessmentReview /></ProtectedRoute>} />
               <Route path="/assessment/result" element={<ProtectedRoute><AssessmentResult /></ProtectedRoute>} />
+              <Route path="/resume" element={<ProtectedRoute><ResumeDashboard /></ProtectedRoute>} />
+              <Route path="/resume/upload" element={<ProtectedRoute><ResumeUpload /></ProtectedRoute>} />
+              <Route path="/resume/preview" element={<ProtectedRoute><ResumePreview /></ProtectedRoute>} />
+              <Route path="/resume/parsing" element={<ProtectedRoute><ResumeParsing /></ProtectedRoute>} />
+              <Route path="/resume/editor" element={<ProtectedRoute><ResumeEditor /></ProtectedRoute>} />
+              <Route path="/resume/analysis" element={<ProtectedRoute><ResumeAnalysis /></ProtectedRoute>} />
+              <Route path="/resume/history" element={<ProtectedRoute><ResumeHistory /></ProtectedRoute>} />
               <Route path="*"                element={<Navigate to="/login" replace />} />
             </Routes>
           </BrowserRouter>

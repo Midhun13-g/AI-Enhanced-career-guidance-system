@@ -41,6 +41,10 @@ spring:
 server:
   port: 8080
 
+resume:
+  storage-dir: ${RESUME_STORAGE_DIR:uploads/resumes}
+  max-size-bytes: 5242880
+
 careerguidance:
   app:
     jwtSecret: ${JWT_SECRET:careerguidancesecretkey2024supersecureandlongenoughforhs256algorithm}

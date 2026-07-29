@@ -14,6 +14,7 @@
         <relativePath/>
     </parent>
     <properties>
+        <!-- Keep aligned with the JDK installed in this workspace; Java 21 is supported when the build runtime is upgraded. -->
         <java.version>17</java.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
     </properties>

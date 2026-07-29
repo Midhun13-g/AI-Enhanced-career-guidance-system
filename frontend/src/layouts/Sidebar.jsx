@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, ClipboardCheck, Home, UserRound } from 'lucide-react';
+import { BarChart3, ClipboardCheck, FileText, Home, UserRound } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: Home },
   { to: '/assessment', label: 'Assessment', icon: ClipboardCheck },
+  { to: '/resume', label: 'Resume Builder', icon: FileText },
   { to: '/profile', label: 'Profile', icon: UserRound },
   { to: '/assessment/result', label: 'Results', icon: BarChart3 },
 ];
@@ -45,9 +46,9 @@ export default function Sidebar({ open, onClose }) {
         </nav>
 
         <div className="absolute bottom-5 left-4 right-4 rounded-xl bg-slate-50 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Module 3</p>
-          <p className="mt-1 text-sm font-bold text-slate-900">Skills & Interest Assessment</p>
-          <p className="mt-2 text-xs leading-5 text-slate-500">Evaluate aptitude, personality, interests, and technical readiness.</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Module 4</p>
+          <p className="mt-1 text-sm font-bold text-slate-900">Resume AI Parser</p>
+          <p className="mt-2 text-xs leading-5 text-slate-500">Turn your resume into an actionable career profile.</p>
         </div>
       </aside>
     </>

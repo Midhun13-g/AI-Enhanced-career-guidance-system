@@ -41,6 +41,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
+    @ExceptionHandler({InvalidFileFormatException.class, FileTooLargeException.class})
+    public ResponseEntity<Map<String, String>> handleFileValidation(RuntimeException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateResumeException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateResume(DuplicateResumeException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(ResumeNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleResumeNotFound(ResumeNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    private ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", message);
+        return ResponseEntity.status(status).body(error);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
