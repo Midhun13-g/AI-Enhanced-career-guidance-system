@@ -1,5 +1,6 @@
 package com.careerguidance.entity;
 import com.careerguidance.constant.ResumeStatus;
+import com.careerguidance.constant.ResumeReviewStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 @Entity @Table(name = "resumes")
@@ -12,6 +13,7 @@ public class Resume {
     @Column(name="file_size", nullable=false) private Long fileSize;
     @Column(name="file_path", nullable=false) private String filePath;
     @Enumerated(EnumType.STRING) @Column(nullable=false) private ResumeStatus status;
+    @Enumerated(EnumType.STRING) @Column(name="review_status", nullable=false) private ResumeReviewStatus reviewStatus = ResumeReviewStatus.PENDING;
     @Column(name="upload_time", nullable=false, updatable=false) private LocalDateTime uploadTime;
     @Column(name="last_updated", nullable=false) private LocalDateTime lastUpdated;
     @PrePersist void create(){
@@ -66,6 +68,8 @@ public class Resume {
     public void setStatus(ResumeStatus v){
         status=v;
     }
+    public ResumeReviewStatus getReviewStatus(){ return reviewStatus; }
+    public void setReviewStatus(ResumeReviewStatus v){ reviewStatus=v; }
     public LocalDateTime getUploadTime(){
         return uploadTime;
     }

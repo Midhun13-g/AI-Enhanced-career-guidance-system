@@ -8,6 +8,11 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@hookform/resolvers": "^5.5.7",
+    "@mui/icons-material": "^9.2.0",
+    "@mui/material": "^9.2.0",
     "axios": "^1.7.2",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.27.0",
@@ -17,7 +22,8 @@
     "react-icons": "^5.7.0",
     "react-is": "^19.2.7",
     "react-router-dom": "^6.21.1",
-    "recharts": "^3.9.2"
+    "recharts": "^3.9.2",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

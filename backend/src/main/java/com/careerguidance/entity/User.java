@@ -46,6 +46,9 @@ public class User {
     private Double cgpa;
     private String location;
 
+    @Column(nullable = false)
+    private Boolean active = true;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -161,6 +164,9 @@ public class User {
     public void setLocation(String location) {
         this.location = location;
     }
+
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active) { this.active = active; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

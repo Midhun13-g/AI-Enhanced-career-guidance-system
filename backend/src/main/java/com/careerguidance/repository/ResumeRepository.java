@@ -5,4 +5,5 @@ import java.util.*;
 public interface ResumeRepository extends JpaRepository<Resume,Long> {
     List<Resume> findByUserIdOrderByUploadTimeDesc(Long userId);
     boolean existsByUserIdAndOriginalFileNameAndFileSize(Long userId,String name,Long size);
+    java.util.Optional<Resume> findFirstByUserIdOrderByUploadTimeDesc(Long userId);
 }

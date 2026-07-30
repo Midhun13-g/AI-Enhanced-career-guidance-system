@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface AssessmentResultRepository extends JpaRepository<AssessmentResult, Long> {
     Optional<AssessmentResult> findBySessionId(Long sessionId);
+    java.util.List<AssessmentResult> findBySessionUserIdOrderByCreatedAtDesc(Long userId);
 }

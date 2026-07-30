@@ -1,0 +1,4 @@
+package com.careerguidance.dto.request;
+import com.careerguidance.constant.*; import jakarta.validation.constraints.*;
+public class CreateQuestionRequest { @NotNull private AssessmentCategoryName category; @NotBlank private String question; @NotNull private QuestionType questionType; @NotNull @Min(1) private Integer displayOrder; private String difficulty;
+ public AssessmentCategoryName getCategory(){return category;} public void setCategory(AssessmentCategoryName v){category=v;} public String getQuestion(){return question;} public void setQuestion(String v){question=v;} public QuestionType getQuestionType(){return questionType;} public void setQuestionType(QuestionType v){questionType=v;} public Integer getDisplayOrder(){return displayOrder;} public void setDisplayOrder(Integer v){displayOrder=v;} public String getDifficulty(){return difficulty;} public void setDifficulty(String v){difficulty=v;} }
