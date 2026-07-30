@@ -29,7 +29,7 @@ const fallback = {
     const session = readLocalSession();
     writeLocalSession({
       ...session,
-      answers: { ...session.answers, [payload.questionId]: payload.answer },
+      answers: { ...session.answers, [payload.questionId]: payload.optionId ?? payload.answer },
       updatedAt: new Date().toISOString(),
     });
     return { saved: true };

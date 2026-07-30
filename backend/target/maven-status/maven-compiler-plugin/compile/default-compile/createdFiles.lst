@@ -13,8 +13,8 @@ com\careerguidance\security\AuthTokenFilter.class
 com\careerguidance\repository\AssessmentQuestionRepository.class
 com\careerguidance\controller\StudentProfileController.class
 com\careerguidance\entity\AssessmentOption.class
-com\careerguidance\mapper\AssessmentMapper.class
 com\careerguidance\dto\response\ResumeResponse.class
+com\careerguidance\mapper\AssessmentMapper.class
 com\careerguidance\repository\UserRepository.class
 com\careerguidance\repository\RoleRepository.class
 com\careerguidance\dto\response\AssessmentAnswerResponse.class
@@ -24,8 +24,8 @@ com\careerguidance\service\ResumeParserService.class
 com\careerguidance\controller\AssessmentController.class
 com\careerguidance\dto\response\MessageResponse.class
 com\careerguidance\exception\UnauthorizedException.class
-com\careerguidance\repository\ResumeAnalysisRepository.class
 com\careerguidance\controller\AuthController.class
+com\careerguidance\repository\ResumeAnalysisRepository.class
 com\careerguidance\service\impl\MockResumeParserService.class
 com\careerguidance\constant\AssessmentSessionStatus.class
 com\careerguidance\dto\response\ResumeAnalysisResponse.class
@@ -43,10 +43,10 @@ com\careerguidance\entity\AssessmentCategory.class
 com\careerguidance\exception\InvalidFileFormatException.class
 com\careerguidance\dto\response\AssessmentOptionResponse.class
 com\careerguidance\repository\AssessmentCategoryRepository.class
-com\careerguidance\entity\AssessmentQuestion.class
 com\careerguidance\dto\response\AssessmentQuestionResponse.class
-com\careerguidance\repository\StudentProfileRepository.class
+com\careerguidance\entity\AssessmentQuestion.class
 com\careerguidance\entity\User.class
+com\careerguidance\repository\StudentProfileRepository.class
 com\careerguidance\repository\AssessmentResultRepository.class
 com\careerguidance\config\OpenApiConfig.class
 com\careerguidance\repository\ResumeSkillRepository.class
@@ -65,8 +65,8 @@ com\careerguidance\config\SecurityConfig.class
 com\careerguidance\entity\ResumeAnalysis.class
 com\careerguidance\service\StudentProfileService.class
 com\careerguidance\entity\ResumeProject.class
-com\careerguidance\repository\ResumeCertificationRepository.class
 com\careerguidance\entity\ResumeEducation.class
+com\careerguidance\repository\ResumeCertificationRepository.class
 com\careerguidance\service\ResumeService.class
 com\careerguidance\service\impl\ResumeServiceImpl.class
 com\careerguidance\security\UserDetailsImpl.class
@@ -74,8 +74,8 @@ com\careerguidance\exception\BadRequestException.class
 com\careerguidance\entity\AssessmentResult.class
 com\careerguidance\security\JwtUtils.class
 com\careerguidance\repository\ResumeRepository.class
-com\careerguidance\repository\AssessmentOptionRepository.class
 com\careerguidance\entity\StudentProfile.class
+com\careerguidance\repository\AssessmentOptionRepository.class
 com\careerguidance\entity\ResumeSkill.class
 com\careerguidance\repository\ResumeEducationRepository.class
 com\careerguidance\CareerGuidanceApplication.class

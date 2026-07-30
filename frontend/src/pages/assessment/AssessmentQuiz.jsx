@@ -23,12 +23,23 @@ export default function AssessmentQuiz() {
   const assessment = useAssessment();
   const questions = assessment.questions.length ? assessment.questions : [];
   const currentQuestion = questions[assessment.currentQuestionIndex];
-  const currentSection = currentQuestion ? getQuestionSection(currentQuestion) : assessmentSections[0];
+  const currentSection = currentQuestion
+    ? getQuestionSection(currentQuestion) || assessmentSections.find((section) => section.id === currentQuestion.sectionId) || assessmentSections[0]
+    : assessmentSections[0];
   const methods = useForm({ defaultValues: { answers: assessment.answers }, mode: 'onChange' });
   const Icon = icons[currentSection?.id] || Code2;
 
   const sectionQuestions = useMemo(() => questions.filter((question) => question.sectionId === currentSection?.id), [questions, currentSection]);
   const sectionPosition = sectionQuestions.findIndex((question) => question.id === currentQuestion?.id) + 1;
+  const missingQuestions = useMemo(
+    () => questions.filter((question) => {
+      const answer = assessment.answers[question.id];
+      return question.required && (Array.isArray(answer) ? answer.length === 0 : answer === undefined || answer === '');
+    }),
+    [questions, assessment.answers],
+  );
+  const completion = questions.length ? Math.round(((questions.length - missingQuestions.length) / questions.length) * 100) : 0;
+  const isComplete = questions.length > 0 && missingQuestions.length === 0;
 
   const goNext = async () => {
     const valid = await methods.trigger(`answers.${currentQuestion.id}`);
@@ -56,14 +67,14 @@ export default function AssessmentQuiz() {
 
   return (
     <AppLayout>
-      <AssessmentProgress current={assessment.currentQuestionIndex + 1} total={questions.length} section={currentSection} completion={assessment.completion} />
+      <AssessmentProgress current={assessment.currentQuestionIndex + 1} total={questions.length} section={currentSection} completion={completion} />
       <div className="pt-6">
         <div className="mx-auto max-w-5xl">
           <div className="mb-4 flex justify-end">
             <Timer minutes={45} />
           </div>
           <CategoryHeader
-            eyebrow={`${currentSection.eyebrow} - ${sectionPosition} of ${sectionQuestions.length}`}
+            eyebrow={`${currentSection?.eyebrow || 'Section'} - ${sectionPosition} of ${sectionQuestions.length}`}
             title={currentSection.title}
             description={currentSection.description}
             icon={Icon}
@@ -81,16 +92,16 @@ export default function AssessmentQuiz() {
               <QuestionNavigation
                 canPrevious={assessment.currentQuestionIndex > 0}
                 isLastQuestion={assessment.currentQuestionIndex === questions.length - 1}
-                finishDisabled={!assessment.isComplete}
+                finishDisabled={!isComplete}
                 onPrevious={() => assessment.setCurrentQuestionIndex(Math.max(0, assessment.currentQuestionIndex - 1))}
                 onNext={goNext}
                 onSkip={skip}
                 onSave={save}
                 onFinish={() => navigate('/assessment/review')}
               />
-              {!assessment.isComplete && assessment.currentQuestionIndex === questions.length - 1 && (
+              {!isComplete && assessment.currentQuestionIndex === questions.length - 1 && (
                 <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-                  Answer all required questions before finishing. Missing: {assessment.missingQuestions.length}
+                  Answer all required questions before finishing. Missing: {missingQuestions.length}
                 </p>
               )}
             </form>

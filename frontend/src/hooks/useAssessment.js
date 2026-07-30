@@ -1,6 +1,35 @@
 import { useCallback, useEffect, useState } from 'react';
 import assessmentService from '../services/assessmentService';
 import { useAssessmentContext } from '../context/AssessmentContext';
+function normalizeQuestions(data) {
+  const payload = data?.questions || data || [];
+
+  if (!Array.isArray(payload)) return [];
+
+  // The local fallback already uses the quiz shape. The API groups questions
+  // by category and uses backend field names, so flatten and adapt it here.
+  if (!payload.some((item) => Array.isArray(item.questions))) return payload;
+
+  return payload.flatMap((category) =>
+    (category.questions || []).map((question) => ({
+      id: String(question.id),
+      sectionId: ({
+        TECHNICAL_SKILLS: 'technical',
+        APTITUDE: 'aptitude',
+        PERSONALITY: 'personality',
+        INTEREST: 'interests',
+      })[category.categoryName] || String(category.categoryName || 'assessment').toLowerCase(),
+      category: category.categoryName,
+      title: question.question,
+      type: question.questionType?.toLowerCase() === 'multiple_choice' ? 'mcq' : question.questionType?.toLowerCase() || 'mcq',
+      required: true,
+      options: (question.options || []).map((option) => ({
+        value: String(option.id),
+        label: option.optionText,
+      })),
+    })),
+  );
+}
 
 export default function useAssessment() {
   const context = useAssessmentContext();
@@ -15,7 +44,7 @@ export default function useAssessment() {
     setError('');
     try {
       const data = await assessmentService.getQuestions();
-      setQuestions(data.questions || data || []);
+      setQuestions(normalizeQuestions(data));
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to load assessment questions');
     } finally {
@@ -28,7 +57,7 @@ export default function useAssessment() {
     setError('');
     try {
       const data = await assessmentService.startAssessment();
-      context.setAssessmentId(data.assessmentId);
+      context.setAssessmentId(data.sessionId ?? data.assessmentId);
       return data;
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to start assessment');
@@ -42,9 +71,9 @@ export default function useAssessment() {
     context.setAnswer(questionId, answer);
     try {
       await assessmentService.saveAnswer({
-        assessmentId: context.assessmentId,
-        questionId,
-        answer,
+        sessionId: context.assessmentId,
+        questionId: Number(questionId),
+        optionId: Number(answer),
       });
     } catch (err) {
       setError(err.response?.data?.message || 'Answer saved locally. Server sync failed.');
@@ -56,11 +85,11 @@ export default function useAssessment() {
     setError('');
     try {
       const data = await assessmentService.submitAssessment({
-        assessmentId: context.assessmentId,
+        sessionId: context.assessmentId,
         answers: context.answers,
       });
-      setResult(data.result);
-      return data.result;
+      setResult(data.result || data);
+      return data.result || data;
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to submit assessment');
       throw err;

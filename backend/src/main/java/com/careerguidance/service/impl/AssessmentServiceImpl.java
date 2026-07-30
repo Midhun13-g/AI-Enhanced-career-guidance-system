@@ -119,16 +119,15 @@ public class AssessmentServiceImpl implements com.careerguidance.service.Assessm
     public AssessmentAnswerResponse saveAnswer(Long userId, AssessmentAnswerRequest request) {
         AssessmentSession session = getOwnedSession(userId, request.getSessionId());
         ensureSessionOpen(session);
-        if (answerRepository.existsBySessionIdAndQuestionId(request.getSessionId(), request.getQuestionId())) {
-            throw new DuplicateAnswerException("Question already answered for this assessment session");
-        }
-
         AssessmentQuestion question = getActiveQuestion(request.getQuestionId());
         AssessmentOption option = getOptionForQuestion(request.getOptionId(), question.getId());
-
-        AssessmentAnswer answer = new AssessmentAnswer();
-        answer.setSession(session);
-        answer.setQuestion(question);
+        AssessmentAnswer answer = answerRepository.findBySessionIdAndQuestionId(request.getSessionId(), request.getQuestionId())
+                .orElseGet(() -> {
+                    AssessmentAnswer newAnswer = new AssessmentAnswer();
+                    newAnswer.setSession(session);
+                    newAnswer.setQuestion(question);
+                    return newAnswer;
+                });
         answer.setOption(option);
         answer.setScore(option.getScore());
         return assessmentMapper.toAnswerResponse(answerRepository.save(answer));
