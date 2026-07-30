@@ -6,13 +6,12 @@ import ConfirmationModal from '../../components/assessment/ConfirmationModal';
 import LoadingAnimation from '../../components/common/LoadingAnimation';
 import useAssessment from '../../hooks/useAssessment';
 import { assessmentSections } from '../../utils/assessmentData';
-import { getQuestionSection, isQuestionAnswered } from '../../utils/assessmentScoring';
 import { useToast } from '../../context/ToastContext';
 
-function formatAnswer(answer) {
+function formatAnswer(answer, question) {
   if (Array.isArray(answer)) return answer.join(', ');
   if (answer === undefined || answer === '') return 'Not answered';
-  return String(answer);
+  return question.options?.find((option) => String(option.value) === String(answer))?.label || String(answer);
 }
 
 export default function AssessmentReview() {
@@ -26,6 +25,14 @@ export default function AssessmentReview() {
     ...section,
     questions: questions.filter((question) => question.sectionId === section.id),
   })), [questions]);
+  const missingQuestions = useMemo(
+    () => questions.filter((question) => {
+      const answer = assessment.answers[question.id];
+      return question.required && (Array.isArray(answer) ? answer.length === 0 : answer === undefined || answer === '');
+    }),
+    [questions, assessment.answers],
+  );
+  const isComplete = questions.length > 0 && missingQuestions.length === 0;
 
   const editQuestion = (questionId) => {
     const index = questions.findIndex((question) => question.id === questionId);
@@ -34,7 +41,7 @@ export default function AssessmentReview() {
   };
 
   const submit = async () => {
-    if (!assessment.isComplete) {
+    if (!isComplete) {
       toast?.('Please complete all required questions before submitting.', 'error');
       setConfirmOpen(false);
       return;
@@ -59,16 +66,16 @@ export default function AssessmentReview() {
           </div>
           <button
             onClick={() => setConfirmOpen(true)}
-            disabled={!assessment.isComplete}
+            disabled={!isComplete}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             <Send size={17} /> Submit Assessment
           </button>
         </div>
 
-        {!assessment.isComplete && (
+        {!isComplete && (
           <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-            Submit is disabled until all required questions are answered. Missing: {assessment.missingQuestions.length}
+            Submit is disabled until all required questions are answered. Missing: {missingQuestions.length}
           </div>
         )}
 
@@ -84,8 +91,8 @@ export default function AssessmentReview() {
               </div>
               <div className="divide-y divide-slate-100">
                 {section.questions.map((question) => {
-                  const answered = isQuestionAnswered(question, assessment.answers);
-                  const sectionMeta = getQuestionSection(question);
+                  const answer = assessment.answers[question.id];
+                  const answered = Array.isArray(answer) ? answer.length > 0 : answer !== undefined && answer !== '';
                   return (
                     <div key={question.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
                       <div>
@@ -93,8 +100,8 @@ export default function AssessmentReview() {
                           <CheckCircle2 size={16} className={answered ? 'text-emerald-500' : 'text-slate-300'} aria-hidden="true" />
                           <p className="text-sm font-bold text-slate-900">{question.title}</p>
                         </div>
-                        <p className="mt-2 text-sm text-slate-600">{formatAnswer(assessment.answers[question.id])}</p>
-                        <p className="mt-1 text-xs font-medium text-slate-400">{sectionMeta.title}</p>
+                        <p className="mt-2 text-sm text-slate-600">{formatAnswer(answer, question)}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-400">{section.title}</p>
                       </div>
                       <button onClick={() => editQuestion(question.id)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <Edit3 size={15} /> Edit Answer

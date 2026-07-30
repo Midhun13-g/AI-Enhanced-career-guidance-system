@@ -13,7 +13,12 @@ function normalizeQuestions(data) {
   return payload.flatMap((category) =>
     (category.questions || []).map((question) => ({
       id: String(question.id),
-      sectionId: String(category.categoryId || category.categoryName || 'assessment').toLowerCase(),
+      sectionId: ({
+        TECHNICAL_SKILLS: 'technical',
+        APTITUDE: 'aptitude',
+        PERSONALITY: 'personality',
+        INTEREST: 'interests',
+      })[category.categoryName] || String(category.categoryName || 'assessment').toLowerCase(),
       category: category.categoryName,
       title: question.question,
       type: question.questionType?.toLowerCase() === 'multiple_choice' ? 'mcq' : question.questionType?.toLowerCase() || 'mcq',
@@ -52,7 +57,7 @@ export default function useAssessment() {
     setError('');
     try {
       const data = await assessmentService.startAssessment();
-      context.setAssessmentId(data.assessmentId);
+      context.setAssessmentId(data.sessionId ?? data.assessmentId);
       return data;
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to start assessment');
@@ -66,9 +71,9 @@ export default function useAssessment() {
     context.setAnswer(questionId, answer);
     try {
       await assessmentService.saveAnswer({
-        assessmentId: context.assessmentId,
-        questionId,
-        answer,
+        sessionId: context.assessmentId,
+        questionId: Number(questionId),
+        optionId: Number(answer),
       });
     } catch (err) {
       setError(err.response?.data?.message || 'Answer saved locally. Server sync failed.');
@@ -80,11 +85,11 @@ export default function useAssessment() {
     setError('');
     try {
       const data = await assessmentService.submitAssessment({
-        assessmentId: context.assessmentId,
+        sessionId: context.assessmentId,
         answers: context.answers,
       });
-      setResult(data.result);
-      return data.result;
+      setResult(data.result || data);
+      return data.result || data;
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to submit assessment');
       throw err;
