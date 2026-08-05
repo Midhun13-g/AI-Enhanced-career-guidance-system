@@ -1,3 +1,11 @@
+import Add from '@mui/icons-material/Add';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import FileUpload from '@mui/icons-material/FileUpload';
+import PendingActions from '@mui/icons-material/PendingActions';
+import School from '@mui/icons-material/School';
+import VerifiedUser from '@mui/icons-material/VerifiedUser';
+
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
