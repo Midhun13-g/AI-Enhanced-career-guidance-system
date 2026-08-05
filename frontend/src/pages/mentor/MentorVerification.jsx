@@ -1,17 +1,40 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Select,
+  Snackbar,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  Typography,
+} from '@mui/material';
+
 import Add from '@mui/icons-material/Add';
 import CheckCircle from '@mui/icons-material/CheckCircle';
-import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
 import FileUpload from '@mui/icons-material/FileUpload';
 import PendingActions from '@mui/icons-material/PendingActions';
 import School from '@mui/icons-material/School';
 import VerifiedUser from '@mui/icons-material/VerifiedUser';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup'; import * as yup from 'yup';
-import { Alert, Avatar, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, LinearProgress, MenuItem, Select, Snackbar, Step, StepLabel, Stepper, TextField, Typography } from '@mui/material';
-import Add from '@mui/icons-material/Add.js'; import CheckCircle from '@mui/icons-material/CheckCircle.js'; import DeleteOutline from '@mui/icons-material/DeleteOutline.js'; import FileUpload from '@mui/icons-material/FileUpload.js'; import PendingActions from '@mui/icons-material/PendingActions.js'; import School from '@mui/icons-material/School.js'; import VerifiedUser from '@mui/icons-material/VerifiedUser.js';
 import { mentorVerificationService as service } from '../../services/mentorVerificationService';
 const steps=['Personal information','Professional details','Social profiles','Documents','Availability','Declaration'];
 const schema=yup.object({fullName:yup.string().required('Full name is required'),email:yup.string().email().required(),mobile:yup.string().matches(/^\+?[0-9 ()-]{7,20}$/,'Enter a valid mobile number').required(),dob:yup.string().required(),address:yup.string().required(),city:yup.string().required(),state:yup.string().required(),country:yup.string().required(),company:yup.string().required(),jobTitle:yup.string().required(),experience:yup.number().min(0).required(),industry:yup.string().required(),bio:yup.string().max(500),linkedin:yup.string().url('Enter a valid URL').nullable().transform(v=>v||null),github:yup.string().url('Enter a valid URL').nullable().transform(v=>v||null),portfolio:yup.string().url('Enter a valid URL').nullable().transform(v=>v||null),website:yup.string().url('Enter a valid URL').nullable().transform(v=>v||null),declaration:yup.boolean().oneOf([true],'You must certify the information')});
