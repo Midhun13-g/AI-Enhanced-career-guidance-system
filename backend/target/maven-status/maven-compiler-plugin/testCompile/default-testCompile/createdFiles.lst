@@ -1,1 +1,5 @@
+com\careerguidance\service\SkillTaxonomyServiceTest.class
+com\careerguidance\service\NlpPipelineServiceTest.class
+com\careerguidance\service\ResumeAnalysisServiceTest.class
 com\careerguidance\service\impl\AssessmentServiceImplTest.class
+com\careerguidance\service\NlpPipelineServiceTest$1.class

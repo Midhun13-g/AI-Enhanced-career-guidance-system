@@ -1,3 +1,4 @@
 package com.careerguidance.constant;
 public enum ResumeStatus {
-    UPLOADED, PARSED, FAILED }
+    UPLOADED, PROCESSING, PARSED, COMPLETED, FAILED
+}

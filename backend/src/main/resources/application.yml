@@ -49,3 +49,7 @@ careerguidance:
   app:
     jwtSecret: ${JWT_SECRET:careerguidancesecretkey2024supersecureandlongenoughforhs256algorithm}
     jwtExpirationMs: ${JWT_EXPIRATION_MS:86400000}
+
+nlp:
+  service:
+    url: ${NLP_SERVICE_URL:http://localhost:8000}

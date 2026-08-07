@@ -1,128 +1,172 @@
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\CareerGuidanceApplication.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\config\DataInitializer.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\config\DotenvEnvironmentPostProcessor.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\config\OpenApiConfig.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\config\SecurityConfig.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\AssessmentCategoryName.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\AssessmentSessionStatus.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\QuestionType.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\ResumeReviewStatus.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\ResumeStatus.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminAuthController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminDashboardController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentManagementController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentReviewController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AuthController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\HealthController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\MentorAuthController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\MentorDashboardController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\ResumeController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\ResumeManagementController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\ResumeReviewController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\StudentManagementController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\StudentProfileController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\StudentReviewController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\TestController.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\ApproveResumeRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\AssessmentAnswerRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\AssessmentFeedbackRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\AssessmentSubmitRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\ChangePasswordRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\CreateQuestionRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\LoginRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\RegisterRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\ResumeFeedbackRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\ResumeUpdateRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\StudentProfileRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\UpdateStudentRequest.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentAnswerResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentCategoryResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentOptionResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentQuestionResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentQuestionsByCategoryResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentResultResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentReviewResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentSessionResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssignedStudentResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\DashboardResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\JwtResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\MentorDashboardResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\MessageResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ProfileCompletionResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ResumeAnalysisResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ResumeResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ResumeReviewResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ResumeSummaryResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\StudentProfileResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\StudentSummaryResponse.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\AssessmentAnswer.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\AssessmentCategory.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\AssessmentOption.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\AssessmentQuestion.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\AssessmentResult.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\AssessmentSession.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\Mentor.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\MentorFeedback.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\MentorStudent.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\Resume.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\ResumeAnalysis.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\ResumeCertification.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\ResumeEducation.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\ResumeExperience.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\ResumeFeedback.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\ResumeProject.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\ResumeSkill.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\Role.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\RoleName.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\StudentProfile.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\entity\User.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\BadRequestException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\DuplicateAnswerException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\DuplicateResumeException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\FileTooLargeException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\GlobalExceptionHandler.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\InvalidFileFormatException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\QuestionNotFoundException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\ResourceNotFoundException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\ResumeNotFoundException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\StudentNotAssignedException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\exception\UnauthorizedException.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\mapper\AssessmentMapper.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\mapper\StudentProfileMapper.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentAnswerRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentCategoryRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentOptionRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentQuestionRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentResultRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentSessionRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\MentorFeedbackRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\MentorRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\MentorStudentRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeAnalysisRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeCertificationRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeEducationRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeExperienceRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeFeedbackRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeProjectRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\ResumeSkillRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\RoleRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\StudentProfileRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\UserRepository.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\security\AuthTokenFilter.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\security\JwtUtils.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\security\UserDetailsImpl.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\security\UserDetailsServiceImpl.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\AssessmentService.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\AuthService.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\AssessmentServiceImpl.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\AuthServiceImpl.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\MockResumeParserService.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\ResumeServiceImpl.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\StudentProfileServiceImpl.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\MentorAccessService.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\MentorReviewService.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\ResumeParserService.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\ResumeService.java
-D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\StudentProfileService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\CareerGuidanceApplication.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\config\DataInitializer.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\config\DotenvEnvironmentPostProcessor.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\config\OpenApiConfig.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\config\SecurityConfig.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\AssessmentCategoryName.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\AssessmentDifficulty.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\AssessmentSessionStatus.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\AssessmentStatus.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\AttemptStatus.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\PerformanceLevel.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\QuestionType.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\ResumeReviewStatus.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\constant\ResumeStatus.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\AdminAuthController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\AdminDashboardController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\AssessmentController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\AssessmentManagementController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\AssessmentReviewController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\AuthController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\HealthController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\MentorAuthController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\MentorDashboardController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\ResumeController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\ResumeManagementController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\ResumeNlpController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\ResumeReviewController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\SkillTaxonomyAdminController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\StudentManagementController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\StudentProfileController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\StudentReviewController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\controller\TestController.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\nlp\NlpParseRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\nlp\NlpParseResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\ApproveResumeRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\AssessmentAnswerRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\AssessmentFeedbackRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\AssessmentSubmitRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\ChangePasswordRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\CreateQuestionRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\LoginRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\RegisterRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\ResumeFeedbackRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\ResumeUpdateRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\SkillTaxonomyRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\StudentProfileRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\request\UpdateStudentRequest.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentAnswerResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentCategoryResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentOptionResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentQuestionResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentQuestionsByCategoryResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentResultResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentReviewResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssessmentSessionResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\AssignedStudentResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\DashboardResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\JwtResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\MentorDashboardResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\MessageResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ProfileCompletionResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ProfileVectorResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ResumeAnalysisReportResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ResumeAnalysisResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ResumeEntityResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ResumeProcessResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ResumeResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ResumeReviewResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\ResumeSummaryResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\SkillTaxonomyResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\StudentProfileResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\StudentSkillResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\dto\response\StudentSummaryResponse.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\Assessment.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentAnswer.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentAttempt.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentCategory.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentItem.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentItemOption.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentOption.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentQuestion.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentResult.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AssessmentSession.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AttemptAnswer.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AttemptCertificate.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\AttemptResult.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\Mentor.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\MentorFeedback.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\MentorStudent.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\Resume.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeAnalysis.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeAnalysisReport.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeCertification.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeEducation.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeEntity.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeExperience.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeFeedback.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeProject.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\ResumeSkill.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\Role.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\RoleName.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\SkillTaxonomy.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\StudentProfile.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\StudentProfileVector.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\StudentSkill.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\StudentSkillVector.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\entity\User.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\BadRequestException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\DuplicateAnswerException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\DuplicateResumeException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\FileTooLargeException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\GlobalExceptionHandler.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\InvalidFileFormatException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\ParsingFailedException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\QuestionNotFoundException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\ResourceNotFoundException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\ResumeNotFoundException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\SkillMappingException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\StudentNotAssignedException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\UnauthorizedAccessException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\exception\UnauthorizedException.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\mapper\AssessmentMapper.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\mapper\StudentProfileMapper.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AssessmentAnswerRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AssessmentAttemptRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AssessmentCategoryRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AssessmentOptionRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AssessmentQuestionRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AssessmentResultRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AssessmentSessionRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\AttemptAnswerRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\MentorFeedbackRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\MentorRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\MentorStudentRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeAnalysisReportRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeAnalysisRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeCertificationRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeEducationRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeEntityRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeExperienceRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeFeedbackRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeProjectRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\ResumeSkillRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\RoleRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\SkillTaxonomyRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\StudentProfileRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\StudentProfileVectorRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\StudentSkillRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\repository\UserRepository.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\security\AuthTokenFilter.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\security\JwtUtils.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\security\UserDetailsImpl.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\security\UserDetailsServiceImpl.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\AssessmentService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\AuthService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\impl\AssessmentServiceImpl.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\impl\AuthServiceImpl.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\impl\MockResumeParserService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\impl\ResumeServiceImpl.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\impl\StudentProfileServiceImpl.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\MentorAccessService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\MentorReviewService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\NlpClientService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\NlpPipelineService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\ProfileVectorService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\ResumeAnalysisService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\ResumeParserService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\ResumeService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\SkillTaxonomyService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\StudentProfileService.java
+d:\github projects\AI-Enhanced Career Guidance System\backend\src\main\java\com\careerguidance\service\TextExtractionService.java

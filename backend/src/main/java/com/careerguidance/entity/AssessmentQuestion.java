@@ -45,6 +45,21 @@ public class AssessmentQuestion {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    @Column(nullable = false)
+    private Integer marks = 1;
+
+    @Column(nullable = false)
+    private Double negativeMarks = 0.0;
+
+    @Column(length = 500)
+    private String imageUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String codeSnippet;
+
+    @Column(columnDefinition = "TEXT")
+    private String explanation;
+
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     private List<AssessmentOption> options = new ArrayList<>();
@@ -107,5 +122,45 @@ public class AssessmentQuestion {
 
     public void setOptions(List<AssessmentOption> options) {
         this.options = options;
+    }
+
+    public Integer getMarks() {
+        return marks;
+    }
+
+    public void setMarks(Integer marks) {
+        this.marks = marks;
+    }
+
+    public Double getNegativeMarks() {
+        return negativeMarks;
+    }
+
+    public void setNegativeMarks(Double negativeMarks) {
+        this.negativeMarks = negativeMarks;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getCodeSnippet() {
+        return codeSnippet;
+    }
+
+    public void setCodeSnippet(String codeSnippet) {
+        this.codeSnippet = codeSnippet;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
     }
 }
