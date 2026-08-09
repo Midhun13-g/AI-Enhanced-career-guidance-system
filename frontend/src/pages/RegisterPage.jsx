@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff, FiBriefcase } from 'react-icons/fi';
 import { HiSparkles } from 'react-icons/hi2';
 import api from '../services/api';
 import { Button, Alert } from '../components/ui';
@@ -103,13 +103,27 @@ export default function RegisterPage() {
             <span className="text-xl font-bold text-slate-900">Career<span className="text-blue-600">AI</span></span>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 sm:p-10">
-            <div className="mb-7">
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Create your account</h1>
-              <p className="text-slate-500 mt-1.5 text-sm">Fill in your details to get started for free</p>
-            </div>
+            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 sm:p-10">
+              <div className="mb-7">
+                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Create your account</h1>
+                <p className="text-slate-500 mt-1.5 text-sm">Fill in your details to get started for free</p>
+              </div>
 
-            {error   && <Alert variant="error"   className="mb-5">{error}</Alert>}
+              <Link
+                to="/mentor/signup"
+                className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-teal-200 bg-teal-50 p-4 text-left transition-colors hover:border-teal-400 hover:bg-teal-100"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-teal-600 text-white"><FiBriefcase size={18} /></span>
+                  <span>
+                    <span className="block text-sm font-bold text-slate-900">Want to guide students?</span>
+                    <span className="block text-xs text-slate-600">Apply to become a verified mentor.</span>
+                  </span>
+                </span>
+                <span className="text-sm font-bold text-teal-700">Become a mentor →</span>
+              </Link>
+
+              {error   && <Alert variant="error"   className="mb-5">{error}</Alert>}
             {success && <Alert variant="success" className="mb-5">{success}</Alert>}
 
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>

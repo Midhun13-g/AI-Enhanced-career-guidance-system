@@ -1,174 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { FiCheck, FiExternalLink, FiFileText, FiSearch, FiX } from 'react-icons/fi';
 import { mentorVerificationService as service } from '../../services/mentorVerificationService';
 
-const statuses = ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED'];
-const badge = { PENDING: 'warning', UNDER_REVIEW: 'info', APPROVED: 'success', REJECTED: 'error', SUSPENDED: 'default' };
-
-const ic = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100';
-
 export default function MentorVerificationPage() {
-  const [rows, setRows] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
   const [selected, setSelected] = useState(null);
-  const [dialog, setDialog] = useState(null);
-  const [reason, setReason] = useState('');
+  const [rejectionOpen, setRejectionOpen] = useState(false);
+  const [remarks, setRemarks] = useState('');
   const [loading, setLoading] = useState(true);
-
-  const load = () => {
-    setLoading(true);
-    service.list({ status: status || undefined })
-      .then(x => setRows(x.content || x || []))
-      .catch(() => setRows([]))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, [status]);
-
-  const filtered = useMemo(
-    () => rows.filter(x => JSON.stringify(x).toLowerCase().includes(query.toLowerCase())),
-    [rows, query],
-  );
-
-  const act = async () => {
-    if ((dialog === 'reject' || dialog === 'request-info' || dialog === 'suspend') && !reason.trim()) return;
-    try {
-      if (dialog === 'approve')      await service.approve(selected.id);
-      if (dialog === 'reject')       await service.reject(selected.id, reason);
-      if (dialog === 'request-info') await service.requestInfo(selected.id, reason);
-      if (dialog === 'suspend')      await service.suspend(selected.id, reason);
-      load();
-    } finally {
-      setDialog(null);
-      setReason('');
-    }
-  };
-
-  return (
-    <div>
-      <header className="mb-7">
-        <p className="text-sm font-semibold text-indigo-600">MENTOR VERIFICATION</p>
-        <h1 className="mt-1 text-3xl font-bold">Review mentor applications</h1>
-        <p className="mt-2 text-slate-500">Verify professional credentials and keep the mentor network trusted.</p>
-      </header>
-
-      <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-        {/* Filter bar — native inputs, no MUI style conflicts */}
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row">
-          <input
-            className={ic}
-            placeholder="Search mentors…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-          />
-          <select
-            className={`${ic} sm:w-48 shrink-0`}
-            value={status}
-            onChange={e => setStatus(e.target.value)}
-          >
-            <option value="">All statuses</option>
-            {statuses.map(s => (
-              <option key={s} value={s}>{s.replace('_', ' ')}</option>
-            ))}
-          </select>
-        </div>
-
-        {loading ? (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-100" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <p className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700">
-            No mentor applications found.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[850px] text-left text-sm">
-              <thead className="border-y bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  {['Profile', 'Company', 'Experience', 'Documents', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 font-semibold">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(x => (
-                  <tr key={x.id} className="border-b border-slate-50 hover:bg-slate-50/60">
-                    <td className="px-4 py-4">
-                      <p className="font-semibold">{x.fullName || x.name}</p>
-                      <p className="text-xs text-slate-500">{x.email}</p>
-                    </td>
-                    <td className="px-4 py-4">{x.company || x.currentCompany || '—'}</td>
-                    <td className="px-4 py-4">{x.experience ?? x.yearsOfExperience ?? '—'} yrs</td>
-                    <td className="px-4 py-4">{x.documents?.length ?? '—'}</td>
-                    <td className="px-4 py-4">
-                      <Chip size="small" color={badge[x.status] || 'default'} label={(x.status || 'PENDING').replace('_', ' ')} />
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Button size="small" onClick={() => service.detail(x.id).then(setSelected)}>View</Button>
-                        {x.status !== 'APPROVED'   && <Button size="small" color="success" onClick={() => { setSelected(x); setDialog('approve'); }}>Approve</Button>}
-                        {x.status !== 'REJECTED'   && <Button size="small" color="error"   onClick={() => { setSelected(x); setDialog('reject'); }}>Reject</Button>}
-                        <Button size="small" onClick={() => { setSelected(x); setDialog('request-info'); }}>Request info</Button>
-                        {x.status !== 'SUSPENDED'  && <Button size="small" color="warning" onClick={() => { setSelected(x); setDialog('suspend'); }}>Suspend</Button>}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {/* Profile detail dialog */}
-      <Dialog open={!!selected && !dialog} onClose={() => setSelected(null)} fullWidth maxWidth="md">
-        <DialogTitle>Mentor profile</DialogTitle>
-        <DialogContent dividers>
-          {selected && (
-            <><div className="grid gap-3 sm:grid-cols-2">
-              {Object.entries(selected)
-                .filter(([k]) => k !== 'documents')
-                .map(([k, v]) => (
-                  <div key={k}>
-                    <p className="text-xs uppercase text-slate-500">{k}</p>
-                    <p className="text-sm text-slate-800">{typeof v === 'object' ? JSON.stringify(v) : String(v ?? '—')}</p>
-                  </div>
-                ))}
-            </div>{selected.documents?.length > 0 && <div className="mt-5"><p className="mb-2 text-sm font-semibold">Uploaded documents</p>{selected.documents.map(d => <a key={d.id} className="mr-3 text-sm text-indigo-600 underline" href={d.fileUrl} target="_blank" rel="noreferrer">{d.type}</a>)}</div>}</>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSelected(null)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Action dialog */}
-      <Dialog open={!!dialog} onClose={() => setDialog(null)}>
-        <DialogTitle>
-          {dialog === 'approve' ? 'Approve mentor' : dialog === 'reject' ? 'Reject mentor' : dialog === 'suspend' ? 'Suspend mentor' : 'Request more information'}
-        </DialogTitle>
-        <DialogContent>
-          {dialog !== 'approve' && (
-            <textarea
-              autoFocus
-              required
-              rows={3}
-              className={`${ic} mt-2 resize-none`}
-              placeholder="Reason…"
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-            />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialog(null)}>Cancel</Button>
-          <Button variant="contained" onClick={act}>Confirm</Button>
-        </DialogActions>
-      </Dialog>
-    </div>
-  );
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState('');
+  const load = () => { setLoading(true); setError(''); service.list().then(data => setApplications(data || [])).catch(() => setError('Unable to load mentor applications.')).finally(() => setLoading(false)); };
+  useEffect(load, []);
+  const visible = useMemo(() => applications.filter(item => JSON.stringify(item).toLowerCase().includes(query.toLowerCase())), [applications, query]);
+  const approve = async () => { setActionLoading(true); try { await service.approve(selected.id); setSelected(null); load(); } catch { setError('Unable to approve this application.'); } finally { setActionLoading(false); } };
+  const reject = async () => { if (!remarks.trim()) return; setActionLoading(true); try { await service.reject(selected.id, remarks.trim()); setSelected(null); setRejectionOpen(false); setRemarks(''); load(); } catch { setError('Unable to reject this application.'); } finally { setActionLoading(false); } };
+  return <div className="mx-auto max-w-7xl">
+    <header className="mb-7 rounded-3xl bg-gradient-to-r from-slate-900 to-slate-700 px-6 py-7 text-white sm:px-8"><p className="text-sm font-bold tracking-wider text-teal-300">ADMIN · MENTOR VERIFICATION</p><h1 className="mt-2 text-3xl font-extrabold">Review mentor applications</h1><p className="mt-2 text-sm text-slate-300">Review submitted documents, then approve or reject access to the mentor workspace.</p></header>
+    {error && <p className="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</p>}
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-bold text-slate-900">Pending applications</h2><p className="text-sm text-slate-500">{applications.length} application{applications.length === 1 ? '' : 's'} awaiting a decision</p></div><label className="relative w-full sm:w-72"><FiSearch className="absolute left-3 top-3 text-slate-400" /><input className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-teal-500" placeholder="Search applications" value={query} onChange={event => setQuery(event.target.value)} /></label></div>
+      {loading ? <div className="space-y-3 p-5">{[1, 2, 3].map(item => <div key={item} className="h-20 animate-pulse rounded-xl bg-slate-100" />)}</div> : visible.length === 0 ? <div className="p-12 text-center"><FiFileText className="mx-auto text-slate-300" size={34} /><p className="mt-3 font-semibold text-slate-700">No pending mentor applications</p><p className="mt-1 text-sm text-slate-500">New mentor submissions will appear here for review.</p></div> : <div className="divide-y divide-slate-100">{visible.map(application => <article key={application.id} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-slate-900">{application.fullName}</h3><span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">PENDING REVIEW</span></div><p className="mt-1 text-sm text-slate-500">{application.email} · {application.company} · {application.jobTitle}</p><p className="mt-2 text-xs text-slate-500">{application.experienceYears} years experience · {application.documents?.length || 0} document(s) submitted</p></div><button onClick={() => setSelected(application)} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Review application</button></article>)}</div>}</section>
+    {selected && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4" role="dialog" aria-modal="true"><div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl"><div className="flex items-start justify-between border-b border-slate-100 p-6"><div><p className="text-xs font-bold tracking-wider text-teal-600">APPLICATION REVIEW</p><h2 className="mt-1 text-2xl font-extrabold text-slate-900">{selected.fullName}</h2><p className="mt-1 text-sm text-slate-500">{selected.email}</p></div><button onClick={() => setSelected(null)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><FiX size={20} /></button></div><div className="p-6"><div className="grid gap-4 rounded-2xl bg-slate-50 p-5 sm:grid-cols-2"><Detail label="Company" value={selected.company} /><Detail label="Job title" value={selected.jobTitle} /><Detail label="Experience" value={`${selected.experienceYears} years`} /><Detail label="Phone" value={selected.phone || 'Not provided'} /><Detail label="Expertise" value={selected.expertise || 'Not provided'} /><Detail label="Submitted" value={selected.submittedAt ? new Date(selected.submittedAt).toLocaleDateString() : '—'} /></div><h3 className="mt-7 font-bold text-slate-900">Submitted documents</h3><div className="mt-3 grid gap-3 sm:grid-cols-3">{selected.documents?.map(document => <a key={document.id} href={document.fileUrl} target="_blank" rel="noreferrer" className="rounded-xl border border-slate-200 p-4 text-sm font-semibold text-teal-700 hover:border-teal-400 hover:bg-teal-50"><FiFileText className="mb-2" size={20} />{document.type}<span className="mt-2 flex items-center gap-1 text-xs text-slate-500">Open document <FiExternalLink /></span></a>)}</div>{selected.bio && <><h3 className="mt-7 font-bold text-slate-900">Bio</h3><p className="mt-2 text-sm leading-6 text-slate-600">{selected.bio}</p></>}<div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end"><button onClick={() => setRejectionOpen(true)} disabled={actionLoading} className="rounded-xl border border-rose-300 px-5 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-50">Reject application</button><button onClick={approve} disabled={actionLoading} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700"><FiCheck />{actionLoading ? 'Saving…' : 'Approve mentor'}</button></div></div></div></div>}
+    {rejectionOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/60 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"><h2 className="text-xl font-bold text-slate-900">Reject application</h2><p className="mt-2 text-sm text-slate-500">Give the applicant a clear reason so they can correct their submission.</p><textarea className="mt-4 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-rose-500" rows="4" value={remarks} onChange={event => setRemarks(event.target.value)} placeholder="Reason for rejection" /><div className="mt-5 flex justify-end gap-3"><button onClick={() => setRejectionOpen(false)} className="rounded-xl px-4 py-2 text-sm font-bold text-slate-600">Cancel</button><button onClick={reject} disabled={actionLoading || !remarks.trim()} className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{actionLoading ? 'Saving…' : 'Confirm rejection'}</button></div></div></div>}
+  </div>;
 }
+function Detail({ label, value }) { return <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 text-sm text-slate-800">{value}</p></div>; }

@@ -68,7 +68,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <AssessmentProvider>
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               {/* Auth */}
               <Route path="/login"           element={<LoginPage />} />

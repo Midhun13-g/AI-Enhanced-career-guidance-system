@@ -16,7 +16,7 @@ public class UserDetailsImpl implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id, String firstName, String lastName, String email, String password,
+    public UserDetailsImpl(Long id, String email, String firstName, String lastName, String password,
                            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.firstName = firstName;
@@ -31,7 +31,7 @@ public class UserDetailsImpl implements UserDetails {
                 .map(role -> new SimpleGrantedAuthority(role.getName().name()))
                 .collect(Collectors.toList());
 
-        return new UserDetailsImpl(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(),
+        return new UserDetailsImpl(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(),
                 user.getPassword(), authorities);
     }
 
