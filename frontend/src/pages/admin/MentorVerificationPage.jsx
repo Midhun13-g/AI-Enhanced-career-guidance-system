@@ -129,7 +129,7 @@ export default function MentorVerificationPage() {
         <DialogTitle>Mentor profile</DialogTitle>
         <DialogContent dividers>
           {selected && (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <><div className="grid gap-3 sm:grid-cols-2">
               {Object.entries(selected)
                 .filter(([k]) => k !== 'documents')
                 .map(([k, v]) => (
@@ -138,7 +138,7 @@ export default function MentorVerificationPage() {
                     <p className="text-sm text-slate-800">{typeof v === 'object' ? JSON.stringify(v) : String(v ?? '—')}</p>
                   </div>
                 ))}
-            </div>
+            </div>{selected.documents?.length > 0 && <div className="mt-5"><p className="mb-2 text-sm font-semibold">Uploaded documents</p>{selected.documents.map(d => <a key={d.id} className="mr-3 text-sm text-indigo-600 underline" href={d.fileUrl} target="_blank" rel="noreferrer">{d.type}</a>)}</div>}</>
           )}
         </DialogContent>
         <DialogActions>

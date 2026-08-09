@@ -30,8 +30,12 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post('/api/auth/login', form);
-      login({ id: res.data.id, email: res.data.email, firstName: res.data.firstName, lastName: res.data.lastName, roles: res.data.roles }, res.data.token);
-      navigate('/dashboard');
+      const role = (res.data.roles || [])[0]?.replace('ROLE_', '');
+      const user = { id: res.data.id, email: res.data.email, firstName: res.data.firstName, lastName: res.data.lastName, roles: res.data.roles, role, accountStatus: res.data.accountStatus };
+      login(user, res.data.token);
+      if (role === 'ADMIN') navigate('/admin');
+      else if (role === 'MENTOR') navigate(res.data.accountStatus === 'VERIFIED' ? '/mentor' : '/mentor/pending-verification');
+      else navigate('/student/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
     } finally {

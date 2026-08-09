@@ -35,8 +35,10 @@ public class ResumeAnalysisService {
         int expCount = nlp.getExperience() != null ? nlp.getExperience().size() : 0;
 
         double skillScore = calculateSkillScore(skillCount, nlp.getSkills());
-        double projectScore = Math.min(100, projectCount * 20.0);
-        double educationScore = Math.min(100, eduCount * 40.0);
+        // A single substantial project or recognised qualification should materially
+        // improve the report instead of being drowned out by missing work history.
+        double projectScore = Math.min(100, projectCount * 35.0);
+        double educationScore = Math.min(100, eduCount * 60.0);
         double atsScore = calculateAtsScore(skillCount, projectCount, eduCount, expCount);
         double overallScore = nlp.getResumeScore() != null
                 ? nlp.getResumeScore()
@@ -64,14 +66,14 @@ public class ResumeAnalysisService {
         double avgConf = skills.stream()
                 .mapToDouble(s -> s.getConfidence() != null ? s.getConfidence() : 0.5)
                 .average().orElse(0.5);
-        return Math.min(100, count * 8.0 * avgConf);
+        return Math.min(100, count * 20.0 * avgConf);
     }
 
     private double calculateAtsScore(int skills, int projects, int edu, int exp) {
         double score = 0;
-        score += Math.min(40, skills * 4.0);
-        score += Math.min(20, projects * 5.0);
-        score += Math.min(20, edu * 10.0);
+        score += Math.min(40, skills * 8.0);
+        score += Math.min(20, projects * 10.0);
+        score += Math.min(20, edu * 20.0);
         score += Math.min(20, exp * 5.0);
         return score;
     }

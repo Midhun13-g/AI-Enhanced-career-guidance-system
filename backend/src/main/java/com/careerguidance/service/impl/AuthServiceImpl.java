@@ -7,6 +7,7 @@ import com.careerguidance.dto.response.MessageResponse;
 import com.careerguidance.entity.Role;
 import com.careerguidance.entity.RoleName;
 import com.careerguidance.entity.User;
+import com.careerguidance.entity.AccountStatus;
 import com.careerguidance.exception.BadRequestException;
 import com.careerguidance.repository.RoleRepository;
 import com.careerguidance.repository.UserRepository;
@@ -45,6 +46,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public JwtResponse login(LoginRequest request) {
+        User account = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new com.careerguidance.exception.UnauthorizedException("Invalid email or password"));
+        if (account.getAccountStatus() == AccountStatus.REJECTED || account.getAccountStatus() == AccountStatus.DISABLED) {
+            throw new com.careerguidance.exception.UnauthorizedException("This account is not permitted to sign in");
+        }
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
@@ -56,8 +62,11 @@ public class AuthServiceImpl implements AuthService {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        return new JwtResponse(jwt, userDetails.getId(), userDetails.getFirstName(), userDetails.getLastName(),
+        JwtResponse response = new JwtResponse(jwt, userDetails.getId(), userDetails.getFirstName(), userDetails.getLastName(),
                 userDetails.getEmail(), roles);
+        response.setAccountStatus(account.getAccountStatus());
+        if (account.getAccountStatus() == AccountStatus.PENDING_VERIFICATION) response.setMessage("Your mentor account is pending administrator verification.");
+        return response;
     }
 
     @Override
@@ -71,6 +80,7 @@ public class AuthServiceImpl implements AuthService {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setAccountStatus(AccountStatus.ACTIVE);
         user.setPhone(request.getPhone());
         user.setGender(request.getGender());
         user.setDob(request.getDob() != null ? LocalDate.parse(request.getDob()) : null);

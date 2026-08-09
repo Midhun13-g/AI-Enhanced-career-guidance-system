@@ -49,6 +49,10 @@ public class User {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(name = "account_status", nullable = false)
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -167,6 +171,8 @@ public class User {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public AccountStatus getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(AccountStatus accountStatus) { this.accountStatus = accountStatus; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

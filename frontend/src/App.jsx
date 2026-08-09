@@ -9,6 +9,8 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import MentorSignupPage from './pages/MentorSignupPage';
+import PendingVerificationPage from './pages/PendingVerificationPage';
 
 // Legacy assessment flow
 import AssessmentInstructions from './pages/assessment/AssessmentInstructions';
@@ -71,11 +73,14 @@ function App() {
               {/* Auth */}
               <Route path="/login"           element={<LoginPage />} />
               <Route path="/register"        element={<RegisterPage />} />
+              <Route path="/mentor/signup" element={<MentorSignupPage />} />
+              <Route path="/mentor/pending-verification" element={<ProtectedRoute><PendingVerificationPage /></ProtectedRoute>} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password"  element={<ResetPasswordPage />} />
 
               {/* Core */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/student/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
               {/* Legacy assessment flow */}

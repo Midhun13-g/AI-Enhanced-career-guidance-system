@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class NlpPipelineService {
@@ -54,7 +55,7 @@ public class NlpPipelineService {
     public ResumeProcessResponse process(Long studentId, Long resumeId) {
         Resume resume = resumeRepo.findById(resumeId)
                 .orElseThrow(() -> new ResumeNotFoundException("Resume not found: " + resumeId));
-        if (!resume.getUser().getId().equals(studentId)) {
+        if (resume.getUser() == null || !Objects.equals(resume.getUser().getId(), studentId)) {
             throw new UnauthorizedAccessException("Resume does not belong to this student");
         }
 
@@ -108,7 +109,7 @@ public class NlpPipelineService {
     public List<ResumeEntityResponse> getEntities(Long studentId, Long resumeId) {
         Resume resume = resumeRepo.findById(resumeId)
                 .orElseThrow(() -> new ResumeNotFoundException("Resume not found: " + resumeId));
-        if (!resume.getUser().getId().equals(studentId)) {
+        if (resume.getUser() == null || !Objects.equals(resume.getUser().getId(), studentId)) {
             throw new UnauthorizedAccessException("Resume does not belong to this student");
         }
         return entityRepo.findByResumeId(resumeId).stream().map(this::toEntityResponse).toList();

@@ -1,6 +1,7 @@
 package com.careerguidance.dto.response;
 
 import java.util.List;
+import com.careerguidance.entity.AccountStatus;
 
 public class JwtResponse {
     private String token;
@@ -10,6 +11,8 @@ public class JwtResponse {
     private String lastName;
     private String email;
     private List<String> roles;
+    private AccountStatus accountStatus;
+    private String message;
 
     public JwtResponse(String token, Long id, String firstName, String lastName, String email, List<String> roles) {
         this.token = token;
@@ -47,4 +50,8 @@ public class JwtResponse {
     public List<String> getRoles() {
         return roles;
     }
+    public AccountStatus getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(AccountStatus accountStatus) { this.accountStatus = accountStatus; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
 }

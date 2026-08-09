@@ -22,10 +22,12 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtUtils jwtUtils;
+    private final com.careerguidance.security.VerifiedMentorAuthorizationManager verifiedMentorAuthorizationManager;
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtUtils jwtUtils) {
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtUtils jwtUtils, com.careerguidance.security.VerifiedMentorAuthorizationManager verifiedMentorAuthorizationManager) {
         this.userDetailsService = userDetailsService;
         this.jwtUtils = jwtUtils;
+        this.verifiedMentorAuthorizationManager = verifiedMentorAuthorizationManager;
     }
 
     @Bean
@@ -56,9 +58,12 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/health",
+                        .requestMatchers("/api/auth/**", "/api/public/**", "/uploads/**", "/health",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/actuator/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/student/**").hasRole("STUDENT")
+                        .requestMatchers("/api/mentor/**").access(verifiedMentorAuthorizationManager)
                         .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());

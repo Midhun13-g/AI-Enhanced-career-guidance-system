@@ -8,6 +8,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 @Component
+@org.springframework.core.annotation.Order(1)
 public class DataInitializer implements ApplicationRunner {
 
     private final RoleRepository roleRepository;

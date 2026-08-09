@@ -1,0 +1,3 @@
+package com.careerguidance.entity;
+import jakarta.persistence.*; import java.time.LocalDateTime;
+@Entity @Table(name="mentor_verification_logs") public class MentorVerificationLog { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; @ManyToOne(optional=false) @JoinColumn(name="mentor_id") private MentorProfile mentor; private String action; @ManyToOne @JoinColumn(name="admin_id") private User admin; @Column(columnDefinition="TEXT") private String remarks; private LocalDateTime createdAt=LocalDateTime.now(); public void setMentor(MentorProfile v){mentor=v;} public void setAction(String v){action=v;} public void setAdmin(User v){admin=v;} public void setRemarks(String v){remarks=v;} }
