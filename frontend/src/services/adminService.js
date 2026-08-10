@@ -6,6 +6,16 @@ export const adminService = {
   // Dashboard
   getDashboard: () => unwrap(api.get('/api/admin/dashboard')),
 
+  // Accounts
+  getUsers: (params) => unwrap(api.get('/api/admin/users', { params })),
+  activateUser: (id) => unwrap(api.patch(`/api/admin/users/${id}/activate`)),
+  deactivateUser: (id) => unwrap(api.patch(`/api/admin/users/${id}/deactivate`)),
+
+  // Mentors
+  getMentors: () => unwrap(api.get('/api/admin/mentors')),
+  activateMentor: (id) => unwrap(api.patch(`/api/admin/mentors/${id}/activate`)),
+  deactivateMentor: (id) => unwrap(api.patch(`/api/admin/mentors/${id}/deactivate`)),
+
   // Students — backend: /api/admin/students
   getStudents:   (params) => unwrap(api.get('/api/admin/students', { params })),
   getStudent:    (id)     => unwrap(api.get(`/api/admin/students/${id}`)),

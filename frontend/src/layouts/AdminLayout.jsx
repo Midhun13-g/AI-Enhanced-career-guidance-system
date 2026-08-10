@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   BarChart3, BookOpenCheck, BriefcaseBusiness, FileText, LayoutDashboard,
   LogOut, Menu, Settings, ShieldCheck, Sparkles, Users, X,
-  ClipboardList, PlusSquare, Database, TrendingUp,
+  ClipboardList, PlusSquare, Database, TrendingUp, UserCheck, GraduationCap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,7 +13,9 @@ const sections = [
     links: [
       ['Dashboard', '/admin', LayoutDashboard],
       ['Users', '/admin/users', Users],
-      ['Student Profiles', '/admin/students', Users],
+      ['Student Profiles', '/admin/students', GraduationCap],
+      ['Manage Mentors', '/admin/mentors/manage', Users],
+      ['Mentor Verification', '/admin/mentors', UserCheck],
     ],
   },
   {

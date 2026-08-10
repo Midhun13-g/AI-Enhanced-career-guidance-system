@@ -17,6 +17,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminAuthController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminDashboardController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminMentorVerificationController.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminUserManagementController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentManagementController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentReviewController.java
@@ -51,6 +52,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\SkillTaxonomyRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\StudentProfileRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\UpdateStudentRequest.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AdminUserResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentAnswerResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentCategoryResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentOptionResponse.java

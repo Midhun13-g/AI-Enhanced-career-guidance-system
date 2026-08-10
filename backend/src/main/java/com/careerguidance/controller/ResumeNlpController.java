@@ -19,7 +19,7 @@ import java.util.List;
 @RequestMapping("/api/student/resume")
 @Tag(name = "Resume NLP", description = "Resume intelligence pipeline for students")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('STUDENT')")
+@PreAuthorize("hasRole('STUDENT')")
 public class ResumeNlpController {
 
     private final NlpPipelineService pipeline;

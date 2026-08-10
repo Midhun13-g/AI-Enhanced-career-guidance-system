@@ -57,6 +57,7 @@ import CreateAssessment from './pages/admin/CreateAssessment';
 import QuestionBankManagement from './pages/admin/QuestionBankManagement';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import MentorVerificationPage from './pages/admin/MentorVerificationPage';
+import { MentorManagementPage, UserManagementPage } from './pages/admin/AccountManagementPages';
 
 // Mentor
 import MentorLayout from './layouts/MentorLayout';
@@ -123,7 +124,7 @@ function App() {
               {/* Admin */}
               <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
                 <Route index element={<AdminDashboard />} />
-                <Route path="users"    element={<StudentsPage mode="users" />} />
+                <Route path="users"    element={<UserManagementPage />} />
                 <Route path="students" element={<StudentsPage />} />
 
                 {/* Module 4 Admin pages */}
@@ -138,6 +139,7 @@ function App() {
                 <Route path="skill-taxonomy"        element={<SkillTaxonomyAdmin />} />
                 <Route path="nlp-monitoring"        element={<NLPMonitoring />} />
                 <Route path="mentors"  element={<MentorVerificationPage />} />
+                <Route path="mentors/manage" element={<MentorManagementPage />} />
                 <Route path="careers"  element={<PlaceholderPage title="Career management" description="Manage career paths, recommendations and eligibility criteria." />} />
                 <Route path="skills"   element={<PlaceholderPage title="Skills management" description="Maintain the skills taxonomy used across assessments and profiles." />} />
                 <Route path="reports"  element={<PlaceholderPage title="Reports & analytics" description="Generate and export platform performance reports." />} />

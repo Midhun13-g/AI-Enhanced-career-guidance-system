@@ -32,7 +32,7 @@ import java.util.List;
 @RequestMapping("/api/assessment")
 @Tag(name = "Skills & Interest Assessment", description = "Assessment sessions, answers, scoring, and reports")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('STUDENT')")
+@PreAuthorize("hasRole('STUDENT')")
 public class AssessmentController {
     private final AssessmentService assessmentService;
 

@@ -20,7 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/admin")
 @Tag(name = "Admin - NLP", description = "Admin APIs for skill taxonomy and resume statistics")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class SkillTaxonomyAdminController {
 
     private final SkillTaxonomyService taxonomyService;

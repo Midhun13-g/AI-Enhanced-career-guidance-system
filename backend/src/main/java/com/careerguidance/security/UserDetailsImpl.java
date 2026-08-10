@@ -28,7 +28,9 @@ public class UserDetailsImpl implements UserDetails {
 
     public static UserDetailsImpl build(User user) {
         Collection<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+                // Spring Security's hasRole("ADMIN") checks for the ROLE_ADMIN authority.
+                // Store every application role in that canonical form.
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
                 .collect(Collectors.toList());
 
         return new UserDetailsImpl(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(),
