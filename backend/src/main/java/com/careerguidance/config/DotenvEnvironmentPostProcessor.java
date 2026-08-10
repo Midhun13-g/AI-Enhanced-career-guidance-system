@@ -43,6 +43,9 @@ public class DotenvEnvironmentPostProcessor implements EnvironmentPostProcessor 
             if (f.exists()) return f;
             File backendEnv = new File(dir, "backend/.env");
             if (backendEnv.exists()) return backendEnv;
+            // Supports launching from the workspace root in VS Code.
+            File projectEnv = new File(dir, "AI-Enhanced-career-guidance-system/.env");
+            if (projectEnv.exists()) return projectEnv;
             dir = dir.getParentFile();
             if (dir == null) break;
         }

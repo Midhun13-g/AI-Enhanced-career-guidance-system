@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Save, Send, ChevronLeft, Plus, X, AlertCircle,
-  Clock, HelpCircle, Target, BarChart3, Tag,
+  Clock, HelpCircle, Target, BarChart3, Tag, Sparkles, Loader2,
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 
@@ -30,6 +30,11 @@ export default function CreateAssessment() {
   const [publishing, setPublishing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState({});
+  const [aiTopic, setAiTopic] = useState('');
+  const [suggestedTopics, setSuggestedTopics] = useState([]);
+  const [generating, setGenerating] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   const [form, setForm] = useState({
     name: '', description: '', category: 'Technical', difficulty: 'Medium',
@@ -60,15 +65,39 @@ export default function CreateAssessment() {
 
   const removeSkill = (s) => set('skills', form.skills.filter((x) => x !== s));
 
+  const generateWithGroq = async (topic = aiTopic) => {
+    setGenerating(true); setAiError('');
+    try {
+      const plan = await adminService.generateAssessmentPlan({
+        topic: topic.trim(), category: form.category, difficulty: form.difficulty, questionCount: form.questionCount,
+      });
+      setForm((current) => ({
+        ...current,
+        name: plan.name || current.name,
+        description: plan.description || current.description,
+        skills: Array.isArray(plan.skills) ? plan.skills : current.skills,
+        instructions: plan.instructions || current.instructions,
+        duration: plan.duration || current.duration,
+        questionCount: plan.questionCount || current.questionCount,
+        passingMarks: plan.passingMarks || current.passingMarks,
+      }));
+      setSuggestedTopics(Array.isArray(plan.suggestedTopics) ? plan.suggestedTopics : []);
+      if (topic) setAiTopic(topic);
+    } catch (error) {
+      setAiError(error.response?.data?.detail || error.response?.data?.message || 'Groq could not generate a plan. Check GROQ_API_KEY on the backend.');
+    } finally { setGenerating(false); }
+  };
+
   const handleSave = async (publish = false) => {
     if (!validate()) return;
+    setSaveError('');
     publish ? setPublishing(true) : setSaving(true);
     const payload = { ...form, status: publish ? 'Published' : 'Draft' };
     try {
-      await adminService.createQuestion(payload); // reuse endpoint; swap when dedicated endpoint exists
-    } catch { /* offline fallback */ }
-    setSaved(true);
-    setTimeout(() => { setSaved(false); if (publish) navigate('/admin/assessments'); }, 1200);
+      await adminService.createAssessment(payload);
+      setSaved(true);
+      setTimeout(() => { setSaved(false); if (publish) navigate('/admin/assessments'); }, 1200);
+    } catch (error) { setSaveError(error.response?.data?.message || error.response?.data?.detail || 'Unable to save the assessment.'); }
     publish ? setPublishing(false) : setSaving(false);
   };
 
@@ -86,16 +115,11 @@ export default function CreateAssessment() {
           <h1 className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Create Assessment</h1>
           <p className="mt-1 text-sm text-slate-500">Configure and publish a new assessment for students.</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={() => handleSave(false)} disabled={saving}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-60">
-            <Save size={15} /> {saving ? 'Saving...' : 'Save Draft'}
-          </button>
-          <button onClick={() => handleSave(true)} disabled={publishing}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-colors disabled:opacity-60">
-            <Send size={15} /> {publishing ? 'Publishing...' : 'Publish'}
-          </button>
-        </div>
+        <button onClick={() => generateWithGroq()} disabled={generating}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:from-violet-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
+          {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {generating ? 'Generating…' : 'Generate with Groq'}
+        </button>
       </motion.div>
 
       {/* Success Banner */}
@@ -105,6 +129,7 @@ export default function CreateAssessment() {
           <AlertCircle size={16} className="text-green-500" /> Assessment saved successfully!
         </motion.div>
       )}
+      {saveError && <div className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700"><AlertCircle size={16} /> {saveError}</div>}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Left: Main Form */}
@@ -129,6 +154,24 @@ export default function CreateAssessment() {
                 className={`${inputCls} resize-none ${errors.description ? 'border-red-400' : ''}`} />
               {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
             </Field>
+
+            <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1">
+                  <label className="mb-1.5 flex items-center gap-2 text-sm font-bold text-violet-950"><Sparkles size={15} className="text-violet-600" /> Groq topic assistant</label>
+                  <input value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), generateWithGroq())}
+                    placeholder="e.g. Java collections, database normalization"
+                    className="w-full rounded-lg border border-violet-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100" />
+                </div>
+                <button type="button" onClick={() => generateWithGroq()} disabled={generating}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-60">
+                  {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} Generate plan
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-violet-700">Groq suggests a topic and fills the assessment details. Review before saving.</p>
+              {aiError && <p className="mt-2 text-xs font-semibold text-rose-600">{aiError}</p>}
+              {suggestedTopics.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{suggestedTopics.map((topic) => <button key={topic} type="button" onClick={() => generateWithGroq(topic)} className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100">{topic}</button>)}</div>}
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Category" required>

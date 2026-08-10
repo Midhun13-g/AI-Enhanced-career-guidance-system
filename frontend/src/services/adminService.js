@@ -5,6 +5,8 @@ const unwrap = (promise) => promise.then((response) => response.data);
 export const adminService = {
   // Dashboard
   getDashboard: () => unwrap(api.get('/api/admin/dashboard')),
+  generateAssessmentPlan: (data) => unwrap(api.post('/api/admin/ai/assessments/plan', data)),
+  createAssessment: (data) => unwrap(api.post('/api/admin/assessments', data)),
 
   // Accounts
   getUsers: (params) => unwrap(api.get('/api/admin/users', { params })),

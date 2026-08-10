@@ -14,6 +14,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\QuestionType.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\ResumeReviewStatus.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\constant\ResumeStatus.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminAssessmentController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminAuthController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminDashboardController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AdminMentorVerificationController.java
@@ -22,6 +23,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentManagementController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AssessmentReviewController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\AuthController.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\GroqAssessmentController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\HealthController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\MentorAuthController.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\controller\MentorDashboardController.java
@@ -42,7 +44,9 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\AssessmentFeedbackRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\AssessmentSubmitRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\ChangePasswordRequest.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\CreateAssessmentRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\CreateQuestionRequest.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\GroqAssessmentRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\LoginRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\MentorRegistrationRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\RegisterRequest.java
@@ -63,6 +67,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentSessionResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssignedStudentResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\DashboardResponse.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\GroqAssessmentPlanResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\JwtResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\MentorDashboardResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\MentorProfileResponse.java
@@ -139,6 +144,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentCategoryRepository.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentOptionRepository.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentQuestionRepository.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentRepository.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentResultRepository.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AssessmentSessionRepository.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\repository\AttemptAnswerRepository.java
@@ -170,8 +176,10 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\security\VerifiedMentorAuthorizationManager.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\AssessmentService.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\AuthService.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\GroqAssessmentService.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\AssessmentServiceImpl.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\AuthServiceImpl.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\GroqAssessmentServiceImpl.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\MentorVerificationServiceImpl.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\MockResumeParserService.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\service\impl\ResumeServiceImpl.java
