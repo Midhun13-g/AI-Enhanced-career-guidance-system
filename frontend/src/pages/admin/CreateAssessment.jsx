@@ -35,6 +35,9 @@ export default function CreateAssessment() {
   const [generating, setGenerating] = useState(false);
   const [aiError, setAiError] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [questions, setQuestions] = useState([]);
+  const [showManualQuestion, setShowManualQuestion] = useState(false);
+  const [manualQuestion, setManualQuestion] = useState({ questionText: '', options: ['', '', '', ''], correctOptionIndex: 0, explanation: '' });
 
   const [form, setForm] = useState({
     name: '', description: '', category: 'Technical', difficulty: 'Medium',
@@ -65,34 +68,62 @@ export default function CreateAssessment() {
 
   const removeSkill = (s) => set('skills', form.skills.filter((x) => x !== s));
 
-  const generateWithGroq = async (topic = aiTopic) => {
+  const addManualQuestion = () => {
+    const questionText = manualQuestion.questionText.trim();
+    const options = manualQuestion.options.map((option) => option.trim());
+    if (!questionText || options.some((option) => !option)) {
+      setSaveError('Enter the question and all four answer options before adding it.');
+      return;
+    }
+    setQuestions((current) => [...current, { ...manualQuestion, questionText, options }]);
+    setManualQuestion({ questionText: '', options: ['', '', '', ''], correctOptionIndex: 0, explanation: '' });
+    setShowManualQuestion(false); setSaveError('');
+  };
+
+  const generateWithAI = async (topic = aiTopic, questionsOnly = false) => {
     setGenerating(true); setAiError('');
     try {
       const plan = await adminService.generateAssessmentPlan({
-        topic: topic.trim(), category: form.category, difficulty: form.difficulty, questionCount: form.questionCount,
+        topic: (topic || form.name || form.description || 'assessment questions').trim(), category: form.category, difficulty: form.difficulty,
+        questionCount: questionsOnly ? Math.max(1, form.questionCount - questions.length) : form.questionCount,
       });
-      setForm((current) => ({
-        ...current,
-        name: plan.name || current.name,
-        description: plan.description || current.description,
-        skills: Array.isArray(plan.skills) ? plan.skills : current.skills,
-        instructions: plan.instructions || current.instructions,
-        duration: plan.duration || current.duration,
-        questionCount: plan.questionCount || current.questionCount,
-        passingMarks: plan.passingMarks || current.passingMarks,
-      }));
-      setSuggestedTopics(Array.isArray(plan.suggestedTopics) ? plan.suggestedTopics : []);
+      if (!questionsOnly) {
+        setForm((current) => ({
+          ...current,
+          name: plan.name || current.name,
+          description: plan.description || current.description,
+          skills: Array.isArray(plan.skills) ? plan.skills : current.skills,
+          instructions: plan.instructions || current.instructions,
+          duration: plan.duration || current.duration,
+          questionCount: plan.questionCount || current.questionCount,
+          passingMarks: plan.passingMarks || current.passingMarks,
+        }));
+      }
+      const generatedQuestions = Array.isArray(plan.questions) ? plan.questions.filter((question) =>
+        question?.questionText && Array.isArray(question.options) && question.options.length >= 2 &&
+        Number.isInteger(question.correctOptionIndex) && question.correctOptionIndex >= 0 && question.correctOptionIndex < question.options.length
+      ) : [];
+      if (questionsOnly && generatedQuestions.length === 0) {
+        setAiError('No valid questions were returned. Try again with a topic, or check that the updated backend is running.');
+        return;
+      }
+      setQuestions((current) => questionsOnly ? [...current, ...generatedQuestions] : generatedQuestions);
+      if (!questionsOnly) setSuggestedTopics(Array.isArray(plan.suggestedTopics) ? plan.suggestedTopics : []);
       if (topic) setAiTopic(topic);
     } catch (error) {
-      setAiError(error.response?.data?.detail || error.response?.data?.message || 'Groq could not generate a plan. Check GROQ_API_KEY on the backend.');
+      setAiError('The AI assistant could not generate a plan right now. Please try again or add questions manually.');
     } finally { setGenerating(false); }
   };
 
   const handleSave = async (publish = false) => {
     if (!validate()) return;
+    if (publish && questions.length === 0) {
+      setSaveError('Add at least one question before publishing. You can add questions manually or use the AI assistant.');
+      return;
+    }
     setSaveError('');
     publish ? setPublishing(true) : setSaving(true);
-    const payload = { ...form, status: publish ? 'Published' : 'Draft' };
+    const payload = { ...form, status: publish ? 'Published' : 'Draft', questions };
     try {
       await adminService.createAssessment(payload);
       setSaved(true);
@@ -115,11 +146,6 @@ export default function CreateAssessment() {
           <h1 className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Create Assessment</h1>
           <p className="mt-1 text-sm text-slate-500">Configure and publish a new assessment for students.</p>
         </div>
-        <button onClick={() => generateWithGroq()} disabled={generating}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:from-violet-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
-          {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {generating ? 'Generating…' : 'Generate with Groq'}
-        </button>
       </motion.div>
 
       {/* Success Banner */}
@@ -158,19 +184,19 @@ export default function CreateAssessment() {
             <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="min-w-0 flex-1">
-                  <label className="mb-1.5 flex items-center gap-2 text-sm font-bold text-violet-950"><Sparkles size={15} className="text-violet-600" /> Groq topic assistant</label>
-                  <input value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), generateWithGroq())}
+                  <label className="mb-1.5 flex items-center gap-2 text-sm font-bold text-violet-950"><Sparkles size={15} className="text-violet-600" /> Need ideas?</label>
+                  <input value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), generateWithAI())}
                     placeholder="e.g. Java collections, database normalization"
                     className="w-full rounded-lg border border-violet-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100" />
                 </div>
-                <button type="button" onClick={() => generateWithGroq()} disabled={generating}
+                <button type="button" onClick={() => generateWithAI()} disabled={generating}
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-60">
-                  {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} Generate plan
+                  {generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} AI assist
                 </button>
               </div>
-              <p className="mt-2 text-xs text-violet-700">Groq suggests a topic and fills the assessment details. Review before saving.</p>
+              <p className="mt-2 text-xs text-violet-700">Optional: get a topic suggestion and a draft you can review and change.</p>
               {aiError && <p className="mt-2 text-xs font-semibold text-rose-600">{aiError}</p>}
-              {suggestedTopics.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{suggestedTopics.map((topic) => <button key={topic} type="button" onClick={() => generateWithGroq(topic)} className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100">{topic}</button>)}</div>}
+              {suggestedTopics.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{suggestedTopics.map((topic) => <button key={topic} type="button" onClick={() => generateWithAI(topic)} className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100">{topic}</button>)}</div>}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -216,6 +242,24 @@ export default function CreateAssessment() {
                 rows={3} placeholder="e.g. No tab switching allowed. Auto-submission enabled..."
                 className={`${inputCls} resize-none`} />
             </Field>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-slate-800">Assessment questions</p>
+                  <p className="text-xs text-slate-500">Build the questions for this assessment.</p>
+                </div>
+                <div className="flex items-center gap-2"><button type="button" onClick={() => setShowManualQuestion((visible) => !visible)} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700"><Plus size={13} className="mr-1 inline" /> Add question</button><button type="button" onClick={() => generateWithAI(aiTopic, true)} disabled={generating} className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-60">{generating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />} AI assist</button><span className={`rounded-full px-3 py-1 text-xs font-bold ${questions.length ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{questions.length} ready</span></div>
+              </div>
+              {showManualQuestion && <div className="mt-4 space-y-3 rounded-lg border border-indigo-100 bg-white p-4">
+                <p className="text-sm font-bold text-slate-800">Add a multiple-choice question</p>
+                <textarea value={manualQuestion.questionText} onChange={(e) => setManualQuestion((current) => ({ ...current, questionText: e.target.value }))} rows={2} placeholder="Write your question" className={`${inputCls} resize-none`} />
+                <div className="grid gap-2 sm:grid-cols-2">{manualQuestion.options.map((option, index) => <label key={index} className="flex items-center gap-2"><input type="radio" name="correct-option" checked={manualQuestion.correctOptionIndex === index} onChange={() => setManualQuestion((current) => ({ ...current, correctOptionIndex: index }))} className="accent-indigo-600" title="Mark as correct answer"/><input value={option} onChange={(e) => setManualQuestion((current) => ({ ...current, options: current.options.map((value, optionIndex) => optionIndex === index ? e.target.value : value) }))} placeholder={`Option ${index + 1}`} className={inputCls} /></label>)}</div>
+                <textarea value={manualQuestion.explanation} onChange={(e) => setManualQuestion((current) => ({ ...current, explanation: e.target.value }))} rows={2} placeholder="Explanation (optional)" className={`${inputCls} resize-none`} />
+                <div className="flex justify-end gap-2"><button type="button" onClick={() => setShowManualQuestion(false)} className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600">Cancel</button><button type="button" onClick={addManualQuestion} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-bold text-white">Add question</button></div>
+              </div>}
+              {questions.length > 0 ? <div className="mt-3 space-y-2">{questions.slice(0, 3).map((question, index) => <p key={`${question.questionText}-${index}`} className="truncate rounded-lg bg-white px-3 py-2 text-sm text-slate-700">{index + 1}. {question.questionText}</p>)}{questions.length > 3 && <p className="text-xs font-semibold text-slate-500">+ {questions.length - 3} more questions</p>}</div> : <p className="mt-3 text-xs text-amber-700">Add at least one question before publishing.</p>}
+            </div>
           </motion.div>
 
           {/* Configuration */}

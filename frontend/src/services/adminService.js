@@ -7,6 +7,7 @@ export const adminService = {
   getDashboard: () => unwrap(api.get('/api/admin/dashboard')),
   generateAssessmentPlan: (data) => unwrap(api.post('/api/admin/ai/assessments/plan', data)),
   createAssessment: (data) => unwrap(api.post('/api/admin/assessments', data)),
+  getAssessments: () => unwrap(api.get('/api/admin/assessments')),
 
   // Accounts
   getUsers: (params) => unwrap(api.get('/api/admin/users', { params })),
@@ -24,11 +25,11 @@ export const adminService = {
   updateStudent: (id, data) => unwrap(api.put(`/api/admin/students/${id}`, data)),
   deleteStudent: (id)     => unwrap(api.delete(`/api/admin/students/${id}`)),
 
-  // Assessment questions — backend: /api/admin/assessments/questions
-  getQuestions:    (params) => unwrap(api.get('/api/admin/assessments/questions', { params })),
-  createQuestion:  (data)   => unwrap(api.post('/api/admin/assessments/questions', data)),
-  updateQuestion:  (id, data) => unwrap(api.put(`/api/admin/assessments/questions/${id}`, data)),
-  deleteQuestion:  (id)     => unwrap(api.delete(`/api/admin/assessments/questions/${id}`)),
+  // Assessment question bank
+  getQuestions:    (params) => unwrap(api.get('/api/admin/questions', { params })),
+  createQuestion:  (data)   => unwrap(api.post('/api/admin/questions', data)),
+  updateQuestion:  (id, data) => unwrap(api.put(`/api/admin/questions/${id}`, data)),
+  deleteQuestion:  (id)     => unwrap(api.delete(`/api/admin/questions/${id}`)),
 
   // Resumes — backend: /api/admin/resumes
   getResumes:  (params) => unwrap(api.get('/api/admin/resumes', { params })),

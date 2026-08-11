@@ -54,6 +54,7 @@ import AdminLayout from './layouts/AdminLayout';
 import { AdminDashboard, PlaceholderPage, QuestionsPage, ResumesPage, StudentsPage } from './pages/admin/AdminPages';
 import AdminAssessmentDashboard from './pages/admin/AdminAssessmentDashboard';
 import CreateAssessment from './pages/admin/CreateAssessment';
+import AssessmentsPage from './pages/admin/AssessmentsPage';
 import QuestionBankManagement from './pages/admin/QuestionBankManagement';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import MentorVerificationPage from './pages/admin/MentorVerificationPage';
@@ -132,7 +133,7 @@ function App() {
                 <Route path="assessments/create"     element={<CreateAssessment />} />
                 <Route path="assessments/questions"  element={<QuestionBankManagement />} />
                 <Route path="assessments/analytics"  element={<AdminAnalytics />} />
-                <Route path="assessments"            element={<QuestionsPage />} />
+                <Route path="assessments"            element={<AssessmentsPage />} />
 
                 <Route path="resumes"              element={<ResumesPage />} />
                 <Route path="resume-analytics"     element={<ResumeAdminDashboard />} />

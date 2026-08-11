@@ -56,6 +56,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\SkillTaxonomyRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\StudentProfileRequest.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\request\UpdateStudentRequest.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AdminAssessmentResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AdminUserResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentAnswerResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\AssessmentCategoryResponse.java
@@ -74,6 +75,7 @@ D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\MessageResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ProfileCompletionResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ProfileVectorResponse.java
+D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\PublishedAssessmentResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ResumeAnalysisReportResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ResumeAnalysisResponse.java
 D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\src\main\java\com\careerguidance\dto\response\ResumeEntityResponse.java

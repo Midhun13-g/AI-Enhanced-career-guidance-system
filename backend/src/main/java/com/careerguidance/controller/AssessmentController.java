@@ -7,6 +7,9 @@ import com.careerguidance.dto.response.AssessmentCategoryResponse;
 import com.careerguidance.dto.response.AssessmentQuestionsByCategoryResponse;
 import com.careerguidance.dto.response.AssessmentResultResponse;
 import com.careerguidance.dto.response.AssessmentSessionResponse;
+import com.careerguidance.dto.response.PublishedAssessmentResponse;
+import com.careerguidance.constant.AssessmentStatus;
+import com.careerguidance.repository.AssessmentRepository;
 import com.careerguidance.security.UserDetailsImpl;
 import com.careerguidance.service.AssessmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,9 +38,18 @@ import java.util.List;
 @PreAuthorize("hasRole('STUDENT')")
 public class AssessmentController {
     private final AssessmentService assessmentService;
+    private final AssessmentRepository assessments;
 
-    public AssessmentController(AssessmentService assessmentService) {
+    public AssessmentController(AssessmentService assessmentService, AssessmentRepository assessments) {
         this.assessmentService = assessmentService;
+        this.assessments = assessments;
+    }
+
+    @GetMapping("/published")
+    @Operation(summary = "Get assessments published for students")
+    public ResponseEntity<List<PublishedAssessmentResponse>> getPublishedAssessments() {
+        return ResponseEntity.ok(assessments.findByStatusOrderByCreatedAtDesc(AssessmentStatus.PUBLISHED)
+                .stream().map(PublishedAssessmentResponse::from).toList());
     }
 
     @GetMapping("/categories")

@@ -42,7 +42,9 @@ public class GroqAssessmentServiceImpl implements GroqAssessmentService {
                 "', difficulty '" + request.difficulty() + "', and " + questionCount + " questions. " +
                 "Use exactly these JSON fields: name (string), description (string), skills (array of 3 to 6 strings), " +
                 "instructions (string), duration (integer 5 to 180), questionCount (integer), passingMarks (integer 1 to 100), " +
-                "suggestedTopics (array of 5 specific topic strings).";
+                "suggestedTopics (array of 5 specific topic strings), questions (array of exactly " + questionCount +
+                " MCQ objects). Every question object must have questionText (string), options (array of exactly 4 strings), " +
+                "correctOptionIndex (integer 0 to 3), and explanation (string).";
         try {
             Map<String, Object> requestBody = Map.of(
                     "model", model,
@@ -58,7 +60,12 @@ public class GroqAssessmentServiceImpl implements GroqAssessmentService {
                     .retrieve().body(String.class);
             JsonNode root = mapper.readTree(raw);
             String content = root.path("choices").path(0).path("message").path("content").asText();
-            return mapper.readValue(content, GroqAssessmentPlanResponse.class);
+            GroqAssessmentPlanResponse plan = mapper.readValue(content, GroqAssessmentPlanResponse.class);
+            if (plan.questions() == null || plan.questions().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                        "The AI service did not return assessment questions. Please try again.");
+            }
+            return plan;
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Groq could not generate an assessment plan. Check its API key, model, and account limits.");

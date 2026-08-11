@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
 import Badge from '../../components/ui/Badge';
+import api from '../../services/api';
 
 const categories = [
   {
@@ -101,6 +102,11 @@ export default function AssessmentCategories() {
   const [group, setGroup] = useState('All');
   const [difficulty, setDifficulty] = useState('All');
   const [sort, setSort] = useState('name');
+  const [publishedAssessments, setPublishedAssessments] = useState([]);
+
+  useEffect(() => {
+    api.get('/api/assessment/published').then((response) => setPublishedAssessments(response.data)).catch(() => setPublishedAssessments([]));
+  }, []);
 
   const filtered = useMemo(() => {
     let list = categories;
@@ -162,6 +168,26 @@ export default function AssessmentCategories() {
 
         {/* Results count */}
         <p className="text-sm text-slate-500">{filtered.length} assessment{filtered.length !== 1 ? 's' : ''} found</p>
+
+        {publishedAssessments.length > 0 && (
+          <section>
+            <div className="mb-4 flex items-end justify-between">
+              <div><h2 className="text-lg font-extrabold text-slate-900">Published Assessments</h2><p className="mt-1 text-sm text-slate-500">New assessments made available by your administrator.</p></div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{publishedAssessments.length} available</span>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {publishedAssessments.map((assessment, index) => (
+                <motion.div key={assessment.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * index }} className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-card hover:shadow-card-md transition-all hover:-translate-y-0.5">
+                  <div className="flex items-start justify-between mb-4"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-sm"><BookOpen size={22} /></div><div className="flex flex-col items-end gap-1"><Badge label={assessment.category} variant="ai" /><Badge label={assessment.difficulty} /></div></div>
+                  <h3 className="font-extrabold text-slate-900 leading-snug">{assessment.title}</h3>
+                  <p className="mt-1.5 text-sm text-slate-500 leading-relaxed line-clamp-2">{assessment.description}</p>
+                  <div className="mt-3 flex items-center gap-1 text-xs text-slate-400"><BookOpen size={12} /><span className="font-semibold">{assessment.totalQuestions} questions · {assessment.durationMinutes} min</span></div>
+                  <button onClick={() => navigate('/assessments/details', { state: { assessment: { title: assessment.title, description: assessment.description, category: assessment.category, difficulty: assessment.difficulty, duration: `${assessment.durationMinutes} minutes`, questions: assessment.totalQuestions, passingScore: assessment.passingPercentage, maxAttempts: assessment.maximumAttempts, instructions: assessment.instructions, id: assessment.id } } })} className="mt-4 w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-700 transition-colors">View Assessment</button>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Category Cards Grid */}
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
