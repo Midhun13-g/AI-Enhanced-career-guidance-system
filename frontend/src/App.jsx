@@ -9,6 +9,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
+import MentorSelectionPage from './pages/MentorSelectionPage';
 import MentorSignupPage from './pages/MentorSignupPage';
 import PendingVerificationPage from './pages/PendingVerificationPage';
 
@@ -22,6 +23,8 @@ import AssessmentResult from './pages/assessment/AssessmentResult';
 import AssessmentDashboard from './pages/assessment/AssessmentDashboard';
 import AssessmentCategories from './pages/assessment/AssessmentCategories';
 import AssessmentDetails from './pages/assessment/AssessmentDetails';
+import PublishedAssessmentQuiz from './pages/assessment/PublishedAssessmentQuiz';
+import PublishedAssessmentResult from './pages/assessment/PublishedAssessmentResult';
 import CodingAssessment from './pages/assessment/CodingAssessment';
 import ResultAnalysis from './pages/assessment/ResultAnalysis';
 import AIPerformanceAnalysis from './pages/assessment/AIPerformanceAnalysis';
@@ -84,6 +87,7 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/student/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/mentors" element={<ProtectedRoute><MentorSelectionPage /></ProtectedRoute>} />
 
               {/* Legacy assessment flow */}
               <Route path="/assessment"        element={<ProtectedRoute><AssessmentInstructions /></ProtectedRoute>} />
@@ -95,6 +99,8 @@ function App() {
               <Route path="/assessments"              element={<ProtectedRoute><AssessmentDashboard /></ProtectedRoute>} />
               <Route path="/assessments/categories"   element={<ProtectedRoute><AssessmentCategories /></ProtectedRoute>} />
               <Route path="/assessments/details"      element={<ProtectedRoute><AssessmentDetails /></ProtectedRoute>} />
+              <Route path="/assessments/quiz/:assessmentId" element={<ProtectedRoute><PublishedAssessmentQuiz /></ProtectedRoute>} />
+              <Route path="/assessments/quiz/:assessmentId/result/:attemptId" element={<ProtectedRoute><PublishedAssessmentResult /></ProtectedRoute>} />
               <Route path="/assessments/coding"       element={<ProtectedRoute><CodingAssessment /></ProtectedRoute>} />
               <Route path="/assessments/result"       element={<ProtectedRoute><ResultAnalysis /></ProtectedRoute>} />
               <Route path="/assessments/ai-analysis"  element={<ProtectedRoute><AIPerformanceAnalysis /></ProtectedRoute>} />

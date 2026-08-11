@@ -10,7 +10,8 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (pathname.startsWith('/admin') && user?.role !== 'ADMIN') return <Navigate to="/login" replace />;
-  if (pathname.startsWith('/mentor') && pathname !== '/mentor/pending-verification') {
+  const isMentorPortal = pathname === '/mentor' || pathname.startsWith('/mentor/');
+  if (isMentorPortal && pathname !== '/mentor/pending-verification') {
     if (user?.role !== 'MENTOR') return <Navigate to="/login" replace />;
     if (user?.accountStatus !== 'VERIFIED') return <Navigate to="/mentor/pending-verification" replace />;
   }

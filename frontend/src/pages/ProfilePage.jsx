@@ -33,6 +33,8 @@ export default function ProfilePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState('');
   const [success, setSuccess]       = useState('');
+  const [mentorEmail, setMentorEmail] = useState('');
+  const [mentorSaving, setMentorSaving] = useState(false);
   const toast = useToast();
 
   const fetchProfile = async () => {
@@ -86,6 +88,13 @@ export default function ProfilePage() {
       setError(msg);
       toast?.(msg, 'error');
     }
+  };
+
+  const chooseMentor = async (event) => {
+    event.preventDefault(); setMentorSaving(true); setError('');
+    try { await api.post('/api/student/mentor', { mentorEmail }); setSuccess('Mentor selected successfully.'); setMentorEmail(''); }
+    catch (err) { setError(err.response?.data?.message || 'Unable to select mentor.'); }
+    finally { setMentorSaving(false); }
   };
 
   return (
@@ -184,6 +193,12 @@ export default function ProfilePage() {
                       <DetailItem icon={FiMapPin}   label="Location"      value={[profile?.city, profile?.state, profile?.country].filter(Boolean).join(', ') || null} />
                     </div>
                   </div>
+
+                  <form onSubmit={chooseMentor} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <h3 className="text-sm font-bold text-slate-700">Choose your mentor</h3>
+                    <p className="mt-1 text-sm text-slate-500">Enter the verified mentor’s Gmail address to request guidance.</p>
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row"><input required type="email" value={mentorEmail} onChange={(event) => setMentorEmail(event.target.value)} placeholder="mentor@gmail.com" className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm" /><Button type="submit" disabled={mentorSaving}>{mentorSaving ? 'Saving…' : 'Choose mentor'}</Button></div>
+                  </form>
 
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                     <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">

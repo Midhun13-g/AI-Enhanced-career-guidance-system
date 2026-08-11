@@ -152,7 +152,7 @@ export default function AssessmentDetails() {
                 ))}
               </div>
               <button
-                onClick={() => navigate('/assessment')}
+                onClick={() => assessment.id ? navigate(`/assessments/quiz/${assessment.id}`) : navigate('/assessment')}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <Play size={16} /> Start Assessment

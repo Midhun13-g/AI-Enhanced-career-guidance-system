@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ClipboardCheck, FileText, UserRound,
   BarChart3, BookOpen, Briefcase, Settings, ChevronRight,
   Sparkles, X, ClipboardList, Layers, Brain, TrendingUp,
-  Award, History, Trophy, Target, Code2, Upload,
+  Award, History, Trophy, Target, Code2, Upload, Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,6 +14,7 @@ const NAV_SECTIONS = [
     items: [
       { to: '/dashboard',  label: 'Dashboard',    icon: LayoutDashboard, color: 'text-blue-600',   bg: 'bg-blue-50' },
       { to: '/profile',    label: 'My Profile',   icon: UserRound,       color: 'text-indigo-600', bg: 'bg-indigo-50' },
+      { to: '/mentors',    label: 'Find a Mentor', icon: Users,           color: 'text-teal-600', bg: 'bg-teal-50' },
     ],
   },
   {
