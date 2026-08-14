@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, LogOut, Menu, Search, Settings, User, Sparkles, X, ChevronDown } from 'lucide-react';
+import { Bell, LogOut, Menu, Search, Settings, User, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const NOTIFICATIONS = [
-  { id: 1, title: 'AI Analysis Ready',      desc: 'Your career match report is ready to view.',  time: '2m ago',  dot: 'bg-blue-500',    unread: true },
-  { id: 2, title: 'Profile 80% Complete',   desc: 'Add your skills to unlock full AI features.',  time: '1h ago',  dot: 'bg-amber-500',   unread: true },
-  { id: 3, title: 'New Course Recommended', desc: 'React Advanced Patterns matches your goals.',  time: '3h ago',  dot: 'bg-emerald-500', unread: false },
-];
+// Notifications are intentionally empty until a notification API is available.
+// The UI must not present generated samples as user activity.
+const NOTIFICATIONS = [];
 
 function NotificationPanel({ onClose }) {
   return (
@@ -23,7 +21,7 @@ function NotificationPanel({ onClose }) {
         <div className="flex items-center gap-2">
           <Bell size={15} className="text-slate-600" />
           <p className="text-sm font-bold text-slate-800">Notifications</p>
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">2</span>
+          {NOTIFICATIONS.some((notification) => notification.unread) && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">{NOTIFICATIONS.filter((notification) => notification.unread).length}</span>}
         </div>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
           <X size={14} />
@@ -40,12 +38,9 @@ function NotificationPanel({ onClose }) {
             </div>
           </div>
         ))}
+        {NOTIFICATIONS.length === 0 && <p className="px-4 py-8 text-center text-sm text-slate-500">No notifications yet.</p>}
       </div>
-      <div className="px-4 py-2.5 border-t border-slate-100">
-        <button className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-          Mark all as read
-        </button>
-      </div>
+      {NOTIFICATIONS.length > 0 && <div className="px-4 py-2.5 border-t border-slate-100"><button type="button" className="text-xs font-semibold text-slate-400" disabled>Notification management is not configured.</button></div>}
     </motion.div>
   );
 }
@@ -149,12 +144,6 @@ export default function DashboardNavbar({ onMenuClick }) {
         {/* Right actions */}
         <div className="ml-auto flex items-center gap-1.5">
 
-          {/* AI badge */}
-          <div className="hidden sm:flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-3 py-1.5">
-            <Sparkles size={13} className="text-blue-600" />
-            <span className="text-xs font-bold text-blue-700">AI Active</span>
-          </div>
-
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <button
@@ -163,7 +152,7 @@ export default function DashboardNavbar({ onMenuClick }) {
               aria-label="Notifications"
             >
               <Bell size={18} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white" />
+              {NOTIFICATIONS.some((notification) => notification.unread) && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white" />}
             </button>
             <AnimatePresence>
               {showNotif && <NotificationPanel onClose={() => setShowNotif(false)} />}

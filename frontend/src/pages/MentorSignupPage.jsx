@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiBriefcase, FiCheckCircle, FiFileText, FiGithub, FiLinkedin, FiLock, FiMail, FiPhone, FiUploadCloud, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiBriefcase, FiCheckCircle, FiExternalLink, FiGithub, FiLinkedin, FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi';
 import api from '../services/api';
 import { Alert, Button } from '../components/ui';
 
 const requiredDocuments = [
-  ['governmentId', 'Government ID', 'PDF, JPG or PNG'],
-  ['professionalId', 'Professional / company ID', 'PDF, JPG or PNG'],
-  ['resume', 'Resume', 'PDF preferred'],
+  ['governmentId', 'Government ID', 'Paste the Google Drive share link'],
+  ['professionalId', 'Professional / company ID', 'Paste the Google Drive share link'],
+  ['resume', 'Resume', 'Paste the Google Drive share link'],
 ];
 
 export default function MentorSignupPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '', phone: '', company: '', jobTitle: '', experienceYears: '', expertise: '', bio: '', linkedinUrl: '', githubUrl: '', portfolioUrl: '' });
-  const [files, setFiles] = useState({});
+  const [documentLinks, setDocumentLinks] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const change = event => setForm(current => ({ ...current, [event.target.name]: event.target.value }));
@@ -22,16 +22,10 @@ export default function MentorSignupPage() {
     event.preventDefault();
     setError('');
     if (form.password !== form.confirmPassword) return setError('Passwords do not match.');
-    if (!requiredDocuments.every(([key]) => files[key])) return setError('Please upload all three required documents.');
+    if (!requiredDocuments.every(([key]) => documentLinks[key]?.trim())) return setError('Please add a Google Drive link for all three required documents.');
     setLoading(true);
     try {
-      const documents = [];
-      for (const [documentType, file] of Object.entries(files)) {
-        const body = new FormData();
-        body.append('file', file);
-        const { data } = await api.post('/api/auth/mentor-documents', body);
-        documents.push({ documentType, fileUrl: data.fileUrl });
-      }
+      const documents = requiredDocuments.map(([documentType]) => ({ documentType, fileUrl: documentLinks[documentType].trim() }));
       const { confirmPassword, ...payload } = form;
       await api.post('/api/auth/register/mentor', { ...payload, experienceYears: Number(payload.experienceYears), documents });
       navigate('/login', { state: { message: 'Your mentor application was sent to the admin for review. You can sign in after approval.' } });
@@ -68,7 +62,7 @@ export default function MentorSignupPage() {
             <Field label="Expertise / skills"><input className={input} name="expertise" value={form.expertise} onChange={change} placeholder="Java, product design, data science..." /></Field>
             <div className="md:col-span-2"><label className={label}>Short bio <span className="font-normal text-slate-400">(optional)</span></label><textarea className={`${input} min-h-28 resize-y`} name="bio" value={form.bio} onChange={change} placeholder="Briefly describe your professional background and the areas you can mentor in." /></div>
           </div></section>
-          <section className="mt-9 border-t border-slate-100 pt-8"><h2 className="text-lg font-bold text-slate-900">Verification documents</h2><p className="mt-1 text-sm text-slate-500">These documents are visible only to administrators reviewing your application.</p><div className="mt-5 grid gap-4 md:grid-cols-3">{requiredDocuments.map(([key, title, help]) => <DocumentInput key={key} title={title} help={help} file={files[key]} onChange={file => setFiles(current => ({ ...current, [key]: file }))} />)}</div></section>
+          <section className="mt-9 border-t border-slate-100 pt-8"><h2 className="text-lg font-bold text-slate-900">Verification documents</h2><p className="mt-1 text-sm text-slate-500">Add Google Drive sharing links instead of uploading files. Set each file to <b>Anyone with the link can view</b> so the admin can verify it.</p><div className="mt-5 grid gap-4 md:grid-cols-3">{requiredDocuments.map(([key, title, help]) => <DriveLinkInput key={key} title={title} help={help} value={documentLinks[key] || ''} onChange={value => setDocumentLinks(current => ({ ...current, [key]: value }))} />)}</div></section>
           <section className="mt-9 border-t border-slate-100 pt-8"><h2 className="text-lg font-bold text-slate-900">Set your password</h2><div className="mt-5 grid gap-4 md:grid-cols-2"><Field label="Password" icon={<FiLock />}><input className={input} name="password" type="password" minLength="8" value={form.password} onChange={change} required placeholder="At least 8 characters" /></Field><Field label="Confirm password" icon={<FiLock />}><input className={input} name="confirmPassword" type="password" minLength="8" value={form.confirmPassword} onChange={change} required placeholder="Repeat password" /></Field></div></section>
           <div className="mt-9 flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between"><p className="flex items-center gap-2 text-sm text-slate-500"><FiCheckCircle className="text-teal-600" /> Your account remains pending until an admin decides.</p><Button type="submit" variant="gradient" size="lg" loading={loading}>{loading ? 'Sending application…' : 'Send to admin for review'}</Button></div>
         </form>
@@ -78,4 +72,4 @@ export default function MentorSignupPage() {
 }
 
 function Field({ label, icon, children }) { return <div><label className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-slate-700">{icon && <span className="text-teal-600">{icon}</span>}{label}</label>{children}</div>; }
-function DocumentInput({ title, help, file, onChange }) { return <label className="group cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 transition hover:border-teal-500 hover:bg-teal-50"><input hidden type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={event => onChange(event.target.files?.[0])} /><FiUploadCloud className="text-teal-600" size={23} /><p className="mt-3 text-sm font-bold text-slate-800">{file?.name || title}</p><p className="mt-1 text-xs text-slate-500">{file ? 'Ready to submit' : help}</p>{file && <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"><FiFileText /> Uploaded</span>}</label>; }
+function DriveLinkInput({ title, help, value, onChange }) { return <div className="rounded-2xl border border-dashed border-teal-200 bg-teal-50/50 p-4"><FiExternalLink className="text-teal-600" size={23} /><p className="mt-3 text-sm font-bold text-slate-800">{title}</p><p className="mt-1 text-xs text-slate-500">{help}</p><input required type="url" value={value} onChange={event => onChange(event.target.value)} placeholder="https://drive.google.com/..." className="mt-3 w-full rounded-xl border border-teal-200 bg-white px-3 py-2 text-xs outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" />{value && <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"><FiCheckCircle /> Link added</span>}</div>; }

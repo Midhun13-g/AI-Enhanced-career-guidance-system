@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   ClipboardList, CheckCircle2, BarChart3, Zap, TrendingUp,
-  Clock, ChevronRight, Play, Brain, Star, Calendar,
+  Clock, ChevronRight, Play, Star, Calendar,
 } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
 import StatCard from '../../components/ui/StatCard';
@@ -58,22 +58,6 @@ export default function AssessmentDashboard() {
           >
             <Play size={15} /> Start New Assessment
           </button>
-        </motion.div>
-
-        {/* AI Message Banner */}
-        <motion.div
-          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
-          className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-4"
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-            <Brain size={18} />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-blue-600">AI Career Assistant</p>
-            <p className="mt-0.5 text-sm font-medium text-slate-700">
-              Based on your profile, we recommend improving your <span className="font-bold text-blue-700">problem-solving skills</span> and completing the <span className="font-bold text-blue-700">SQL & Database</span> assessment to boost your Backend Developer match score by ~12%.
-            </p>
-          </div>
         </motion.div>
 
         {/* Stats Row */}

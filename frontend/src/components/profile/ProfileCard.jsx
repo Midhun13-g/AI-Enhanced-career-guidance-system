@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { FiEdit2, FiMapPin, FiBook, FiTarget, FiExternalLink } from 'react-icons/fi';
-import { HiSparkles } from 'react-icons/hi2';
 import { Badge, Button } from '../ui/index';
 
 export default function ProfileCard({ profile, onEdit }) {
@@ -67,12 +66,6 @@ export default function ProfileCard({ profile, onEdit }) {
             </div>
           </div>
         )}
-
-        {/* AI badge */}
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 mb-4">
-          <HiSparkles className="text-blue-600 shrink-0" size={14} />
-          <p className="text-xs text-blue-700 font-medium">AI recommendations are based on your profile data</p>
-        </div>
 
         {/* Social links */}
         {(profile?.linkedinUrl || profile?.githubUrl || profile?.portfolioUrl) && (

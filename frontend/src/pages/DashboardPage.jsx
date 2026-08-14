@@ -52,7 +52,6 @@ function AIInsightCard({ user, completion }) {
               <p className="text-sm font-bold">Career Intelligence</p>
             </div>
           </div>
-          <Badge className="bg-white/20 text-white border-white/30 border text-xs">Live</Badge>
         </div>
         <h3 className="text-xl font-extrabold leading-snug mb-2">
           Hello, {user?.firstName || 'Student'} 👋
@@ -202,7 +201,6 @@ export default function DashboardPage() {
                     {loadingData ? '—' : <Counter to={completion.profileCompletion} suffix="%" />}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mb-4">Complete your profile to unlock AI features</p>
                 {loadingData ? <Skeleton className="h-2.5 w-full" /> : (
                   <ProgressBar value={completion.profileCompletion} color="gradient" size="md" />
                 )}
@@ -233,7 +231,6 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <HiSparkles className="text-blue-600" size={16} />
                   <p className="text-sm font-semibold text-slate-700">Skill Overview</p>
-                  <Badge variant="ai" className="ml-auto">AI</Badge>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <RadarChart data={radarData} margin={{ top: 0, right: 20, bottom: 0, left: 20 }}>
@@ -258,7 +255,6 @@ export default function DashboardPage() {
                   {[
                     { text: 'Account created',       time: 'Just now',   color: 'bg-blue-500' },
                     { text: 'Profile setup started', time: '1 min ago',  color: 'bg-indigo-500' },
-                    { text: 'AI engine ready',       time: '2 mins ago', color: 'bg-teal-500' },
                   ].map((a, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${a.color}`} />

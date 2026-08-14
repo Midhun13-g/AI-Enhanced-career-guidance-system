@@ -165,10 +165,6 @@ export default function AssessmentDetails() {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
-              <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-1">AI Insight</p>
-              <p className="text-sm text-green-800 font-medium">Completing this assessment will improve your Backend Developer career match by an estimated <span className="font-extrabold">+12%</span>.</p>
-            </div>
           </motion.div>
         </div>
       </div>

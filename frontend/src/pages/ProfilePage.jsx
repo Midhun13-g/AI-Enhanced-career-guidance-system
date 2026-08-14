@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCamera, FiMail, FiPhone, FiBook, FiTarget, FiMapPin, FiCalendar } from 'react-icons/fi';
-import { HiSparkles } from 'react-icons/hi2';
 import api from '../services/api';
 import AppLayout from '../components/layout/AppLayout';
 import ProfileCard from '../components/profile/ProfileCard';
@@ -158,27 +157,6 @@ export default function ProfilePage() {
 
                 {/* Right column */}
                 <div className="lg:col-span-2 space-y-5">
-
-                  {/* AI insight banner */}
-                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-white">
-                    <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-                    <div className="relative flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
-                        <HiSparkles size={18} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold">AI Career Intelligence</p>
-                        <p className="text-xs text-blue-100 mt-0.5">
-                          {completion.profileCompletion < 80
-                            ? 'Complete your profile to unlock personalised AI career recommendations.'
-                            : 'Your profile is strong! AI recommendations are fully personalised.'}
-                        </p>
-                      </div>
-                      <Badge className="ml-auto bg-white/20 text-white border border-white/30 shrink-0">
-                        {completion.profileCompletion}%
-                      </Badge>
-                    </div>
-                  </div>
 
                   {/* Details grid */}
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">

@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, ClipboardCheck, FileText, UserRound,
-  BarChart3, BookOpen, Briefcase, Settings, ChevronRight,
+  BarChart3, BookOpen, Briefcase, Settings,
   Sparkles, X, ClipboardList, Layers, Brain, TrendingUp,
   Award, History, Trophy, Target, Code2, Upload, Users,
 } from 'lucide-react';
@@ -20,8 +20,8 @@ const NAV_SECTIONS = [
   {
     label: 'Assessment Engine',
     items: [
-      { to: '/assessments',              label: 'Assessment Hub',    icon: ClipboardList, color: 'text-blue-600',   bg: 'bg-blue-50',   badge: 'AI' },
-      { to: '/assessments/categories',   label: 'Take Assessment',   icon: ClipboardCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+      { to: '/assessments/categories',   label: 'Assessment Hub',    icon: ClipboardList, color: 'text-blue-600',   bg: 'bg-blue-50', exact: true },
+      { to: '/assessment',               label: 'Take Assessment',  icon: ClipboardCheck, color: 'text-indigo-600', bg: 'bg-indigo-50', activePaths: ['/assessment', '/assessments/take/'] },
       { to: '/assessments/coding',       label: 'Coding Challenge',  icon: Code2,         color: 'text-purple-600', bg: 'bg-purple-50' },
       { to: '/assessments/history',      label: 'History',           icon: History,       color: 'text-slate-600',  bg: 'bg-slate-100' },
       { to: '/assessments/certificates', label: 'Certificates',      icon: Trophy,        color: 'text-amber-600',  bg: 'bg-amber-50' },
@@ -30,21 +30,21 @@ const NAV_SECTIONS = [
   {
     label: 'AI Insights',
     items: [
-      { to: '/assessments/ai-analysis',  label: 'AI Analysis',       icon: Brain,         color: 'text-purple-600', bg: 'bg-purple-50', badge: 'AI' },
-      { to: '/assessments/skill-growth', label: 'Skill Growth',      icon: TrendingUp,    color: 'text-teal-600',   bg: 'bg-teal-50',   badge: 'AI' },
-      { to: '/assessments/skill-gap',    label: 'Skill Gap',         icon: Target,        color: 'text-rose-600',   bg: 'bg-rose-50',   badge: 'AI' },
+      { to: '/assessments/ai-analysis',  label: 'AI Analysis',       icon: Brain,         color: 'text-purple-600', bg: 'bg-purple-50' },
+      { to: '/assessments/skill-growth', label: 'Skill Growth',      icon: TrendingUp,    color: 'text-teal-600',   bg: 'bg-teal-50' },
+      { to: '/assessments/skill-gap',    label: 'Skill Gap',         icon: Target,        color: 'text-rose-600',   bg: 'bg-rose-50' },
       { to: '/assessments/result',       label: 'Result Analysis',   icon: BarChart3,     color: 'text-green-600',  bg: 'bg-green-50' },
     ],
   },
   {
     label: 'Resume Intelligence',
     items: [
-      { to: '/resume',                label: 'Resume Dashboard',   icon: FileText,   color: 'text-teal-600',   bg: 'bg-teal-50',   badge: 'AI' },
+      { to: '/resume',                label: 'Resume Dashboard',   icon: FileText,   color: 'text-teal-600',   bg: 'bg-teal-50' },
       { to: '/resume/upload',         label: 'Upload Resume',      icon: Upload,     color: 'text-blue-600',   bg: 'bg-blue-50' },
-      { to: '/resume/nlp-results',    label: 'NLP Extraction',     icon: Layers,     color: 'text-indigo-600', bg: 'bg-indigo-50', badge: 'AI' },
-      { to: '/resume/skill-taxonomy', label: 'Skill Taxonomy',     icon: Layers,     color: 'text-purple-600', bg: 'bg-purple-50', badge: 'AI' },
+      { to: '/resume/nlp-results',    label: 'NLP Extraction',     icon: Layers,     color: 'text-indigo-600', bg: 'bg-indigo-50' },
+      { to: '/resume/skill-taxonomy', label: 'Skill Taxonomy',     icon: Layers,     color: 'text-purple-600', bg: 'bg-purple-50' },
       { to: '/resume/analysis',       label: 'Quality Analysis',   icon: BarChart3,  color: 'text-green-600',  bg: 'bg-green-50' },
-      { to: '/resume/insights',       label: 'AI Insights',        icon: Sparkles,   color: 'text-amber-600',  bg: 'bg-amber-50',  badge: 'AI' },
+      { to: '/resume/insights',       label: 'AI Insights',        icon: Sparkles,   color: 'text-amber-600',  bg: 'bg-amber-50' },
       { to: '/resume/skill-profile',  label: 'Skill Profile',      icon: TrendingUp, color: 'text-rose-600',   bg: 'bg-rose-50' },
       { to: '/resume/history',        label: 'Resume History',     icon: History,    color: 'text-slate-600',  bg: 'bg-slate-100' },
       { to: '/resume/report',         label: 'Resume Report',      icon: FileText,   color: 'text-teal-600',   bg: 'bg-teal-50' },
@@ -53,7 +53,7 @@ const NAV_SECTIONS = [
   {
     label: 'AI Tools',
     items: [
-      { to: '/assessment/result',  label: 'Career Match',    icon: Briefcase,  color: 'text-amber-600', bg: 'bg-amber-50', badge: 'AI' },
+      { to: '/assessment/result',  label: 'Career Match',    icon: Briefcase,  color: 'text-amber-600', bg: 'bg-amber-50' },
     ],
   },
   {
@@ -64,11 +64,14 @@ const NAV_SECTIONS = [
   },
 ];
 
+function isItemActive(pathname, item) {
+  if (item.activePaths) return item.activePaths.some((path) => pathname === path || (path.endsWith('/') && pathname.startsWith(path)));
+  return item.exact ? pathname === item.to : pathname === item.to || (item.to !== '/dashboard' && item.to !== '/profile' && pathname.startsWith(`${item.to}/`));
+}
+
 function NavItem({ item, onClose }) {
   const location = useLocation();
-  const active =
-    location.pathname === item.to ||
-    (item.to !== '/dashboard' && item.to !== '/profile' && location.pathname.startsWith(item.to));
+  const active = isItemActive(location.pathname, item);
   const Icon = item.icon;
 
   return (
@@ -87,18 +90,6 @@ function NavItem({ item, onClose }) {
         <Icon size={15} aria-hidden="true" />
       </span>
       <span className="flex-1 truncate">{item.label}</span>
-      {item.badge && (
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full
-          ${active ? 'bg-white/20 text-white' : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-indigo-700'}`}>
-          {item.badge}
-        </span>
-      )}
-      {active && (
-        <motion.div
-          layoutId="activeIndicator"
-          className="absolute right-2 h-1.5 w-1.5 rounded-full bg-white/70"
-        />
-      )}
     </Link>
   );
 }
@@ -160,24 +151,6 @@ export default function Sidebar({ open, onClose }) {
             </div>
           ))}
         </nav>
-
-        {/* AI Tip Banner */}
-        <div className="mx-3 mb-3 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-4 shrink-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <Sparkles size={13} className="text-blue-600" />
-            <p className="text-xs font-bold text-blue-700">AI Tip</p>
-          </div>
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Complete assessments to improve your career readiness score.
-          </p>
-          <Link
-            to="/assessments"
-            onClick={onClose}
-            className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            Start now <ChevronRight size={11} />
-          </Link>
-        </div>
 
         {/* User footer */}
         <div className="border-t border-slate-100 px-3 py-3 shrink-0">

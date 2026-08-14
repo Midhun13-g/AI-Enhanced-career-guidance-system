@@ -83,7 +83,6 @@ export default function ProfileForm({ profile, onSubmit, submitting, error, succ
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-extrabold text-slate-900">Edit Profile</h3>
-          <p className="text-sm text-slate-500 mt-0.5">Update your information to improve AI recommendations</p>
         </div>
         {onCancel && (
           <button type="button" onClick={onCancel} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors" aria-label="Cancel">

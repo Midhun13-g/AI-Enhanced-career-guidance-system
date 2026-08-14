@@ -17,7 +17,6 @@ export default function ProgressCard({ completion }) {
           </div>
           <div>
             <h3 className="text-sm font-bold text-slate-900">Profile Completion</h3>
-            <p className="text-xs text-slate-500">Complete your profile to unlock AI features</p>
           </div>
         </div>
         <div className="text-right">

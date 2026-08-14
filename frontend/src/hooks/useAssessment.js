@@ -102,14 +102,15 @@ export default function useAssessment() {
     setLoading(true);
     setError('');
     try {
-      const data = await assessmentService.getResult();
+      if (!context.assessmentId) throw new Error('No assessment session is available.');
+      const data = await assessmentService.getResult(context.assessmentId);
       setResult(data.result || data);
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to load assessment result');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [context.assessmentId]);
 
   useEffect(() => {
     loadQuestions();

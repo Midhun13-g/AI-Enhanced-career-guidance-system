@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require&tcpKeepAlive=true&socketTimeout=30&connectTimeout=10
-    username: postgres.yfjzozcvawtmzmybhycx
-    password: Midhun@G2006
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 20000
@@ -47,7 +47,7 @@ resume:
 
 careerguidance:
   app:
-    jwtSecret: ${JWT_SECRET:careerguidancesecretkey2024supersecureandlongenoughforhs256algorithm}
+    jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: ${JWT_EXPIRATION_MS:86400000}
 
 nlp:
