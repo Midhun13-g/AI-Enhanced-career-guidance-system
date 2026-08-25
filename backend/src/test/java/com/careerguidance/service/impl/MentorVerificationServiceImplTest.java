@@ -39,6 +39,9 @@ public class MentorVerificationServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private MentorRepository mentorRepository;
+
     @InjectMocks
     private MentorVerificationServiceImpl mentorVerificationService;
 
@@ -207,7 +210,7 @@ public class MentorVerificationServiceImplTest {
     private MentorRegistrationRequest.DocumentRequest document(String type) {
         MentorRegistrationRequest.DocumentRequest document = new MentorRegistrationRequest.DocumentRequest();
         document.documentType = type;
-        document.fileUrl = "https://example.com/" + type.replace(" ", "-").toLowerCase();
+        document.fileUrl = "https://drive.google.com/file/d/" + type.replace(" ", "-").toLowerCase();
         return document;
     }
 

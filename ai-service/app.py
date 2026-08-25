@@ -1,12 +1,29 @@
+import os
+import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import re
 
-app = FastAPI(title="AI Career Guidance - NLP Service", version="1.0.0")
+# Import AI Guidance Routers
+from routes import resume, jobs, career
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("ai_service")
+
+app = FastAPI(
+    title="AI Career Guidance System API",
+    description="Full AI Career Guidance system processing PDF/DOCX resumes, semantic matching, skill gaps, course recommendations, SHAP explainability, and career roadmaps.",
+    version="2.0.0"
+)
+
+# Register Router Modules
+app.include_router(resume.router)
+app.include_router(jobs.router)
+app.include_router(career.router)
 
 # ---------------------------------------------------------------------------
-# Schema
+# Legacy NLP Schema & Parsing Logic for Backward Compatibility
 # ---------------------------------------------------------------------------
 
 class ParseRequest(BaseModel):
@@ -49,10 +66,6 @@ class ParseResponse(BaseModel):
     resumeScore: float = 0.0
     summary: Optional[str] = None
 
-# ---------------------------------------------------------------------------
-# Skill taxonomy (normalized lookup)
-# ---------------------------------------------------------------------------
-
 SKILL_TAXONOMY = {
     "reactjs": "React.js", "react js": "React.js", "react": "React.js",
     "nodejs": "Node.js", "node js": "Node.js", "node": "Node.js",
@@ -78,8 +91,6 @@ SKILL_TAXONOMY = {
     "kafka": "Apache Kafka", "rabbitmq": "RabbitMQ",
     "elasticsearch": "Elasticsearch", "linux": "Linux",
 }
-
-KNOWN_SKILLS = set(SKILL_TAXONOMY.keys())
 
 DEGREE_PATTERNS = [
     r"\b(b\.?tech|bachelor of technology|b\.?e\.?|bachelor of engineering)\b",
@@ -114,10 +125,6 @@ EDUCATION_SECTION_RE = re.compile(
 
 YEAR_RE = re.compile(r"\b(20\d{2}|19\d{2})\b")
 CGPA_RE = re.compile(r"\b(\d\.\d{1,2})\s*(cgpa|gpa|/10|/4)?\b", re.IGNORECASE)
-
-# ---------------------------------------------------------------------------
-# Extraction helpers
-# ---------------------------------------------------------------------------
 
 def extract_skills(text: str) -> List[NlpSkill]:
     lower = text.lower()
@@ -192,12 +199,12 @@ def calculate_score(skills, education, projects, certifications, experience) -> 
     return round(min(100.0, score), 2)
 
 # ---------------------------------------------------------------------------
-# Routes
+# Health & Backward-Compatible Endpoints
 # ---------------------------------------------------------------------------
 
 @app.get("/health")
 def health():
-    return {"status": "NLP service is running", "version": "1.0.0"}
+    return {"status": "AI Career Guidance Service is running", "version": "2.0.0"}
 
 @app.post("/api/nlp/parse", response_model=ParseResponse)
 def parse_resume(req: ParseRequest):
@@ -228,3 +235,37 @@ def parse_resume(req: ParseRequest):
         resumeScore=score,
         summary=summary,
     )
+
+# ---------------------------------------------------------------------------
+# Gradio UI Integration (for Hugging Face Spaces UI tab)
+# ---------------------------------------------------------------------------
+try:
+    import gradio as gr
+    def gradio_interface():
+        with gr.Blocks(title="AI Career Guidance System") as demo:
+            gr.Markdown("# AI Career Guidance & Resume Analysis System")
+            gr.Markdown("Upload your Resume (PDF/DOCX) to get complete job matching, skill gaps, course recommendations, SHAP explainability, and career roadmap.")
+            file_input = gr.File(label="Upload Resume (PDF/DOCX)")
+            output_json = gr.JSON(label="Full AI Analysis Result")
+            
+            async def run_gradio_pipeline(file_obj):
+                if file_obj is None:
+                    return {"error": "No file uploaded."}
+                from services.resume_service import ResumePipelineService
+                from fastapi import UploadFile
+                
+                with open(file_obj.name, "rb") as f:
+                    content = f.read()
+                
+                upload_file = UploadFile(filename=os.path.basename(file_obj.name), file=open(file_obj.name, "rb"))
+                return await ResumePipelineService.process_resume_file(upload_file)
+
+            analyze_btn = gr.Button("Analyze Resume", variant="primary")
+            analyze_btn.click(fn=run_gradio_pipeline, inputs=[file_input], outputs=[output_json])
+        return demo
+
+    gr_app = gradio_interface()
+    app = gr.mount_gradio_app(app, gr_app, path="/gradio")
+    logger.info("Mounted Gradio interface at /gradio")
+except Exception as e:
+    logger.info(f"Gradio mounting skipped: {e}")

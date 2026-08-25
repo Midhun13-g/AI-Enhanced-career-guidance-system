@@ -22,6 +22,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    validate-on-migrate: false
     locations: classpath:db/migration
 
   jpa:
@@ -58,3 +59,21 @@ nlp:
 groq:
   api-key: ${GROQ_API_KEY:}
   model: ${GROQ_MODEL:llama-3.1-8b-instant}
+
+ai:
+  service:
+    base-url: ${AI_SERVICE_BASE_URL:http://localhost:8000}
+    analyze-endpoint: ${AI_SERVICE_ANALYZE_ENDPOINT:/api/resume/analyze}
+
+huggingface:
+  space:
+    id: ${HF_SPACE_ID:}
+    url: ${HF_SPACE_URL:https://midhun-2542-career-guidance-system.hf.space}
+    analyze-endpoint: ${HF_ANALYZE_ENDPOINT:/api/resume/analyze}
+  token: ${HF_TOKEN:}
+  timeout:
+    connect-seconds: ${HF_CONNECT_TIMEOUT:15}
+    read-seconds: ${HF_READ_TIMEOUT:180}
+  retry:
+    max-attempts: ${HF_MAX_RETRIES:3}
+    backoff-ms: ${HF_RETRY_BACKOFF_MS:2000}

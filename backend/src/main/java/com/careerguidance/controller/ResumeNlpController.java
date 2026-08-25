@@ -1,19 +1,29 @@
 package com.careerguidance.controller;
 
-import com.careerguidance.dto.response.*;
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.careerguidance.dto.response.ProfileVectorResponse;
+import com.careerguidance.dto.response.ResumeAnalysisReportResponse;
+import com.careerguidance.dto.response.ResumeEntityResponse;
+import com.careerguidance.dto.response.ResumeProcessResponse;
+import com.careerguidance.dto.response.StudentSkillResponse;
 import com.careerguidance.security.UserDetailsImpl;
 import com.careerguidance.service.NlpPipelineService;
 import com.careerguidance.service.ProfileVectorService;
 import com.careerguidance.service.ResumeAnalysisService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/student/resume")
@@ -47,7 +57,7 @@ public class ResumeNlpController {
     public ResponseEntity<ResumeAnalysisReportResponse> getReport(
             @AuthenticationPrincipal UserDetailsImpl user,
             @PathVariable Long resumeId) {
-        return ResponseEntity.ok(analysisService.getReport(resumeId));
+        return ResponseEntity.ok(analysisService.getReport(user.getId(), resumeId));
     }
 
     @GetMapping("/entities/{resumeId}")

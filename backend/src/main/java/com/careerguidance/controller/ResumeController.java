@@ -1,13 +1,7 @@
 package com.careerguidance.controller;
 
-import com.careerguidance.dto.request.ResumeUpdateRequest;
-import com.careerguidance.dto.response.ResumeAnalysisResponse;
-import com.careerguidance.dto.response.ResumeResponse;
-import com.careerguidance.security.UserDetailsImpl;
-import com.careerguidance.service.ResumeService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -28,13 +22,21 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import com.careerguidance.dto.request.ResumeUpdateRequest;
+import com.careerguidance.dto.response.ResumeAnalysisResponse;
+import com.careerguidance.dto.response.ResumeResponse;
+import com.careerguidance.security.UserDetailsImpl;
+import com.careerguidance.service.ResumeService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/resumes")
 @Tag(name = "Resumes", description = "Resume upload, parsing, analysis, and management")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAuthority('STUDENT')")
+@PreAuthorize("hasRole('STUDENT')")
 public class ResumeController {
 
     private final ResumeService resumeService;

@@ -46,6 +46,7 @@ import ResumeSkillTaxonomy from './pages/resume/ResumeSkillTaxonomy';
 import ResumeInsights from './pages/resume/ResumeInsights';
 import ResumeSkillProfile from './pages/resume/ResumeSkillProfile';
 import ResumeReport from './pages/resume/ResumeReport';
+import AICareerGuidancePage from './pages/resume/AICareerGuidancePage';
 
 // Admin — Resume Intelligence
 import ResumeAdminDashboard from './pages/admin/ResumeAdminDashboard';
@@ -87,6 +88,7 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/student/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/profile"   element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/settings"  element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/mentors" element={<ProtectedRoute><MentorSelectionPage /></ProtectedRoute>} />
 
               {/* Legacy assessment flow */}
@@ -122,6 +124,7 @@ function App() {
               <Route path="/resume/insights"       element={<ProtectedRoute><ResumeInsights /></ProtectedRoute>} />
               <Route path="/resume/skill-profile"  element={<ProtectedRoute><ResumeSkillProfile /></ProtectedRoute>} />
               <Route path="/resume/report"         element={<ProtectedRoute><ResumeReport /></ProtectedRoute>} />
+              <Route path="/resume/ai-guidance"     element={<ProtectedRoute><AICareerGuidancePage /></ProtectedRoute>} />
 
               {/* Mentor verification */}
               <Route path="/become-mentor"  element={<BecomeMentor />} />

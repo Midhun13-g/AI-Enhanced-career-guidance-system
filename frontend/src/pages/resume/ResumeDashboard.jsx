@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Award, BarChart3, BookOpen, CheckCircle2, FileText, History, Plus, Sparkles, Upload } from 'lucide-react';
+import { ArrowRight, Award, BarChart3, BookOpen, CheckCircle2, FileText, History, Map, Sparkles, Upload, Loader2, Compass } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
-import { resumeHistory } from './resumeData';
+import { getAiAnalysisHistory } from '../../services/resumeService';
 
 function StatCard({ icon: Icon, label, value, color, bg, delay }) {
   return (
@@ -19,47 +20,43 @@ function StatCard({ icon: Icon, label, value, color, bg, delay }) {
   );
 }
 
-function CircularProgress({ value }) {
-  const r = 52;
-  const circ = 2 * Math.PI * r;
-  const dash = (value / 100) * circ;
-  return (
-    <div className="relative flex h-36 w-36 items-center justify-center">
-      <svg className="-rotate-90" width="144" height="144">
-        <circle cx="72" cy="72" r={r} fill="none" stroke="#EFF6FF" strokeWidth="10" />
-        <motion.circle
-          cx="72" cy="72" r={r} fill="none"
-          stroke="url(#prog)" strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          initial={{ strokeDashoffset: circ }}
-          animate={{ strokeDashoffset: circ - dash }}
-          transition={{ duration: 1.2, ease: 'easeOut' }}
-        />
-        <defs>
-          <linearGradient id="prog" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#2563EB" />
-            <stop offset="100%" stopColor="#4F46E5" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="absolute text-center">
-        <p className="text-2xl font-black text-slate-900">{value}%</p>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Complete</p>
-      </div>
-    </div>
-  );
-}
-
-const STATUS_COLOR = { Analyzed: 'bg-emerald-50 text-emerald-700', Processing: 'bg-amber-50 text-amber-700', Failed: 'bg-red-50 text-red-700' };
+const STATUS_COLOR = {
+  COMPLETED: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  PROCESSING: 'bg-amber-50 text-amber-700 border border-amber-200',
+  PENDING: 'bg-blue-50 text-blue-700 border border-blue-200',
+  FAILED: 'bg-red-50 text-red-700 border border-red-200',
+};
 
 export default function ResumeDashboard() {
+  const navigate = useNavigate();
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const response = await getAiAnalysisHistory();
+        const list = Array.isArray(response.data) ? response.data : [];
+        setHistory(list);
+      } catch (err) {
+        console.error('Failed to load recent analysis data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const totalAnalyses = history.length;
+  const latestAnalysis = history.length > 0 ? history[0] : null;
+  const totalSkills = latestAnalysis?.skillCount || 0;
+  const topDomain = latestAnalysis?.topJobRole || (totalAnalyses > 0 ? 'General' : 'Not Analyzed');
+
   const stats = [
-    { icon: CheckCircle2, label: 'Resume Status', value: 'Uploaded ✓', color: 'text-emerald-600', bg: 'bg-emerald-50', delay: 0.05 },
-    { icon: BarChart3, label: 'Resume Score', value: '82%', color: 'text-blue-600', bg: 'bg-blue-50', delay: 0.1 },
-    { icon: Sparkles, label: 'Skills Extracted', value: '10', color: 'text-indigo-600', bg: 'bg-indigo-50', delay: 0.15 },
-    { icon: BookOpen, label: 'Projects Identified', value: '2', color: 'text-teal-600', bg: 'bg-teal-50', delay: 0.2 },
-    { icon: Award, label: 'Certifications Found', value: '2', color: 'text-amber-600', bg: 'bg-amber-50', delay: 0.25 },
+    { icon: CheckCircle2, label: 'Resume Status', value: totalAnalyses > 0 ? 'Analyzed ✓' : 'Pending Upload', color: 'text-emerald-600', bg: 'bg-emerald-50', delay: 0.05 },
+    { icon: Compass, label: 'Target Domain', value: topDomain, color: 'text-blue-600', bg: 'bg-blue-50', delay: 0.1 },
+    { icon: Sparkles, label: 'Skills Detected', value: totalSkills.toString(), color: 'text-indigo-600', bg: 'bg-indigo-50', delay: 0.15 },
+    { icon: History, label: 'Total Analyses', value: totalAnalyses.toString(), color: 'text-teal-600', bg: 'bg-teal-50', delay: 0.2 },
   ];
 
   return (
@@ -72,76 +69,106 @@ export default function ResumeDashboard() {
         >
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-xl">
-              <p className="text-sm font-bold uppercase tracking-wider text-blue-200">Module 3 · Resume Intelligence</p>
-              <h1 className="mt-2 text-3xl font-black sm:text-4xl">Welcome back, Alex 👋</h1>
+              <p className="text-sm font-bold uppercase tracking-wider text-blue-200">Module 3 · AI Resume Intelligence</p>
+              <h1 className="mt-2 text-3xl font-black sm:text-4xl">AI Career Guidance Hub 🚀</h1>
               <div className="mt-4 flex items-start gap-3 rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
                 <Sparkles size={18} className="mt-0.5 shrink-0 text-blue-200" />
                 <p className="text-sm leading-6 text-blue-50">
-                  Upload your resume to analyze your skills and improve your career profile. AI will extract skills, education, projects, and certifications automatically.
+                  Upload your resume to trigger the Hugging Face AI pipeline for semantic job matching, skill gap discovery, SHAP explainability, and multi-phase roadmap generation.
                 </p>
               </div>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Link to="/resume/upload" className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50">
-                  <Upload size={16} /> Upload New Resume
+                <Link to="/resume/upload" className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 shadow-md">
+                  <Upload size={16} /> Analyze Resume
                 </Link>
-                <Link to="/resume/analysis" className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/25">
-                  <BarChart3 size={16} /> View Report
+                <Link to="/resume/ai-guidance" className="inline-flex items-center gap-2 rounded-xl bg-indigo-900/80 backdrop-blur-md border border-indigo-400/30 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-900">
+                  <Sparkles size={16} className="text-amber-300" /> AI Career Dashboard
                 </Link>
               </div>
             </div>
-            <div className="flex flex-col items-center gap-2">
-              <CircularProgress value={88} />
-              <p className="text-sm font-semibold text-blue-100">Profile Completion</p>
+
+            <div className="flex flex-col items-center justify-center rounded-2xl bg-white/10 p-6 backdrop-blur-md text-center min-w-[180px]">
+              <span className="text-3xl font-black text-white">{totalAnalyses}</span>
+              <span className="text-xs font-bold text-blue-100 uppercase tracking-wider mt-1">Saved Analyses</span>
             </div>
           </div>
         </motion.div>
 
-        {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {/* Dynamic Stats */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => <StatCard key={s.label} {...s} />)}
         </div>
 
-        {/* Recent Analysis */}
+        {/* Recent AI Analysis */}
         <div className="card overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
-            <h2 className="font-black text-slate-900">Recent Resume Analysis</h2>
+            <h2 className="font-black text-slate-900">Recent AI Analyses</h2>
             <Link to="/resume/history" className="flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-700">
-              View all <ArrowRight size={15} />
+              View all history <ArrowRight size={15} />
             </Link>
           </div>
-          <div className="divide-y divide-slate-50">
-            {resumeHistory.map((item, i) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }}
-                className="flex flex-wrap items-center gap-4 px-6 py-4"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500">
-                  <FileText size={18} />
-                </div>
-                <div className="min-w-[160px] flex-1">
-                  <p className="font-bold text-slate-900">{item.fileName}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">Uploaded {item.uploadDate}</p>
-                </div>
-                <span className="text-sm font-black text-blue-600">{item.score}%</span>
-                <span className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLOR[item.status] || 'bg-slate-100 text-slate-600'}`}>
-                  {item.status}
-                </span>
-                <div className="flex gap-1">
-                  <Link to="/resume/nlp-results" className="rounded-lg px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50">View</Link>
-                  <Link to="/resume/analysis" className="rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Report</Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+
+          {loading ? (
+            <div className="py-12 text-center space-y-2">
+              <Loader2 size={28} className="mx-auto animate-spin text-blue-600" />
+              <p className="text-xs text-slate-400 font-bold">Loading recent analyses...</p>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="py-12 text-center space-y-3">
+              <FileText size={36} className="mx-auto text-slate-300" />
+              <p className="text-sm font-bold text-slate-700">No resumes analyzed yet</p>
+              <Link to="/resume/upload" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100">
+                <Upload size={14} /> Upload your first resume
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {history.slice(0, 4).map((item, i) => {
+                const analysisId = item.analysisId || item.id;
+                const fileName = item.originalFileName || item.fileName || 'Resume';
+                const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'Recent';
+                const status = item.status || 'COMPLETED';
+
+                return (
+                  <motion.div
+                    key={analysisId}
+                    initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07 }}
+                    className="flex flex-wrap items-center gap-4 px-6 py-4"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                      <FileText size={18} />
+                    </div>
+                    <div className="min-w-[160px] flex-1">
+                      <p className="font-bold text-slate-900 text-sm">{fileName}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">Analyzed on {dateStr}</p>
+                    </div>
+                    <span className="text-xs font-bold text-slate-600">
+                      {item.topJobRole || 'Not classified'}
+                    </span>
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLOR[status] || 'bg-slate-100 text-slate-600'}`}>
+                      {status}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate('/resume/ai-guidance', { state: { analysisId, filename: fileName } })}
+                        className="rounded-lg px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 flex items-center gap-1 transition"
+                      >
+                        <Sparkles size={12} /> Open Report
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
         <div className="grid gap-4 sm:grid-cols-3">
           {[
-            { to: '/resume/nlp-results', icon: Sparkles, label: 'NLP Extraction Results', desc: 'View all extracted entities from your resume', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-            { to: '/resume/skill-taxonomy', icon: BarChart3, label: 'Skill Taxonomy Mapping', desc: 'Review how your skills are normalized', color: 'text-teal-600', bg: 'bg-teal-50' },
-            { to: '/resume/insights', icon: History, label: 'AI Career Insights', desc: 'Get personalized career recommendations', color: 'text-amber-600', bg: 'bg-amber-50' },
+            { to: '/resume/ai-guidance', icon: Map, label: 'AI Career Guidance Dashboard', desc: 'Semantic matches, skill-gap analysis, SHAP & roadmaps', color: 'text-blue-600', bg: 'bg-blue-50' },
+            { to: '/resume/upload', icon: Upload, label: 'Resume Upload & Analysis', desc: 'Upload PDF/DOCX to run the Hugging Face AI pipeline', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { to: '/resume/history', icon: History, label: 'Resume History', desc: 'Access and review all previous AI evaluation runs', color: 'text-teal-600', bg: 'bg-teal-50' },
           ].map(({ to, icon: Icon, label, desc, color, bg }) => (
             <Link key={to} to={to} className="card-hover flex items-start gap-4 p-5">
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${bg}`}>

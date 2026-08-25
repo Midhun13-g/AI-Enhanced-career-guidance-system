@@ -1,5 +1,6 @@
 package com.careerguidance.exception;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,6 +77,19 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, e.getDefaultMessage());
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(AIServiceException.class)
+    public ResponseEntity<Map<String, Object>> handleAIServiceException(AIServiceException ex) {
+        HttpStatus status = ex.getHttpStatus() != null ? ex.getHttpStatus() : HttpStatus.BAD_REQUEST;
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("success", false);
+        body.put("status", "FAILED");
+        body.put("message", ex.getMessage());
+        body.put("errorCode", ex.getErrorCode());
+        body.put("timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(status).body(body);
     }
 
     private ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {

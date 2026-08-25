@@ -41,8 +41,9 @@ const NAV_SECTIONS = [
     items: [
       { to: '/resume',                label: 'Resume Dashboard',   icon: FileText,   color: 'text-teal-600',   bg: 'bg-teal-50' },
       { to: '/resume/upload',         label: 'Upload Resume',      icon: Upload,     color: 'text-blue-600',   bg: 'bg-blue-50' },
-      { to: '/resume/nlp-results',    label: 'NLP Extraction',     icon: Layers,     color: 'text-indigo-600', bg: 'bg-indigo-50' },
-      { to: '/resume/skill-taxonomy', label: 'Skill Taxonomy',     icon: Layers,     color: 'text-purple-600', bg: 'bg-purple-50' },
+      { to: '/resume/ai-guidance',    label: 'AI Career Guidance', icon: Sparkles,   color: 'text-indigo-600', bg: 'bg-indigo-50' },
+      { to: '/resume/nlp-results',    label: 'NLP Extraction',     icon: Layers,     color: 'text-purple-600', bg: 'bg-purple-50' },
+      { to: '/resume/skill-taxonomy', label: 'Skill Taxonomy',     icon: Layers,     color: 'text-blue-600',   bg: 'bg-blue-50' },
       { to: '/resume/analysis',       label: 'Quality Analysis',   icon: BarChart3,  color: 'text-green-600',  bg: 'bg-green-50' },
       { to: '/resume/insights',       label: 'AI Insights',        icon: Sparkles,   color: 'text-amber-600',  bg: 'bg-amber-50' },
       { to: '/resume/skill-profile',  label: 'Skill Profile',      icon: TrendingUp, color: 'text-rose-600',   bg: 'bg-rose-50' },
@@ -51,15 +52,16 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'AI Tools',
+    label: 'AI Tools & Career',
     items: [
-      { to: '/assessment/result',  label: 'Career Match',    icon: Briefcase,  color: 'text-amber-600', bg: 'bg-amber-50' },
+      { to: '/resume/ai-guidance', label: 'AI Job Matches',  icon: Briefcase,  color: 'text-amber-600', bg: 'bg-amber-50' },
+      { to: '/assessments/skill-gap', label: 'Skill Gap Tool', icon: Target, color: 'text-rose-600', bg: 'bg-rose-50' },
     ],
   },
   {
-    label: 'Learning',
+    label: 'Learning & Growth',
     items: [
-      { to: '/profile', label: 'Roadmap', icon: BookOpen, color: 'text-rose-600', bg: 'bg-rose-50' },
+      { to: '/resume/ai-guidance', label: 'Personalized Roadmap', icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50' },
     ],
   },
 ];

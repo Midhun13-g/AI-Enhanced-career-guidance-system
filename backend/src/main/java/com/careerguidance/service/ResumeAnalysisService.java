@@ -1,16 +1,18 @@
 package com.careerguidance.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.careerguidance.dto.nlp.NlpParseResponse;
 import com.careerguidance.dto.response.ResumeAnalysisReportResponse;
 import com.careerguidance.entity.Resume;
 import com.careerguidance.entity.ResumeAnalysisReport;
 import com.careerguidance.exception.ResumeNotFoundException;
+import com.careerguidance.exception.UnauthorizedAccessException;
 import com.careerguidance.repository.ResumeAnalysisReportRepository;
 import com.careerguidance.repository.ResumeRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class ResumeAnalysisService {
@@ -41,7 +43,7 @@ public class ResumeAnalysisService {
         double educationScore = Math.min(100, eduCount * 60.0);
         double atsScore = calculateAtsScore(skillCount, projectCount, eduCount, expCount);
         double overallScore = nlp.getResumeScore() != null
-                ? nlp.getResumeScore()
+            ? nlp.getResumeScore().doubleValue()
                 : (skillScore * 0.4 + projectScore * 0.2 + educationScore * 0.2 + atsScore * 0.2);
 
         ResumeAnalysisReport report = reportRepo.findByResumeId(resumeId).orElseGet(ResumeAnalysisReport::new);
@@ -61,10 +63,20 @@ public class ResumeAnalysisService {
         return toResponse(report);
     }
 
+    @Transactional(readOnly = true)
+    public ResumeAnalysisReportResponse getReport(Long userId, Long resumeId) {
+        Resume resume = resumeRepo.findById(resumeId)
+                .orElseThrow(() -> new ResumeNotFoundException("Resume not found: " + resumeId));
+        if (resume.getUser() == null || !resume.getUser().getId().equals(userId)) {
+            throw new UnauthorizedAccessException("Resume does not belong to the authenticated student");
+        }
+        return getReport(resumeId);
+    }
+
     private double calculateSkillScore(int count, List<NlpParseResponse.NlpSkill> skills) {
         if (skills == null || skills.isEmpty()) return 0.0;
         double avgConf = skills.stream()
-                .mapToDouble(s -> s.getConfidence() != null ? s.getConfidence() : 0.5)
+                .mapToDouble(s -> s.getConfidence() != null ? s.getConfidence().doubleValue() : 0.5)
                 .average().orElse(0.5);
         return Math.min(100, count * 20.0 * avgConf);
     }
