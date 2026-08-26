@@ -5,17 +5,17 @@ export default function ResumeOverview({ resume }) {
   const data = resume ?? {};
   const personal = data.personal_information || data.personal_info || {};
 
-  const name = personal.name || data.name || data.candidate_name || 'Resume Candidate';
+  const name = data.candidateName || personal.name || data.name || data.candidate_name || 'Resume Candidate';
   const email = personal.email || data.email || null;
   const phone = personal.phone || data.phone || null;
   const location = personal.location || data.location || null;
   const summary = data.summary || data.profile_summary || data.objective || null;
 
-  const education = Array.isArray(data.education) ? data.education : (data.education ? [data.education] : []);
-  const experience = Array.isArray(data.experience) ? data.experience : (data.experience ? [data.experience] : []);
-  const projects = Array.isArray(data.projects) ? data.projects : (data.projects ? [data.projects] : []);
-  const certifications = Array.isArray(data.certifications) ? data.certifications : (data.certifications ? [data.certifications] : []);
-  const skillsCount = Array.isArray(data.skills) ? data.skills.length : (data.skills_count ?? 0);
+  const education = Array.isArray(data.education) ? data.education : [];
+  const experience = Array.isArray(data.experience) ? data.experience : [];
+  const projects = Array.isArray(data.projects) ? data.projects : [];
+  const certifications = Array.isArray(data.certifications) ? data.certifications : [];
+  const skillsCount = data.totalSkills ?? (Array.isArray(data.skills) ? data.skills.length : 0);
 
   return (
     <div className="card p-6 space-y-6">

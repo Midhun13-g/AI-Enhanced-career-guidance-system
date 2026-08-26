@@ -65,6 +65,9 @@ public class AiCareerAnalysis {
     @Column(name = "roadmap", columnDefinition = "TEXT")
     private String roadmap;
 
+    @Column(name = "raw_ai_response", columnDefinition = "TEXT")
+    private String rawAiResponse;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -224,6 +227,14 @@ public class AiCareerAnalysis {
 
     public void setRoadmap(String roadmap) {
         this.roadmap = roadmap;
+    }
+
+    public String getRawAiResponse() {
+        return rawAiResponse;
+    }
+
+    public void setRawAiResponse(String rawAiResponse) {
+        this.rawAiResponse = rawAiResponse;
     }
 
     public LocalDateTime getCreatedAt() {

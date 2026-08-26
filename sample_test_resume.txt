@@ -1,2 +1,0 @@
-John Doe
-Software Engineer with React, Python, Java, SQL, and AWS experience. B.Tech Computer Science.

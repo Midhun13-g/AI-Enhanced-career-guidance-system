@@ -34,10 +34,10 @@ export default function CareerRoadmap({ roadmap }) {
         {phases.map((phase, idx) => {
           const phaseNum = phase.phase ?? (idx + 1);
           const title = phase.title || `Phase ${phaseNum}`;
-          const skills = Array.isArray(phase.skills_to_learn) ? phase.skills_to_learn : [];
-          const courses = Array.isArray(phase.recommended_courses) ? phase.recommended_courses : [];
+          const skills = Array.isArray(phase.skillsToLearn) ? phase.skillsToLearn : (Array.isArray(phase.skills_to_learn) ? phase.skills_to_learn : []);
+          const courses = Array.isArray(phase.recommendedCourses) ? phase.recommendedCourses : (Array.isArray(phase.recommended_courses) ? phase.recommended_courses : []);
           const projects = Array.isArray(phase.projects) ? phase.projects : [];
-          const outcome = phase.expected_outcome || null;
+          const outcome = phase.expectedOutcome || phase.expected_outcome || null;
 
           return (
             <React.Fragment key={idx}>

@@ -23,7 +23,7 @@ export default function JobMatches({ jobMatches }) {
             <Briefcase className="text-blue-600" size={22} /> Semantic Job Matches
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Ranked job matches generated using SentenceTransformers (<code className="text-xs bg-slate-100 px-1 py-0.5 rounded">all-MiniLM-L6-v2</code>).
+            Ranked job matches computed via Hugging Face AI Vector Embeddings.
           </p>
         </div>
         <span className="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 border border-blue-100">
@@ -34,12 +34,12 @@ export default function JobMatches({ jobMatches }) {
       <div className="grid gap-4">
         {matches.map((job, idx) => {
           const rank = job.rank ?? (idx + 1);
-          const title = job.job_title || job.title || 'Role Recommendation';
-          const company = job.company || 'Industry Partner';
-          const domain = job.domain || 'Software Development';
-          const matchScore = Math.round((job.match_score ?? 0) * (job.match_score <= 1 ? 100 : 1));
-          const matchedSkills = Array.isArray(job.matched_skills) ? job.matched_skills : [];
-          const missingSkills = Array.isArray(job.missing_skills) ? job.missing_skills : [];
+          const title = job.jobTitle || job.job_title || job.title || 'Role Recommendation';
+          const company = job.company || '';
+          const domain = job.domain || '';
+          const matchScore = job.matchScore ?? Math.round((job.match_score ?? 0) * (job.match_score <= 1 ? 100 : 1));
+          const matchedSkills = Array.isArray(job.matchedSkills) ? job.matchedSkills : (Array.isArray(job.matched_skills) ? job.matched_skills : []);
+          const missingSkills = Array.isArray(job.missingSkills) ? job.missingSkills : (Array.isArray(job.missing_skills) ? job.missing_skills : []);
           const isExpanded = expandedIndex === idx;
 
           return (
@@ -72,11 +72,13 @@ export default function JobMatches({ jobMatches }) {
                         </span>
                       )}
                     </h3>
-                    <p className="text-xs font-semibold text-slate-500 flex items-center gap-2 mt-0.5">
-                      <span className="flex items-center gap-1"><Building2 size={12} /> {company}</span>
-                      <span>•</span>
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">{domain}</span>
-                    </p>
+                    {(company || domain) && (
+                      <p className="text-xs font-semibold text-slate-500 flex items-center gap-2 mt-0.5">
+                        {company && <span className="flex items-center gap-1"><Building2 size={12} /> {company}</span>}
+                        {company && domain && <span>•</span>}
+                        {domain && <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">{domain}</span>}
+                      </p>
+                    )}
                   </div>
                 </div>
 

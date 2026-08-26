@@ -25,7 +25,7 @@ export default function AIAnalysisLoading() {
             Analyzing Your Resume
           </h2>
           <p className="text-sm font-semibold text-slate-500 mt-2">
-            ⏳ Please wait while sentence-transformers & NLP extract your skills, compute semantic job matches, recommend target courses, and generate your career roadmap.
+            ⏳ Please wait while Hugging Face AI pipeline extracts your skills, computes semantic job matches, recommends target courses, and generates your career roadmap.
           </p>
         </div>
 
@@ -36,7 +36,7 @@ export default function AIAnalysisLoading() {
           </div>
           <div className="flex items-center gap-2.5">
             <Loader2 className="animate-spin text-indigo-600" size={16} />
-            <span>SentenceTransformer (<code className="bg-slate-200 px-1 py-0.5 rounded">all-MiniLM-L6-v2</code>) Embedding & Matching</span>
+            <span>Hugging Face AI Vector Embedding & Semantic Matching</span>
           </div>
           <div className="flex items-center gap-2.5">
             <Loader2 className="animate-spin text-purple-600" size={16} />

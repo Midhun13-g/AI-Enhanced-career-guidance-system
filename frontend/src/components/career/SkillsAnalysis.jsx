@@ -30,7 +30,7 @@ export default function SkillsAnalysis({ resume, careerAnalysis }) {
             <Cpu className="text-blue-600" size={22} /> Skills Analysis
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Normalized skill extraction via SentenceTransformers & NLP taxonomy matching.
+            Normalized skill extraction via Hugging Face AI & NLP taxonomy matching.
           </p>
         </div>
         <span className="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 border border-blue-100">

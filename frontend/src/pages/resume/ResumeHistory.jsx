@@ -145,8 +145,8 @@ export default function ResumeHistory() {
               {paged.map((item, i) => {
                 const analysisId = item.analysisId || item.id;
                 const fileName = item.originalFileName || item.fileName || 'Resume Document';
-                const domain = item.recommendedDomain || 'General Career';
-                const skillsCount = item.extractedSkillsCount ?? item.skillsExtracted ?? '—';
+                const domain = item.topJobRole || item.recommendedDomain || 'Career Analysis';
+                const skillsCount = item.skillCount ?? item.extractedSkillsCount ?? item.skillsExtracted ?? '—';
                 const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'Recent';
                 const status = item.status || 'COMPLETED';
 

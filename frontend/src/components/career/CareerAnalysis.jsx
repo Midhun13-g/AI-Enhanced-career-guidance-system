@@ -2,22 +2,24 @@ import React from 'react';
 import { Target, CheckCircle2, Compass, Award, BarChart2 } from 'lucide-react';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
-export default function CareerAnalysis({ careerAnalysis, careerGuidance }) {
-  const analysis = careerAnalysis ?? {};
-  const guidance = careerGuidance ?? {};
+export default function CareerAnalysis({ career, careerAnalysis, careerGuidance }) {
+  const analysis = career || careerAnalysis || {};
+  const guidance = careerGuidance || {};
 
-  const overallFit = typeof analysis.overall_career_fit === 'number'
-    ? Math.round(analysis.overall_career_fit * (analysis.overall_career_fit <= 1 ? 100 : 1))
-    : (typeof guidance.overall_fit === 'number'
-        ? Math.round(guidance.overall_fit * (guidance.overall_fit <= 1 ? 100 : 1))
-        : (typeof analysis.readiness_score === 'number' ? Math.round(analysis.readiness_score) : null));
+  const overallFit = typeof analysis.domainConfidence === 'number'
+    ? Math.round(analysis.domainConfidence)
+    : (typeof analysis.overall_career_fit === 'number'
+        ? Math.round(analysis.overall_career_fit * (analysis.overall_career_fit <= 1 ? 100 : 1))
+        : (typeof guidance.overall_fit === 'number'
+            ? Math.round(guidance.overall_fit * (guidance.overall_fit <= 1 ? 100 : 1))
+            : null));
 
   const recommendedDomain =
+    analysis.primaryDomain ||
     analysis.recommended_domain ||
     analysis.primary_domain ||
     guidance.primary_domain ||
-    guidance.career_domain ||
-    'Not specified';
+    '';
 
   const strongAreas = Array.isArray(analysis.strong_areas)
     ? analysis.strong_areas

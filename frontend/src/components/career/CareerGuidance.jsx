@@ -1,11 +1,11 @@
 import React from 'react';
 import { Award, CheckCircle2, AlertCircle, Sparkles, TrendingUp } from 'lucide-react';
 
-export default function CareerGuidance({ careerGuidance }) {
-  const guidance = careerGuidance ?? {};
-  const recommendedRoles = Array.isArray(guidance.recommended_roles)
-    ? guidance.recommended_roles
-    : (Array.isArray(guidance.recommendedRoles) ? guidance.recommendedRoles : []);
+export default function CareerGuidance({ career, careerGuidance }) {
+  const guidance = career || careerGuidance || {};
+  const recommendedRoles = Array.isArray(guidance.recommendedRoles)
+    ? guidance.recommendedRoles
+    : (Array.isArray(guidance.recommended_roles) ? guidance.recommended_roles : []);
 
   if (recommendedRoles.length === 0) {
     return (
@@ -35,10 +35,13 @@ export default function CareerGuidance({ careerGuidance }) {
       <div className="grid gap-4 md:grid-cols-3">
         {recommendedRoles.map((role, idx) => {
           const rank = role.rank ?? (idx + 1);
-          const roleName = role.role_name || role.role || role.title || `Career Role #${rank}`;
-          const careerFit = Math.round((role.career_fit ?? role.fit_score ?? 85) * (role.career_fit <= 1 ? 100 : 1));
-          const readiness = Math.round((role.readiness ?? role.readiness_score ?? 75) * (role.readiness <= 1 ? 100 : 1));
-          const domainScore = Math.round((role.domain_score ?? 80) * (role.domain_score <= 1 ? 100 : 1));
+          const roleName = role.career_role || role.role_name || role.role || role.title || `Career Role #${rank}`;
+          const rawFit = role.overall_score ?? role.job_match_score ?? role.career_fit ?? role.fit_score ?? 0;
+          const careerFit = Math.round(rawFit * (rawFit <= 1 ? 100 : 1));
+          const rawReadiness = role.readiness_score ?? role.readiness ?? 0;
+          const readiness = Math.round(rawReadiness * (rawReadiness <= 1 ? 100 : 1));
+          const rawDomain = role.job_match_score ?? role.domain_score ?? 0;
+          const domainScore = Math.round(rawDomain * (rawDomain <= 1 ? 100 : 1));
 
           const strengths = Array.isArray(role.strengths) ? role.strengths : [];
           const missingSkills = Array.isArray(role.missing_skills) ? role.missing_skills : [];

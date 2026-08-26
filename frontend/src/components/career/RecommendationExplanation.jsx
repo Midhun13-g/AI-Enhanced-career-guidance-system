@@ -26,7 +26,7 @@ export default function RecommendationExplanation({ explanations }) {
 
       <div className="grid gap-6 md:grid-cols-2">
         {items.map((item, idx) => {
-          const title = item.recommendation || item.target || `Recommendation #${idx + 1}`;
+          const title = item.factor || item.recommendation || item.target || `Recommendation #${idx + 1}`;
           const rawType = (item.explanation_type || item.type || '').toUpperCase();
           const isShap = rawType.includes('SHAP');
           const typeLabel = isShap ? 'SHAP Feature Contribution' : 'Recommendation Explanation';

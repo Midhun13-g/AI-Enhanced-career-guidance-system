@@ -55,6 +55,10 @@ public class AIAnalysisResponse {
     @JsonAlias({"execution_time", "executionTime"})
     private double executionTime;
 
+    @JsonProperty("raw_ai_response")
+    @JsonAlias({"raw_ai_response", "rawAiResponse"})
+    private String rawAiResponse;
+
     public boolean isSuccess() { return success; }
     public void setSuccess(boolean success) { this.success = success; }
 
@@ -90,4 +94,7 @@ public class AIAnalysisResponse {
 
     public double getExecutionTime() { return executionTime; }
     public void setExecutionTime(double executionTime) { this.executionTime = executionTime; }
+
+    public String getRawAiResponse() { return rawAiResponse; }
+    public void setRawAiResponse(String rawAiResponse) { this.rawAiResponse = rawAiResponse; }
 }

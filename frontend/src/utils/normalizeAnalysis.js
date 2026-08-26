@@ -1,0 +1,180 @@
+/**
+ * Central Adapter / Normalizer for AI Career Guidance Analysis
+ * Normalizes raw API response (from Python AI API or Spring Boot proxy)
+ * into a single predictable frontend data model.
+ */
+
+function toArray(val) {
+  if (Array.isArray(val)) return val;
+  if (val !== null && val !== undefined && val !== '') return [val];
+  return [];
+}
+
+function normalizeScore(score) {
+  if (typeof score !== 'number' || isNaN(score)) return 0;
+  if (score <= 1) return Math.round(score * 100);
+  return Math.round(score);
+}
+
+export function normalizeAnalysisResponse(raw) {
+  if (!raw) return null;
+
+  // Handle wrapper envelope { success: true, data: { ... } }
+  const data = (raw.data && typeof raw.data === 'object' && (raw.data.resume || raw.data.job_matches || raw.data.career_analysis))
+    ? raw.data
+    : raw;
+
+  // 1. Resume section
+  const rawResume = data.resume || data.parsed_resume || data.resume_overview || {};
+  const personal = rawResume.personal_information || rawResume.personal_info || {};
+
+  const name = personal.name || rawResume.name || rawResume.candidate_name || 'Resume Candidate';
+  const email = personal.email || rawResume.email || null;
+  const phone = personal.phone || rawResume.phone || null;
+  const location = personal.location || rawResume.location || null;
+  const summary = rawResume.summary || rawResume.profile_summary || rawResume.objective || null;
+
+  const fallbackSkills = toArray(data.selected_role?.skills_you_have);
+  const skills = toArray(rawResume.skills || rawResume.normalized_skills || rawResume.extracted_skills).length > 0
+    ? toArray(rawResume.skills || rawResume.normalized_skills || rawResume.extracted_skills)
+    : fallbackSkills;
+  const skillCategories = rawResume.skill_categories && typeof rawResume.skill_categories === 'object' ? rawResume.skill_categories : {};
+  const technicalSkills = toArray(rawResume.technical_skills);
+  const professionalSkills = toArray(rawResume.professional_skills);
+
+  const education = toArray(rawResume.education);
+  const experience = toArray(rawResume.experience);
+  const projects = toArray(rawResume.projects);
+  const certifications = toArray(rawResume.certifications);
+
+  // 2. Job matches section
+  const rawMatches = toArray(data.job_matches || data.jobMatches || data.top_5_roles);
+  const jobMatches = rawMatches.map((job, idx) => {
+    const rank = job.rank ?? (idx + 1);
+    const jobTitle = job.job_title || job.jobTitle || job.title || 'Career Role';
+    const company = job.company || '';
+    const domain = job.domain || job.career_domain || '';
+    const rawScore = job.match_score ?? job.matchScore ?? job.job_match_score ?? job.match_percentage ?? job.overall_score ?? job.combined_score ?? job.final_role_score ?? job.semantic_similarity ?? 0;
+    const matchScore = normalizeScore(rawScore);
+    const matchedSkills = toArray(job.matched_skills || job.matchedSkills || job.role_explanation?.skills_you_have);
+    const missingSkills = toArray(job.missing_skills || job.missingSkills || job.role_explanation?.main_skill_gaps);
+    const semanticSimilarity = typeof job.semantic_similarity === 'number' ? job.semantic_similarity : null;
+    const jobSummary = job.job_summary || job.jobSummary || job.role_explanation?.summary || job.summary || '';
+
+    return {
+      rank,
+      jobTitle,
+      company,
+      domain,
+      matchScore,
+      matchedSkills,
+      missingSkills,
+      semanticSimilarity,
+      jobSummary,
+    };
+  });
+
+  // 3. Career Analysis & Guidance section
+  const careerAnalysis = data.career_analysis || data.careerAnalysis || {};
+  const careerGuidance = data.career_guidance || data.careerGuidance || {};
+  const careerProfile = data.career_profile || {};
+  const primaryDomain = careerAnalysis.primary_domain || careerGuidance.domain_analysis?.primary_domain || careerProfile.primary_domain || (jobMatches[0]?.domain) || '';
+  const rawDomainConf = careerAnalysis.domain_confidence || careerGuidance.domain_analysis?.domain_confidence || careerProfile.primary_confidence || (jobMatches[0]?.matchScore) || 0;
+  const domainConfidence = normalizeScore(rawDomainConf);
+  const domainSummary = careerAnalysis.summary || careerGuidance.domain_analysis?.summary || careerProfile.domain_explanation?.primary_domain_selection_reason || '';
+  const recommendedRoles = toArray(careerGuidance.recommended_roles || careerGuidance.recommendedRoles || data.top_5_roles);
+
+  // 4. Skill Gap Analysis & Priorities section
+  const selectedRole = data.selected_role || (data.role_guidance && data.role_guidance[0]) || {};
+  const rawGaps = toArray(data.skill_gaps || data.skillGaps || selectedRole.skills_to_learn || selectedRole.skill_gap?.required?.missing_skills);
+  const skillGaps = rawGaps.map((item) => {
+    if (typeof item === 'string') {
+      return { skill: item, priority: 'HIGH', reason: 'Target role requirement' };
+    }
+    return {
+      skill: item.skill || item.canonical_skill || item.name || '',
+      priority: item.priority || (item.category === 'REQUIRED' ? 'HIGH' : 'MEDIUM'),
+      reason: item.reason || item.description || `Requirement for ${selectedRole.job?.job_title || 'target role'}`,
+    };
+  });
+
+  const learningPriorities = toArray(data.learning_priorities || data.learningPriorities || selectedRole.learning_priorities);
+
+  // 5. Course Recommendations section
+  const extractedRoleCourses = data.role_guidance
+    ? data.role_guidance.flatMap(rg => toArray(rg.recommended_courses))
+    : [];
+  const rawCourses = toArray(data.course_recommendations || data.courseRecommendations || data.recommended_courses || selectedRole.recommended_courses || extractedRoleCourses);
+  const courses = rawCourses.map((c) => {
+    const courseObj = c.course || c;
+    return {
+      title: courseObj.title || courseObj.course_name || courseObj.courseName || c.skill || '',
+      provider: courseObj.provider || courseObj.institution || courseObj.platform || '',
+      targetSkill: c.target_skill || c.skill || courseObj.target_skill || '',
+      difficulty: courseObj.difficulty || 'Intermediate',
+      duration: courseObj.duration || (courseObj.duration_hours ? `${courseObj.duration_hours} hrs` : ''),
+      reason: c.explanation?.why_this_course || c.explanation?.why_you_need_it || c.reason || courseObj.reason || '',
+      url: courseObj.url || courseObj.link || null,
+      score: normalizeScore(courseObj.final_score || courseObj.score_percentage || c.recommendation_score || c.score || 0),
+    };
+  });
+
+  // 6. Explainability section
+  const extractedRoleExplanations = data.role_guidance
+    ? data.role_guidance.flatMap(rg => toArray(rg.recommended_courses).map(c => c.explanation).filter(Boolean))
+    : [];
+  const rawExplanations = toArray(data.explanations || data.recommendation_explanations || data.explainability || extractedRoleExplanations);
+  const explanations = rawExplanations.map((exp) => ({
+    factor: exp.target_skill || exp.title || exp.recommendation || exp.factor || 'Match Factor',
+    explanation: exp.why_this_course || exp.why_you_need_it || exp.human_readable_explanation || exp.humanReadableExplanation || exp.explanation || exp.reasoning || '',
+    featureContributions: exp.feature_contributions || exp.featureContributions || null,
+  }));
+
+  // 7. Roadmap section
+  const rawRoadmap = toArray(data.roadmap || data.roadmap_phases || selectedRole.roadmap);
+  const roadmap = rawRoadmap.map((p, idx) => ({
+    phase: p.phase ?? p.phase_number ?? (idx + 1),
+    title: p.title || p.phase_name || `Phase ${idx + 1}`,
+    duration: p.duration || p.estimated_duration || '',
+    skillsToLearn: toArray(p.skills_to_learn || p.skillsToLearn || p.target_skills || p.missing_skills_covered),
+    recommendedCourses: toArray(p.recommended_courses || p.recommendedCourses),
+    projects: toArray(p.projects),
+    expectedOutcome: p.expected_outcome || p.expectedOutcome || p.learning_objective || p.completion_criteria || '',
+  }));
+
+  return {
+    requestId: data.request_id || data.requestId || 'gradio-' + Date.now(),
+    executionTime: data.execution_time || data.executionTime || null,
+    resume: {
+      candidateName: name,
+      email,
+      phone,
+      location,
+      summary,
+      skills,
+      skillCategories,
+      technicalSkills,
+      professionalSkills,
+      education,
+      experience,
+      projects,
+      certifications,
+      totalSkills: skills.length,
+    },
+    career: {
+      primaryDomain,
+      domainConfidence,
+      domainSummary,
+      recommendedRoles,
+    },
+    jobMatches,
+    skillGap: {
+      gaps: skillGaps,
+      priorities: learningPriorities,
+    },
+    courses,
+    explanations,
+    roadmap,
+    raw: data,
+  };
+}

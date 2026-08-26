@@ -79,6 +79,7 @@ public class AiCareerAnalysisService {
             analysis.setExplanations(serializeJson(aiResponse.getExplanations()));
             analysis.setCareerGuidance(serializeJson(aiResponse.getCareerGuidance()));
             analysis.setRoadmap(serializeJson(aiResponse.getRoadmap()));
+            analysis.setRawAiResponse(aiResponse.getRawAiResponse());
 
             analysisRepository.save(analysis);
             logger.info("Successfully updated analysis ID {} to COMPLETED", analysisId);
@@ -284,6 +285,7 @@ public class AiCareerAnalysisService {
         if (entity.getRoadmap() != null) {
             resp.setRoadmap(deserializeJson(entity.getRoadmap(), new TypeReference<List<RoadmapResponse>>() {}));
         }
+        resp.setRawAiResponse(entity.getRawAiResponse());
 
         return resp;
     }
