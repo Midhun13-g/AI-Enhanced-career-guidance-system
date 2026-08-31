@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, Code, Award, Sparkles, CheckCircle2, FileText } from 'lucide-react';
+import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, Code, Award, Sparkles, CheckCircle2, FileText, Compass, Target } from 'lucide-react';
 
 export default function ResumeOverview({ resume }) {
   const data = resume ?? {};
@@ -10,6 +10,14 @@ export default function ResumeOverview({ resume }) {
   const phone = personal.phone || data.phone || null;
   const location = personal.location || data.location || null;
   const summary = data.summary || data.profile_summary || data.objective || null;
+  const careerProfile = data.careerProfile || data.career_profile || {};
+  const primaryDomain = careerProfile.primary_domain || careerProfile.primaryDomain || '';
+  const domainConfidence = Number(careerProfile.primary_confidence ?? careerProfile.primaryConfidence);
+  const supportingSkills = Array.isArray(careerProfile.domain_explanation?.supporting_skills)
+    ? careerProfile.domain_explanation.supporting_skills
+    : [];
+  const domainReason = careerProfile.domain_explanation?.primary_domain_selection_reason || null;
+  const displayDomain = primaryDomain.replaceAll('_', ' ');
 
   const education = Array.isArray(data.education) ? data.education : [];
   const experience = Array.isArray(data.experience) ? data.experience : [];
@@ -63,6 +71,36 @@ export default function ResumeOverview({ resume }) {
           <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
             {summary}
           </p>
+        </div>
+      )}
+
+      {primaryDomain && (
+        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h3 className="flex items-center gap-2 text-sm font-black text-slate-900">
+                <Compass size={18} className="text-indigo-600" /> Career Profile
+              </h3>
+              <p className="mt-2 text-lg font-black capitalize text-indigo-950">{displayDomain}</p>
+              {domainReason && <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-600">{domainReason}</p>}
+            </div>
+            {Number.isFinite(domainConfidence) && (
+              <div className="rounded-xl border border-indigo-100 bg-white px-4 py-2 text-center shadow-sm">
+                <span className="block text-2xl font-black text-indigo-600">{Math.round(domainConfidence <= 1 ? domainConfidence * 100 : domainConfidence)}%</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Domain Confidence</span>
+              </div>
+            )}
+          </div>
+          {supportingSkills.length > 0 && (
+            <div className="mt-4 border-t border-indigo-100 pt-3">
+              <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500"><Target size={13} /> Evidence skills</p>
+              <div className="flex flex-wrap gap-2">
+                {supportingSkills.map((skill) => (
+                  <span key={skill} className="rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs font-bold text-indigo-800">{skill}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

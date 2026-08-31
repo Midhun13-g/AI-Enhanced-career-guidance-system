@@ -16,13 +16,74 @@ function normalizeScore(score) {
   return Math.round(score);
 }
 
+function toTextList(value) {
+  return toArray(value)
+    .map((item) => typeof item === 'string'
+      ? item
+      : (item?.skill || item?.canonical_skill || item?.name || item?.title || ''))
+    .filter(Boolean);
+}
+
+function readPipelineResult(rawResponse) {
+  if (typeof rawResponse !== 'string' || !rawResponse.trim()) return null;
+  try {
+    const parsed = JSON.parse(rawResponse);
+    const root = Array.isArray(parsed) ? parsed[0] : parsed;
+    return root?.final_result && typeof root.final_result === 'object' ? root.final_result : null;
+  } catch {
+    return null;
+  }
+}
+
+// The HF Step 9 response is role-centric. Some backend versions persist the
+// compact DTO plus the complete Step 9 payload in raw_ai_response. Rehydrate
+// that payload here so saved analyses remain fully usable without re-running
+// a limited daily resume analysis.
+function hydrateStep9Data(data) {
+  const step9 = readPipelineResult(data.raw_ai_response || data.rawAiResponse);
+  if (!step9) return data;
+
+  const selectedRole = step9.selected_role || step9.default_selected_role || {};
+  const courseExplanations = toArray(selectedRole.recommended_courses)
+    .map((item) => item?.explanation)
+    .filter(Boolean);
+
+  return {
+    ...data,
+    resume: {
+      ...(data.resume || {}),
+      career_profile: step9.career_profile || data.resume?.career_profile,
+      skills: toArray(selectedRole.skills_you_have).length > 0
+        ? selectedRole.skills_you_have
+        : data.resume?.skills,
+    },
+    career_analysis: step9.career_profile || data.career_analysis,
+    career_guidance: {
+      ...(data.career_guidance || {}),
+      recommended_roles: step9.top_5_roles || data.career_guidance?.recommended_roles,
+      domain_analysis: step9.career_profile || data.career_guidance?.domain_analysis,
+    },
+    job_matches: toArray(step9.top_5_roles).length > 0 ? step9.top_5_roles : data.job_matches,
+    selected_role: selectedRole,
+    role_guidance: step9.role_guidance || data.role_guidance,
+    skill_gaps: toArray(selectedRole.skills_to_learn).length > 0 ? selectedRole.skills_to_learn : data.skill_gaps,
+    learning_priorities: step9.learning_priorities || data.learning_priorities,
+    course_recommendations: toArray(selectedRole.recommended_courses).length > 0
+      ? selectedRole.recommended_courses
+      : data.course_recommendations,
+    explanations: courseExplanations.length > 0 ? courseExplanations : data.explanations,
+    roadmap: toArray(step9.roadmap_phases).length > 0 ? step9.roadmap_phases : data.roadmap,
+  };
+}
+
 export function normalizeAnalysisResponse(raw) {
   if (!raw) return null;
 
   // Handle wrapper envelope { success: true, data: { ... } }
-  const data = (raw.data && typeof raw.data === 'object' && (raw.data.resume || raw.data.job_matches || raw.data.career_analysis))
+  const responseData = (raw.data && typeof raw.data === 'object' && (raw.data.resume || raw.data.job_matches || raw.data.career_analysis))
     ? raw.data
     : raw;
+  const data = hydrateStep9Data(responseData);
 
   // 1. Resume section
   const rawResume = data.resume || data.parsed_resume || data.resume_overview || {};
@@ -56,8 +117,9 @@ export function normalizeAnalysisResponse(raw) {
     const domain = job.domain || job.career_domain || '';
     const rawScore = job.match_score ?? job.matchScore ?? job.job_match_score ?? job.match_percentage ?? job.overall_score ?? job.combined_score ?? job.final_role_score ?? job.semantic_similarity ?? 0;
     const matchScore = normalizeScore(rawScore);
-    const matchedSkills = toArray(job.matched_skills || job.matchedSkills || job.role_explanation?.skills_you_have);
-    const missingSkills = toArray(job.missing_skills || job.missingSkills || job.role_explanation?.main_skill_gaps);
+    const roleGuide = toArray(data.role_guidance).find((role) => role?.job?.job_id === job.job_id || role?.job?.job_title === jobTitle);
+    const matchedSkills = toTextList(job.matched_skills || job.matchedSkills || job.role_explanation?.skills_you_have || roleGuide?.skills_you_have);
+    const missingSkills = toTextList(job.missing_skills || job.missingSkills || job.role_explanation?.main_skill_gaps || roleGuide?.skills_to_learn);
     const semanticSimilarity = typeof job.semantic_similarity === 'number' ? job.semantic_similarity : null;
     const jobSummary = job.job_summary || job.jobSummary || job.role_explanation?.summary || job.summary || '';
 
@@ -136,8 +198,9 @@ export function normalizeAnalysisResponse(raw) {
     phase: p.phase ?? p.phase_number ?? (idx + 1),
     title: p.title || p.phase_name || `Phase ${idx + 1}`,
     duration: p.duration || p.estimated_duration || '',
-    skillsToLearn: toArray(p.skills_to_learn || p.skillsToLearn || p.target_skills || p.missing_skills_covered),
-    recommendedCourses: toArray(p.recommended_courses || p.recommendedCourses),
+    skillsToLearn: toTextList(p.skills_to_learn || p.skillsToLearn || p.target_skills || p.missing_skills_covered),
+    recommendedCourses: toArray(p.recommended_courses || p.recommendedCourses)
+      .map((course) => typeof course === 'string' ? course : (course.course?.title || course.title || course.skill || 'Learning resource')),
     projects: toArray(p.projects),
     expectedOutcome: p.expected_outcome || p.expectedOutcome || p.learning_objective || p.completion_criteria || '',
   }));
@@ -151,6 +214,7 @@ export function normalizeAnalysisResponse(raw) {
       phone,
       location,
       summary,
+      careerProfile: rawResume.career_profile || rawResume.careerProfile || data.career_profile || null,
       skills,
       skillCategories,
       technicalSkills,

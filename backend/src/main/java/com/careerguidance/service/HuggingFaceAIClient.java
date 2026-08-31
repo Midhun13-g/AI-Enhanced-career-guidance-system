@@ -289,6 +289,15 @@ public class HuggingFaceAIClient {
 
             Map<String, Object> finalResult = rootMap.get("final_result") instanceof Map<?, ?> m ? (Map<String, Object>) m : rootMap;
 
+            // Step 9 is role-centric: the actionable skills, courses, and roadmap
+            // live on the chosen role rather than at the result root.  Keep this
+            // compatibility layer here so the REST response remains stable for the
+            // frontend and historical analyses.
+            Map<String, Object> selectedRole = getMap(finalResult.get("selected_role"));
+            if (selectedRole.isEmpty()) {
+                selectedRole = getMap(finalResult.get("default_selected_role"));
+            }
+
             // Map resume data
             Map<String, Object> resumeMap = new LinkedHashMap<>();
             if (finalResult.get("resume") instanceof Map<?, ?> r) {
@@ -298,6 +307,12 @@ public class HuggingFaceAIClient {
             }
             if (finalResult.get("career_profile") instanceof Map<?, ?> cp) {
                 resumeMap.put("career_profile", cp);
+            }
+            if (!resumeMap.containsKey("skills")) {
+                List<String> selectedRoleSkills = extractTextList(selectedRole.get("skills_you_have"));
+                if (!selectedRoleSkills.isEmpty()) {
+                    resumeMap.put("skills", selectedRoleSkills);
+                }
             }
             response.setResume(resumeMap);
 
@@ -389,6 +404,16 @@ public class HuggingFaceAIClient {
                     }
                 }
             }
+            if (skillGaps.isEmpty()) {
+                for (Object item : asList(selectedRole.get("skills_to_learn"))) {
+                    Map<String, Object> skill = getMap(item);
+                    SkillGapResponse sg = new SkillGapResponse();
+                    sg.setSkill(skill.isEmpty() ? String.valueOf(item) : String.valueOf(skill.getOrDefault("skill", skill.getOrDefault("canonical_skill", ""))));
+                    sg.setPriority(skill.isEmpty() ? "HIGH" : String.valueOf(skill.getOrDefault("priority", "HIGH")));
+                    sg.setReason(skill.isEmpty() ? "Target role requirement" : String.valueOf(skill.getOrDefault("reason", skill.getOrDefault("recommended_action", "Target role requirement"))));
+                    if (!sg.getSkill().isBlank()) skillGaps.add(sg);
+                }
+            }
 
             if (finalResult.get("learning_priorities") instanceof List<?> lpList) {
                 for (Object lp : lpList) {
@@ -405,20 +430,26 @@ public class HuggingFaceAIClient {
                 rawCourses = l;
             } else if (finalResult.get("recommended_courses") instanceof List<?> l) {
                 rawCourses = l;
+            } else if (selectedRole.get("recommended_courses") instanceof List<?> l) {
+                rawCourses = l;
             }
 
             if (rawCourses != null) {
                 for (Object item : rawCourses) {
                     if (item instanceof Map<?, ?> rawMap) {
                         Map<String, Object> cm = (Map<String, Object>) rawMap;
+                        Map<String, Object> course = getMap(cm.get("course"));
+                        Map<String, Object> source = course.isEmpty() ? cm : course;
                         CourseRecommendationResponse cr = new CourseRecommendationResponse();
-                        cr.setCourseName(String.valueOf(cm.getOrDefault("course_name", cm.getOrDefault("title", ""))));
-                        cr.setProvider(String.valueOf(cm.getOrDefault("provider", cm.getOrDefault("platform", ""))));
-                        cr.setTargetSkill(String.valueOf(cm.getOrDefault("target_skill", cm.getOrDefault("skill", ""))));
-                        cr.setDifficulty(String.valueOf(cm.getOrDefault("difficulty", "")));
-                        cr.setDuration(String.valueOf(cm.getOrDefault("duration", "")));
-                        cr.setReason(String.valueOf(cm.getOrDefault("reason", cm.getOrDefault("description", ""))));
+                        cr.setCourseName(String.valueOf(source.getOrDefault("course_name", source.getOrDefault("title", source.getOrDefault("name", "")))));
+                        cr.setProvider(String.valueOf(source.getOrDefault("provider", source.getOrDefault("platform", ""))));
+                        cr.setTargetSkill(String.valueOf(cm.getOrDefault("target_skill", cm.getOrDefault("canonical_skill", cm.getOrDefault("skill", source.getOrDefault("target_skill", ""))))));
+                        cr.setDifficulty(String.valueOf(source.getOrDefault("difficulty", "")));
+                        cr.setDuration(String.valueOf(source.getOrDefault("duration", source.getOrDefault("duration_hours", ""))));
+                        cr.setReason(String.valueOf(cm.getOrDefault("reason", cm.getOrDefault("description", source.getOrDefault("description", "")))));
                         if (cm.get("recommendation_score") instanceof Number n) {
+                            cr.setRecommendationScore(n.doubleValue());
+                        } else if (source.get("recommendation_score") instanceof Number n) {
                             cr.setRecommendationScore(n.doubleValue());
                         }
                         coursesList.add(cr);
@@ -440,6 +471,17 @@ public class HuggingFaceAIClient {
                     }
                 }
             }
+            if (explanationsList.isEmpty()) {
+                for (Object item : asList(selectedRole.get("recommended_courses"))) {
+                    Map<String, Object> cm = getMap(item);
+                    Map<String, Object> explanation = getMap(cm.get("explanation"));
+                    if (explanation.isEmpty()) continue;
+                    ExplanationResponse er = new ExplanationResponse();
+                    er.setRecommendation(String.valueOf(cm.getOrDefault("canonical_skill", cm.getOrDefault("skill", ""))));
+                    er.setHumanReadableExplanation(String.valueOf(explanation.getOrDefault("why_this_course", explanation.getOrDefault("why_you_need_it", explanation.getOrDefault("human_readable_explanation", "")))));
+                    explanationsList.add(er);
+                }
+            }
             response.setExplanations(explanationsList);
 
             // Map Career Guidance & Analysis
@@ -458,6 +500,14 @@ public class HuggingFaceAIClient {
                 domainMap.put("primary_domain", String.valueOf(((Map<?, ?>) cp).get("primary_domain")));
                 guidance.setDomainAnalysis(domainMap);
             }
+            if (finalResult.get("role_guidance") instanceof List<?> roles) {
+                List<Map<String, Object>> roleList = new ArrayList<>();
+                for (Object role : roles) {
+                    Map<String, Object> job = getMap(getMap(role).get("job"));
+                    if (!job.isEmpty()) roleList.add(job);
+                }
+                guidance.setRecommendedRoles(roleList);
+            }
             response.setCareerGuidance(guidance);
 
             // Map Roadmap
@@ -467,6 +517,8 @@ public class HuggingFaceAIClient {
             if (finalResult.get("roadmap") instanceof List<?> l) {
                 phases = l;
             } else if (finalResult.get("roadmap_phases") instanceof List<?> l) {
+                phases = l;
+            } else if (selectedRole.get("roadmap") instanceof List<?> l) {
                 phases = l;
             }
 
@@ -510,5 +562,30 @@ public class HuggingFaceAIClient {
             logger.error("Failed to parse Gradio JSON output: {}", ex.getMessage(), ex);
             throw new AIServiceException("PARSE_ERROR", "Failed to parse AI pipeline response", ex);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getMap(Object value) {
+        return value instanceof Map<?, ?> map
+                ? (Map<String, Object>) map
+                : Collections.emptyMap();
+    }
+
+    private List<?> asList(Object value) {
+        return value instanceof List<?> list ? list : Collections.emptyList();
+    }
+
+    private List<String> extractTextList(Object value) {
+        List<String> result = new ArrayList<>();
+        for (Object item : asList(value)) {
+            if (item instanceof String text && !text.isBlank()) {
+                result.add(text);
+                continue;
+            }
+            Map<String, Object> map = getMap(item);
+            Object text = map.getOrDefault("canonical_skill", map.getOrDefault("skill", map.getOrDefault("name", "")));
+            if (text != null && !String.valueOf(text).isBlank()) result.add(String.valueOf(text));
+        }
+        return result;
     }
 }
