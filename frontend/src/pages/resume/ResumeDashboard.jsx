@@ -50,11 +50,11 @@ export default function ResumeDashboard() {
   const totalAnalyses = history.length;
   const latestAnalysis = history.length > 0 ? history[0] : null;
   const totalSkills = latestAnalysis?.skillCount || 0;
-  const topDomain = latestAnalysis?.topJobRole || (totalAnalyses > 0 ? 'General' : 'Not Analyzed');
+  const suggestedRole = latestAnalysis?.topJobRole || (totalAnalyses > 0 ? 'Not available' : 'Not analyzed');
 
   const stats = [
     { icon: CheckCircle2, label: 'Resume Status', value: totalAnalyses > 0 ? 'Analyzed ✓' : 'Pending Upload', color: 'text-emerald-600', bg: 'bg-emerald-50', delay: 0.05 },
-    { icon: Compass, label: 'Target Domain', value: topDomain, color: 'text-blue-600', bg: 'bg-blue-50', delay: 0.1 },
+    { icon: Compass, label: 'Top Suggested Role', value: suggestedRole, color: 'text-blue-600', bg: 'bg-blue-50', delay: 0.1 },
     { icon: Sparkles, label: 'Skills Detected', value: totalSkills.toString(), color: 'text-indigo-600', bg: 'bg-indigo-50', delay: 0.15 },
     { icon: History, label: 'Total Analyses', value: totalAnalyses.toString(), color: 'text-teal-600', bg: 'bg-teal-50', delay: 0.2 },
   ];

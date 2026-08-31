@@ -66,8 +66,16 @@ function hydrateStep9Data(data) {
     job_matches: toArray(step9.top_5_roles).length > 0 ? step9.top_5_roles : data.job_matches,
     selected_role: selectedRole,
     role_guidance: step9.role_guidance || data.role_guidance,
-    skill_gaps: toArray(selectedRole.skills_to_learn).length > 0 ? selectedRole.skills_to_learn : data.skill_gaps,
-    learning_priorities: step9.learning_priorities || data.learning_priorities,
+    skill_gaps: toTextList(selectedRole.skill_gap?.required?.missing_skills).length > 0
+      ? [
+          ...toTextList(selectedRole.skill_gap?.required?.missing_skills).map((skill) => ({ skill, priority: 'HIGH', reason: 'Required for the selected role' })),
+          ...toTextList(selectedRole.skill_gap?.preferred?.missing_skills).map((skill) => ({ skill, priority: 'MEDIUM', reason: 'Preferred for the selected role' })),
+          ...toTextList(selectedRole.skill_gap?.soft_skills?.missing_skills).map((skill) => ({ skill, priority: 'LOW', reason: 'Professional skill for the selected role' })),
+        ]
+      : (toArray(selectedRole.skills_to_learn).length > 0 ? selectedRole.skills_to_learn : data.skill_gaps),
+    learning_priorities: toArray(step9.learning_priorities).length > 0
+      ? step9.learning_priorities
+      : (selectedRole.skills_to_learn || data.learning_priorities),
     course_recommendations: toArray(selectedRole.recommended_courses).length > 0
       ? selectedRole.recommended_courses
       : data.course_recommendations,
@@ -141,7 +149,7 @@ export function normalizeAnalysisResponse(raw) {
   const careerGuidance = data.career_guidance || data.careerGuidance || {};
   const careerProfile = data.career_profile || {};
   const primaryDomain = careerAnalysis.primary_domain || careerGuidance.domain_analysis?.primary_domain || careerProfile.primary_domain || (jobMatches[0]?.domain) || '';
-  const rawDomainConf = careerAnalysis.domain_confidence || careerGuidance.domain_analysis?.domain_confidence || careerProfile.primary_confidence || (jobMatches[0]?.matchScore) || 0;
+  const rawDomainConf = careerAnalysis.domain_confidence || careerAnalysis.primary_confidence || careerGuidance.domain_analysis?.domain_confidence || careerGuidance.domain_analysis?.primary_confidence || careerProfile.primary_confidence || (jobMatches[0]?.matchScore) || 0;
   const domainConfidence = normalizeScore(rawDomainConf);
   const domainSummary = careerAnalysis.summary || careerGuidance.domain_analysis?.summary || careerProfile.domain_explanation?.primary_domain_selection_reason || '';
   const recommendedRoles = toArray(careerGuidance.recommended_roles || careerGuidance.recommendedRoles || data.top_5_roles);
@@ -193,17 +201,30 @@ export function normalizeAnalysisResponse(raw) {
   }));
 
   // 7. Roadmap section
+  const selectedRoleGapSkills = new Set([
+    ...toTextList(selectedRole.skill_gap?.required?.missing_skills),
+    ...toTextList(selectedRole.skill_gap?.preferred?.missing_skills),
+    ...toTextList(selectedRole.skill_gap?.soft_skills?.missing_skills),
+  ].map((skill) => skill.toLowerCase()));
   const rawRoadmap = toArray(data.roadmap || data.roadmap_phases || selectedRole.roadmap);
   const roadmap = rawRoadmap.map((p, idx) => ({
     phase: p.phase ?? p.phase_number ?? (idx + 1),
     title: p.title || p.phase_name || `Phase ${idx + 1}`,
     duration: p.duration || p.estimated_duration || '',
-    skillsToLearn: toTextList(p.skills_to_learn || p.skillsToLearn || p.target_skills || p.missing_skills_covered),
+    skillsToLearn: toTextList(p.skills_to_learn || p.skillsToLearn || p.target_skills || p.missing_skills_covered)
+      .filter((skill) => selectedRoleGapSkills.size === 0 || selectedRoleGapSkills.has(skill.toLowerCase())),
     recommendedCourses: toArray(p.recommended_courses || p.recommendedCourses)
       .map((course) => typeof course === 'string' ? course : (course.course?.title || course.title || course.skill || 'Learning resource')),
     projects: toArray(p.projects),
     expectedOutcome: p.expected_outcome || p.expectedOutcome || p.learning_objective || p.completion_criteria || '',
+  })).filter((phase) => phase.skillsToLearn.length > 0 || phase.recommendedCourses.length > 0 || phase.projects.length > 0);
+
+  const normalizedRoadmap = roadmap.map((phase) => ({
+    ...phase,
+    title: phase.skillsToLearn.length > 0 ? `Phase ${phase.phase}: Learn ${phase.skillsToLearn.join(', ')}` : phase.title,
   }));
+  const roleFit = selectedRole.career_fit || {};
+  const selectedJob = selectedRole.job || {};
 
   return {
     requestId: data.request_id || data.requestId || 'gradio-' + Date.now(),
@@ -229,7 +250,17 @@ export function normalizeAnalysisResponse(raw) {
       primaryDomain,
       domainConfidence,
       domainSummary,
+      domainScores: careerAnalysis.candidate_domain_profile || careerGuidance.domain_analysis?.candidate_domain_profile || careerProfile.candidate_domain_profile || {},
       recommendedRoles,
+      selectedRole: {
+        title: selectedJob.job_title || selectedRole.job_title || jobMatches[0]?.jobTitle || '',
+        readiness: normalizeScore(roleFit.career_readiness_percentage),
+        skillGap: normalizeScore(roleFit.overall_skill_gap_percentage),
+        domainAlignment: normalizeScore(selectedJob.domain_score),
+        finalRoleScore: normalizeScore(selectedJob.final_role_score),
+        status: roleFit.status || '',
+        summary: selectedRole.role_explanation?.summary || '',
+      },
     },
     jobMatches,
     skillGap: {
@@ -238,7 +269,7 @@ export function normalizeAnalysisResponse(raw) {
     },
     courses,
     explanations,
-    roadmap,
+    roadmap: normalizedRoadmap,
     raw: data,
   };
 }

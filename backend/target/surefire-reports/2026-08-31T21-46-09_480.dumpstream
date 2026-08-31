@@ -1,4 +1,4 @@
-# Created at 2026-08-31T18:29:16.053
+# Created at 2026-08-31T21:46:10.363
 Boot Manifest-JAR contains absolute paths in classpath 'D:\Career Guidence\AI-Enhanced-career-guidance-system\backend\target\test-classes'
 Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
 'other' has different root

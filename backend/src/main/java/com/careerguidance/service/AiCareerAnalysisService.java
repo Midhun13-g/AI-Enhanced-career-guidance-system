@@ -248,6 +248,15 @@ public class AiCareerAnalysisService {
                 dto.setSkillCount(skillList.size());
             }
         }
+        // Analyses created before the Step 9 compatibility mapping may only
+        // contain the full pipeline payload in rawAiResponse. Preserve useful
+        // history metrics without requiring the user to consume another AI run.
+        if (dto.getSkillCount() == null || dto.getSkillCount() == 0) {
+            Integer recoveredSkillCount = extractRawSelectedRoleSkillCount(entity.getRawAiResponse());
+            if (recoveredSkillCount != null) {
+                dto.setSkillCount(recoveredSkillCount);
+            }
+        }
 
         return dto;
     }
@@ -316,5 +325,25 @@ public class AiCareerAnalysisService {
             return "AI service authentication error.";
         }
         return msg;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Integer extractRawSelectedRoleSkillCount(String rawAiResponse) {
+        if (rawAiResponse == null || rawAiResponse.isBlank()) return null;
+        try {
+            Object parsed = objectMapper.readValue(rawAiResponse, Object.class);
+            Object root = parsed instanceof List<?> list && !list.isEmpty() ? list.get(0) : parsed;
+            if (!(root instanceof Map<?, ?> rootMap)) return null;
+            Object finalResult = rootMap.get("final_result");
+            if (!(finalResult instanceof Map<?, ?> finalMap)) return null;
+            Object selected = finalMap.get("selected_role");
+            if (!(selected instanceof Map<?, ?> selectedMap)) selected = finalMap.get("default_selected_role");
+            if (!(selected instanceof Map<?, ?> selectedMap)) return null;
+            Object skills = selectedMap.get("skills_you_have");
+            return skills instanceof List<?> list ? list.size() : null;
+        } catch (Exception ex) {
+            logger.debug("Unable to recover skill count from raw AI response: {}", ex.getMessage());
+            return null;
+        }
     }
 }

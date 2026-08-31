@@ -26,7 +26,7 @@ import SkillGapAnalysis from '../../components/career/SkillGapAnalysis';
 import LearningPriorities from '../../components/career/LearningPriorities';
 import CourseRecommendations from '../../components/career/CourseRecommendations';
 import RecommendationExplanation from '../../components/career/RecommendationExplanation';
-import CareerGuidance from '../../components/career/CareerGuidance';
+import CareerReadiness from '../../components/career/CareerReadiness';
 import CareerRoadmap from '../../components/career/CareerRoadmap';
 import AIAnalysisLoading from '../../components/career/AIAnalysisLoading';
 import ErrorState from '../../components/career/ErrorState';
@@ -269,15 +269,15 @@ export default function AICareerGuidancePage() {
 
           {activeTab === 'jobs' && (
             <div className="space-y-6">
+              <CareerReadiness selectedRole={career.selectedRole} />
               <JobMatches jobMatches={jobMatches} />
-              <CareerGuidance career={career} careerGuidance={career} />
             </div>
           )}
 
           {activeTab === 'skills' && (
             <div className="space-y-6">
               <SkillGapAnalysis skillGaps={skillGap.gaps} />
-              <LearningPriorities priorities={skillGap.priorities} />
+              <LearningPriorities learningPriorities={skillGap.priorities} />
             </div>
           )}
 

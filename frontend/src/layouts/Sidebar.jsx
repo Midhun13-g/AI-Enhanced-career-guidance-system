@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, ClipboardCheck, FileText, UserRound,
-  BarChart3, BookOpen, Briefcase, Settings,
+  BarChart3, Settings,
   Sparkles, X, ClipboardList, Layers, Brain, TrendingUp,
   Award, History, Trophy, Target, Code2, Upload, Users,
 } from 'lucide-react';
@@ -49,19 +49,6 @@ const NAV_SECTIONS = [
       { to: '/resume/skill-profile',  label: 'Skill Profile',      icon: TrendingUp, color: 'text-rose-600',   bg: 'bg-rose-50' },
       { to: '/resume/history',        label: 'Resume History',     icon: History,    color: 'text-slate-600',  bg: 'bg-slate-100' },
       { to: '/resume/report',         label: 'Resume Report',      icon: FileText,   color: 'text-teal-600',   bg: 'bg-teal-50' },
-    ],
-  },
-  {
-    label: 'AI Tools & Career',
-    items: [
-      { to: '/resume/ai-guidance', label: 'AI Job Matches',  icon: Briefcase,  color: 'text-amber-600', bg: 'bg-amber-50' },
-      { to: '/assessments/skill-gap', label: 'Skill Gap Tool', icon: Target, color: 'text-rose-600', bg: 'bg-rose-50' },
-    ],
-  },
-  {
-    label: 'Learning & Growth',
-    items: [
-      { to: '/resume/ai-guidance', label: 'Personalized Roadmap', icon: BookOpen, color: 'text-indigo-600', bg: 'bg-indigo-50' },
     ],
   },
 ];
