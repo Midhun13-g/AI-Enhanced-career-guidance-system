@@ -7,3 +7,5 @@ __pycache__/
 .env
 .vscode/
 .DS_Store
+backend/target/
+uploads/profile-images/

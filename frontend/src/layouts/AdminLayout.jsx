@@ -1,78 +1,225 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import {
-  BarChart3, BookOpenCheck, BriefcaseBusiness, FileText, LayoutDashboard,
-  LogOut, Menu, Settings, ShieldCheck, Sparkles, Users, X,
-  ClipboardList, PlusSquare, Database, TrendingUp, UserCheck, GraduationCap,
-} from 'lucide-react';
+  FiGrid, FiUsers, FiUserCheck, FiBookOpen, FiFileText,
+  FiBarChart2, FiCpu, FiBriefcase, FiLayers, FiSettings,
+  FiLogOut, FiMenu, FiX, FiShield, FiPlusSquare, FiDatabase,
+  FiTrendingUp, FiCheckSquare
+} from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
-const sections = [
+const SECTIONS = [
   {
-    label: 'Overview',
+    label: 'Overview & Directory',
     links: [
-      ['Dashboard', '/admin', LayoutDashboard],
-      ['Users', '/admin/users', Users],
-      ['Student Profiles', '/admin/students', GraduationCap],
-      ['Manage Mentors', '/admin/mentors/manage', Users],
-      ['Mentor Verification', '/admin/mentors', UserCheck],
+      { label: 'Admin Dashboard', to: '/admin', icon: FiGrid },
+      { label: 'User Directory', to: '/admin/users', icon: FiUsers },
+      { label: 'Student Profiles', to: '/admin/students', icon: FiUserCheck },
+      { label: 'Manage Mentors', to: '/admin/mentors/manage', icon: FiUsers },
+      { label: 'Advisor Verifications', to: '/admin/mentors', icon: FiShield },
     ],
   },
   {
     label: 'Assessment Engine',
     links: [
-      ['Assessment Dashboard', '/admin/assessment-dashboard', ClipboardList],
-      ['Create Assessment', '/admin/assessments/create', PlusSquare],
-      ['Question Bank', '/admin/assessments/questions', Database],
-      ['Analytics', '/admin/assessments/analytics', TrendingUp],
-      ['All Assessments', '/admin/assessments', BookOpenCheck],
+      { label: 'Assessment Hub', to: '/admin/assessment-dashboard', icon: FiCheckSquare },
+      { label: 'Create Assessment', to: '/admin/assessments/create', icon: FiPlusSquare },
+      { label: 'Question Bank', to: '/admin/assessments/questions', icon: FiDatabase },
+      { label: 'Analytics & Cohorts', to: '/admin/assessments/analytics', icon: FiTrendingUp },
+      { label: 'Published Tests', to: '/admin/assessments', icon: FiBookOpen },
     ],
   },
   {
-    label: 'Content',
+    label: 'Curriculum & Intelligence',
     links: [
-      ['Resume Management', '/admin/resumes', FileText],
-      ['Resume Analytics', '/admin/resume-analytics', BarChart3],
-      ['Skill Taxonomy', '/admin/skill-taxonomy', Sparkles],
-      ['NLP Monitoring', '/admin/nlp-monitoring', BriefcaseBusiness],
-      ['Career Management', '/admin/careers', BriefcaseBusiness],
-      ['Skills Management', '/admin/skills', Sparkles],
+      { label: 'Resume Repository', to: '/admin/resumes', icon: FiFileText },
+      { label: 'Resume Analytics', to: '/admin/resume-analytics', icon: FiBarChart2 },
+      { label: 'Skill Taxonomy', to: '/admin/skill-taxonomy', icon: FiLayers },
+      { label: 'NLP Engine Monitor', to: '/admin/nlp-monitoring', icon: FiCpu },
+      { label: 'Career Pathways', to: '/admin/careers', icon: FiBriefcase },
+      { label: 'Competency Standards', to: '/admin/skills', icon: FiLayers },
     ],
   },
   {
-    label: 'System',
+    label: 'System Configuration',
     links: [
-      ['Reports', '/admin/reports', BarChart3],
-      ['Settings', '/admin/settings', Settings],
+      { label: 'Audit Reports', to: '/admin/reports', icon: FiBarChart2 },
+      { label: 'Platform Settings', to: '/admin/settings', icon: FiSettings },
     ],
   },
 ];
+
 export default function AdminLayout() {
-  const [open, setOpen] = useState(false); const { user, logout } = useAuth(); const navigate = useNavigate();
-  const leave = () => { logout(); navigate('/login'); };
-  return <div className="min-h-screen bg-[#f6f8fc] text-slate-800">
-    {open && <button aria-label="Close menu" onClick={() => setOpen(false)} className="fixed inset-0 z-30 bg-slate-950/35 lg:hidden" />}
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col bg-slate-950 p-5 text-slate-300 transition-transform lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="mb-10 flex items-center gap-3 px-2 text-white"><div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400"><ShieldCheck size={21}/></div><div><p className="font-bold">CareerAI</p><p className="text-xs text-slate-500">Administration</p></div><button onClick={() => setOpen(false)} className="ml-auto lg:hidden"><X size={20}/></button></div>
-      <nav className="flex-1 overflow-y-auto space-y-5 pb-4">
-        {sections.map((section) => (
-          <div key={section.label}>
-            <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">{section.label}</p>
-            <div className="space-y-0.5">
-              {section.links.map(([label, to, Icon]) => (
-                <NavLink end={to === '/admin'} key={to} to={to} onClick={() => setOpen(false)}
-                  className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                    isActive ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'hover:bg-slate-800 hover:text-white'
-                  }`}>
-                  <Icon size={16} />{label}
+  const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const initials = user
+    ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
+    : 'A';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] text-neutral-900 antialiased selection:bg-[#0038FF] selection:text-white">
+      
+      {/* ── Mobile Backdrop ── */}
+      {open && (
+        <button
+          aria-label="Close menu"
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-30 bg-neutral-950/40 backdrop-blur-xs lg:hidden cursor-default"
+        />
+      )}
+
+      {/* ── Sidebar Rail ── */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col justify-between border-r border-neutral-200/80 bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+          open ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        }`}
+      >
+        {/* Top: Unboxed Prism Brand Header */}
+        <div className="flex h-16 items-center justify-between px-5 border-b border-neutral-100 shrink-0">
+          <Link to="/admin" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+            <div className="h-7 w-7 flex items-center justify-center shrink-0">
+              <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                <polygon points="16,2 28,9 16,16 4,9" fill="#0038FF" />
+                <polygon points="4,9 16,16 16,30 4,23" fill="#0026B3" />
+                <polygon points="28,9 16,16 16,30 28,23" fill="#3B82F6" />
+                <polygon points="16,2 16,16 4,9" fill="#FFFFFF" fillOpacity="0.2" />
+              </svg>
+            </div>
+            <span className="text-sm font-extrabold tracking-tight text-neutral-950">
+              CAREER<span className="text-[#0038FF]">AI</span>
+            </span>
+          </Link>
+
+          <button
+            onClick={() => setOpen(false)}
+            className="lg:hidden rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <FiX size={16} />
+          </button>
+        </div>
+
+        {/* Scrollable Nav Sections */}
+        <nav className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-4" aria-label="Administration Navigation">
+          {SECTIONS.map((section) => (
+            <div key={section.label} className="space-y-0.5">
+              <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-neutral-400 font-mono">
+                {section.label}
+              </p>
+              {section.links.map(({ label, to, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  end={to === '/admin'}
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-blue-50/70 text-[#0038FF] font-semibold border-l-2 border-[#0038FF]'
+                        : 'text-neutral-600 hover:text-neutral-950 hover:bg-neutral-50'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon
+                        size={14}
+                        className={`shrink-0 ${
+                          isActive ? 'text-[#0038FF]' : 'text-neutral-400'
+                        }`}
+                      />
+                      <span className="truncate">{label}</span>
+                    </>
+                  )}
                 </NavLink>
               ))}
             </div>
+          ))}
+        </nav>
+
+        {/* Bottom User Rail & Logout */}
+        <div className="p-3 border-t border-neutral-100 bg-[#F8FAFC]/50 space-y-2 shrink-0">
+          <div className="flex items-center gap-2.5 px-2 py-1.5">
+            <div className="h-7 w-7 rounded bg-neutral-950 text-white flex items-center justify-center text-[10px] font-bold font-mono tracking-wider shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-neutral-900 truncate">
+                {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Administrator'}
+              </p>
+              <p className="text-[10px] font-mono text-neutral-400 truncate">
+                {user?.email || 'admin@academic.edu'}
+              </p>
+            </div>
           </div>
-        ))}
-      </nav>
-      <button onClick={leave} className="mt-auto flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-300"><LogOut size={18}/>Logout</button>
-    </aside>
-    <main className="min-h-screen lg:pl-72"><header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-slate-200/80 bg-white/85 px-5 backdrop-blur lg:px-9"><button onClick={() => setOpen(true)} className="rounded-lg p-2 hover:bg-slate-100 lg:hidden"><Menu/></button><div className="hidden text-sm text-slate-500 sm:block">Administration <span className="mx-2 text-slate-300">/</span> Career Guidance System</div><div className="ml-auto flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-full bg-indigo-100 font-bold text-indigo-700">{(user?.firstName || 'A')[0]}</div><div className="hidden sm:block"><p className="text-sm font-semibold">{user?.firstName || 'Admin'} {user?.lastName || ''}</p><p className="text-xs text-slate-500">ROLE_ADMIN</p></div></div></header><div className="p-5 lg:p-9"><Outlet/></div></main>
-  </div>;
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
+          >
+            <FiLogOut size={13} />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main Content Area ── */}
+      <div className="lg:pl-64 flex flex-col min-h-screen">
+        
+        {/* Top Header */}
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-neutral-200/80 bg-white px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setOpen(true)}
+              className="rounded-lg border border-neutral-200 p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 lg:hidden transition-colors"
+              aria-label="Open navigation menu"
+            >
+              <FiMenu size={18} />
+            </button>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 font-mono">
+                  Administration Console
+                </span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+                  <FiShield size={9} /> System Root
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-400 hidden sm:block">
+                Academic intelligence control center & platform supervision
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-semibold text-neutral-900">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase">
+                {user?.roles?.[0]?.replace('ROLE_', '') || 'SUPER_ADMIN'}
+              </span>
+            </div>
+            <div className="h-8 w-8 rounded bg-neutral-950 font-mono text-xs font-bold text-white flex items-center justify-center">
+              {initials}
+            </div>
+          </div>
+        </header>
+
+        {/* Dynamic Route Canvas */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] w-full mx-auto">
+          <Outlet />
+        </main>
+      </div>
+
+    </div>
+  );
 }

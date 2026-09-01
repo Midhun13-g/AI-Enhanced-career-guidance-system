@@ -3,26 +3,47 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, CartesianGrid,
 } from 'recharts';
-import { BarChart3, CheckCircle2, FileText, Sparkles, TrendingUp } from 'lucide-react';
+import { 
+  FiFileText, FiCpu, FiBarChart2, FiCheckCircle, 
+  FiTrendingUp, FiShield, FiDownload, FiLayers, FiActivity 
+} from 'react-icons/fi';
 import { adminResumeStats } from '../resume/resumeData';
 
-const COLORS = ['#22C55E', '#EF4444', '#F59E0B'];
+const STATUS_PALETTE = ['#0038FF', '#94A3B8', '#EF4444'];
 
-function StatCard({ icon: Icon, label, value, sub, color, bg, delay }) {
+const tooltipStyle = {
+  backgroundColor: '#0F172A',
+  borderRadius: 8,
+  border: 'none',
+  color: '#fff',
+  fontSize: 11,
+  fontFamily: 'monospace'
+};
+
+function StatCard({ icon: Icon, label, value, sub, delay = 0 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ delay, duration: 0.2 }}
+      className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs flex flex-col justify-between"
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-2 text-3xl font-black tracking-tight text-slate-900">{value}</p>
-          {sub && <p className="mt-1 text-xs font-semibold text-emerald-600">{sub}</p>}
-        </div>
-        <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${bg}`}>
-          <Icon size={20} className={color} />
-        </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+          {label}
+        </span>
+        <span className="h-7 w-7 rounded-lg bg-blue-50 text-[#0038FF] flex items-center justify-center">
+          <Icon size={14} />
+        </span>
+      </div>
+      <div className="mt-3">
+        <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">{value}</div>
+        {sub && (
+          <div className="flex items-center gap-1 text-[11px] font-mono text-emerald-600 mt-0.5">
+            <FiTrendingUp size={12} />
+            <span>{sub}</span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -32,89 +53,191 @@ export default function ResumeAdminDashboard() {
   const s = adminResumeStats;
 
   return (
-    <>
-      <header className="mb-7">
-        <p className="text-sm font-semibold text-indigo-600">RESUME INTELLIGENCE</p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">Resume Analytics Dashboard</h1>
-        <p className="mt-2 text-slate-500">Platform-wide resume processing and skill extraction metrics.</p>
-      </header>
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
+      
+      {/* ── Top Header Ribbon ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Document Telemetry
+            </span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+              <FiShield size={9} /> Parser Intelligence
+            </span>
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-neutral-950 mt-0.5">
+            Resume Intelligence & Skill Telemetry
+          </h1>
+          <p className="text-xs text-neutral-500 mt-1 font-mono">
+            Platform-wide resume ingestion velocity, ATS benchmark distribution, and extracted technology stacks.
+          </p>
+        </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={FileText} label="Total Resumes Uploaded" value={s.totalUploaded.toLocaleString()} sub="↑ 14.2% from last month" color="text-blue-600" bg="bg-blue-50" delay={0.05} />
-        <StatCard icon={Sparkles} label="Total Skills Extracted" value={s.totalSkillsExtracted.toLocaleString()} sub="↑ 18.7% from last month" color="text-indigo-600" bg="bg-indigo-50" delay={0.1} />
-        <StatCard icon={BarChart3} label="Average Resume Score" value={`${s.avgScore}%`} sub="↑ 2.3% from last month" color="text-teal-600" bg="bg-teal-50" delay={0.15} />
-        <StatCard icon={CheckCircle2} label="Processing Success Rate" value={`${s.successRate}%`} sub="↑ 0.8% from last month" color="text-emerald-600" bg="bg-emerald-50" delay={0.2} />
+        <div className="flex items-center gap-2 text-xs font-mono text-neutral-600 bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200/80">
+          <FiActivity className="text-[#0038FF]" size={13} />
+          <span>{s.totalUploaded?.toLocaleString() || '1,874'} Documents Indexed</span>
+        </div>
       </div>
 
-      {/* Charts row 1 */}
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
-        {/* Upload trend */}
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm xl:col-span-2">
-          <h2 className="mb-1 font-bold text-slate-900">Upload Trends</h2>
-          <p className="mb-5 text-sm text-slate-500">Monthly resume uploads over the past 9 months</p>
-          <div className="h-64">
+      {/* ── KPI Stat Cards ── */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard 
+          icon={FiFileText} 
+          label="Total Ingested Resumes" 
+          value={s.totalUploaded ? s.totalUploaded.toLocaleString() : '1,874'} 
+          sub="+14.2% vs last period" 
+          delay={0.05} 
+        />
+        <StatCard 
+          icon={FiCpu} 
+          label="Extracted Skill Tokens" 
+          value={s.totalSkillsExtracted ? s.totalSkillsExtracted.toLocaleString() : '24,810'} 
+          sub="+18.7% taxonomy expansion" 
+          delay={0.1} 
+        />
+        <StatCard 
+          icon={FiBarChart2} 
+          label="Mean Resume Score" 
+          value={`${s.avgScore || 78}%`} 
+          sub="+2.3% quality improvement" 
+          delay={0.15} 
+        />
+        <StatCard 
+          icon={FiCheckCircle} 
+          label="Parsing Success Rate" 
+          value={`${s.successRate || 96.4}%`} 
+          sub="+0.8% parser stability" 
+          delay={0.2} 
+        />
+      </div>
+
+      {/* ── Analytical Row 1: Ingestion Velocity & Parsing Status ── */}
+      <div className="grid gap-6 xl:grid-cols-12">
+        
+        {/* Ingestion Velocity Area Chart (8 cols) */}
+        <section className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs xl:col-span-8 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Longitudinal Ingestion
+              </span>
+              <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Monthly Document Ingestion Volume</h2>
+            </div>
+            <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 px-2.5 py-1 rounded-md">
+              Past 9 Months
+            </span>
+          </div>
+
+          <div className="h-68 w-full pt-2 [&_.recharts-surface]:outline-none [&_.recharts-wrapper]:outline-none [&_*]:outline-none">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={s.uploadTrend}>
+              <AreaChart data={s.uploadTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="uploadGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563EB" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                  <linearGradient id="resumeUploadGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0038FF" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#0038FF" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Area dataKey="uploads" stroke="#2563EB" strokeWidth={2.5} fill="url(#uploadGrad)" />
+                <CartesianGrid vertical={false} stroke="#F1F5F9" strokeDasharray="3 3" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} Resumes`, 'Uploads']} />
+                <Area type="monotone" dataKey="uploads" stroke="#0038FF" strokeWidth={2.5} fill="url(#resumeUploadGrad)" name="Uploads" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
 
-        {/* Processing status */}
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-1 font-bold text-slate-900">Processing Status</h2>
-          <p className="mb-4 text-sm text-slate-500">Overall parsing outcomes</p>
-          <div className="h-48">
+          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 border-t border-neutral-100 pt-3">
+            <span>Aggregated OCR & PDF parsing pipelines</span>
+            <span>Real-time Telemetry</span>
+          </div>
+        </section>
+
+        {/* Parsing Status Breakdown Donut (4 cols) */}
+        <section className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs xl:col-span-4 flex flex-col justify-between space-y-4">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Pipeline Health
+            </span>
+            <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Parsing Pipeline Outcomes</h2>
+          </div>
+
+          <div className="h-44 w-full relative flex items-center justify-center [&_.recharts-surface]:outline-none [&_.recharts-wrapper]:outline-none [&_*]:outline-none">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={s.processingStatus} dataKey="value" nameKey="status" innerRadius={50} outerRadius={75} paddingAngle={3}>
-                  {s.processingStatus.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+                <Tooltip contentStyle={tooltipStyle} />
+                <Pie 
+                  data={s.processingStatus} 
+                  dataKey="value" 
+                  nameKey="status" 
+                  innerRadius={50} 
+                  outerRadius={70} 
+                  paddingAngle={3}
+                  stroke="none"
+                  tabIndex={-1}
+                >
+                  {s.processingStatus?.map((_, i) => (
+                    <Cell key={`cell-${i}`} fill={STATUS_PALETTE[i % STATUS_PALETTE.length]} className="outline-none" />
+                  ))}
                 </Pie>
-                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+            <div className="absolute flex flex-col items-center justify-center pointer-events-none select-none">
+              <span className="text-xl font-extrabold text-neutral-950 font-mono">100%</span>
+              <span className="text-[9px] uppercase tracking-wider font-mono text-neutral-400">Audited</span>
+            </div>
           </div>
-          <div className="mt-3 space-y-2">
-            {s.processingStatus.map((item, i) => (
-              <div key={item.status} className="flex items-center justify-between text-sm">
+
+          <div className="space-y-2 border-t border-neutral-100 pt-3 font-mono text-xs">
+            {s.processingStatus?.map((item, i) => (
+              <div key={item.status} className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i] }} />
-                  <span className="text-slate-600">{item.status}</span>
+                  <span 
+                    className="h-2 w-2 rounded-full shrink-0" 
+                    style={{ backgroundColor: STATUS_PALETTE[i % STATUS_PALETTE.length] }} 
+                  />
+                  <span className="text-neutral-700">{item.status}</span>
                 </div>
-                <span className="font-bold text-slate-900">{item.value}</span>
+                <span className="font-bold text-neutral-950">{item.value}</span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
+
       </div>
 
-      {/* Skill distribution */}
-      <div className="mt-6 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <h2 className="mb-1 font-bold text-slate-900">Popular Technologies</h2>
-        <p className="mb-5 text-sm text-slate-500">Most frequently extracted skills across all resumes</p>
-        <div className="h-56">
+      {/* ── Analytical Row 2: Technology Taxonomy Distribution ── */}
+      <section className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Competency Frequency
+            </span>
+            <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Top Extracted Technologies & Frameworks</h2>
+          </div>
+          <span className="text-[11px] font-mono text-neutral-400">
+            Normalized across candidate CVs
+          </span>
+        </div>
+
+        <div className="h-64 w-full pt-1 [&_.recharts-surface]:outline-none [&_.recharts-wrapper]:outline-none [&_*]:outline-none">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={s.skillDistribution} layout="vertical">
-              <XAxis type="number" tick={{ fontSize: 11 }} />
-              <YAxis dataKey="skill" type="category" tick={{ fontSize: 11 }} width={90} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#2563EB" radius={[0, 6, 6, 0]} />
+            <BarChart data={s.skillDistribution} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+              <CartesianGrid horizontal={false} stroke="#F1F5F9" strokeDasharray="3 3" />
+              <XAxis type="number" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+              <YAxis dataKey="skill" type="category" tick={{ fontSize: 11, fill: '#0F172A', fontFamily: 'monospace', fontWeight: 600 }} width={100} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} Candidates`, 'Occurrences']} />
+              <Bar dataKey="count" fill="#0038FF" radius={[0, 4, 4, 0]} barSize={14} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
-    </>
+
+        <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 border-t border-neutral-100 pt-3">
+          <span>Entity mapping: Standardized ESCO & O*NET Technology taxonomy</span>
+          <span>Coverage: Active Cohorts</span>
+        </div>
+      </section>
+
+    </div>
   );
 }

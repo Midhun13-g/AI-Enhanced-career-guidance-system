@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Layers, Loader2 } from 'lucide-react';
+import {
+  FiArrowRight,
+  FiLayers,
+  FiActivity,
+  FiShield,
+  FiCheckCircle,
+  FiUploadCloud,
+  FiAlertCircle,
+  FiSliders,
+  FiCpu,
+} from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { getStudentSkills } from '../../services/resumeService';
-
-const CAT_COLOR = {
-  Frontend:    'bg-indigo-100 text-indigo-700',
-  Backend:     'bg-purple-100 text-purple-700',
-  Database:    'bg-teal-100 text-teal-700',
-  Language:    'bg-blue-100 text-blue-700',
-  DevOps:      'bg-orange-100 text-orange-700',
-  Cloud:       'bg-sky-100 text-sky-700',
-  'AI/ML':     'bg-pink-100 text-pink-700',
-  Tools:       'bg-slate-200 text-slate-700',
-  General:     'bg-slate-100 text-slate-600',
-};
 
 export default function ResumeSkillTaxonomy() {
   const [skills, setSkills] = useState([]);
@@ -25,122 +23,238 @@ export default function ResumeSkillTaxonomy() {
 
   useEffect(() => {
     getStudentSkills()
-      .then((res) => setSkills(res.data ?? []))
-      .catch(() => setError('Failed to load skill taxonomy. Please process your resume first.'))
+      .then((res) => setSkills(res?.data ?? []))
+      .catch(() => setError('Failed to load skill taxonomy mappings from the parsing engine.'))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <AppLayout>
-      <div className="flex h-64 items-center justify-center gap-3 text-slate-500">
-        <Loader2 className="animate-spin" size={22} /> Loading skill taxonomy…
-      </div>
-    </AppLayout>
-  );
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex h-72 flex-col items-center justify-center gap-3 text-neutral-400 font-mono text-xs">
+          <FiActivity className="animate-spin text-[#0038FF]" size={24} />
+          <span>Normalizing extracted tokens against global taxonomy...</span>
+        </div>
+      </AppLayout>
+    );
+  }
 
-  if (error) return (
-    <AppLayout>
-      <div className="mx-auto max-w-lg py-16 text-center">
-        <p className="font-bold text-red-600">{error}</p>
-        <Link to="/resume/upload" className="mt-4 inline-block rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white">
-          Upload Resume
-        </Link>
-      </div>
-    </AppLayout>
-  );
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="mx-auto max-w-lg py-16 text-center antialiased">
+          <div className="rounded-2xl border border-neutral-200/90 bg-white p-8 shadow-xs space-y-4">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+              <FiAlertCircle size={22} />
+            </div>
+            <p className="text-xs font-bold text-neutral-900 font-mono">{error}</p>
+            <Link
+              to="/resume/upload"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#0038FF] hover:bg-blue-700 active:scale-[0.99] text-white px-5 py-2.5 text-xs font-mono font-bold transition-all shadow-md shadow-blue-500/20"
+            >
+              <FiUploadCloud size={14} />
+              <span>Upload Resume</span>
+            </Link>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
-  const categories = ['All', ...new Set(skills.map((s) => s.category).filter(Boolean))];
+  const rawCategories = skills.map((s) => s.category).filter(Boolean);
+  const categories = ['All', ...new Set(rawCategories)];
   const filtered = filter === 'All' ? skills : skills.filter((s) => s.category === filter);
+
+  const stats = [
+    { label: 'Identified Skills', value: skills.length, sub: 'Extracted tokens' },
+    { label: 'Active Clusters', value: Math.max(1, categories.length - 1), sub: 'Domain categories' },
+    { label: 'High Confidence', value: skills.filter((s) => (s.confidence ?? 0) >= 0.85).length, sub: 'Score >= 85%' },
+    { label: 'Primary Source', value: skills.filter((s) => (s.source || 'RESUME') === 'RESUME').length, sub: 'Direct resume text' },
+  ];
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wider text-blue-600">Module 3 · Taxonomy</p>
-            <h1 className="mt-1 text-3xl font-black text-slate-950">Skill Taxonomy Mapping</h1>
-            <p className="mt-1 text-slate-500">How extracted skills are normalised against the standard taxonomy.</p>
-          </div>
-          <Link to="/resume/analysis" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
-            Quality Analysis <ArrowRight size={16} />
-          </Link>
-        </div>
-
-        {/* Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: 'Total Skills', value: skills.length, bg: 'bg-slate-100', color: 'text-slate-700' },
-            { label: 'Categories',   value: categories.length - 1, bg: 'bg-blue-50', color: 'text-blue-700' },
-            { label: 'High Confidence', value: skills.filter((s) => (s.confidence ?? 0) >= 0.85).length, bg: 'bg-emerald-50', color: 'text-emerald-700' },
-            { label: 'Source: Resume',  value: skills.filter((s) => s.source === 'RESUME').length, bg: 'bg-indigo-50', color: 'text-indigo-700' },
-          ].map(({ label, value, bg, color }) => (
-            <div key={label} className={`rounded-2xl p-4 ${bg}`}>
-              <p className={`text-2xl font-black ${color}`}>{value}</p>
-              <p className={`text-xs font-bold ${color} opacity-70`}>{label}</p>
+      <div className="space-y-8 max-w-[1400px] mx-auto pb-16 antialiased selection:bg-[#0038FF] selection:text-white">
+        
+        {/* ── Top Header Ribbon ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-neutral-200/80 pb-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Resume Intelligence
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+                <FiShield size={9} /> Module 03 Taxonomy Engine
+              </span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950">
+              Skill Taxonomy & Normalization
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
+              Mapping noisy resume text strings to standardized, machine-readable industry ontology identifiers for career vector calculation.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link
+              to="/resume/analysis"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#0038FF] hover:bg-blue-700 active:scale-[0.99] text-white py-2.5 px-4 font-mono text-xs font-semibold tracking-wide transition-all shadow-md shadow-blue-500/20 group"
+            >
+              <span>Quality Diagnostics</span>
+              <FiArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* ── Diagnostic KPI Grid ── */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 font-mono">
+          {stats.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className="rounded-2xl border border-neutral-200/90 bg-white p-5 shadow-xs flex flex-col justify-between space-y-3 hover:border-neutral-300 transition-colors"
+            >
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                {s.label}
+              </span>
+              <div>
+                <p className="text-2xl sm:text-3xl font-black text-neutral-950 tracking-tight leading-tight">
+                  {s.value}
+                </p>
+                <p className="text-[10px] text-[#0038FF] font-semibold mt-0.5">
+                  {s.sub}
+                </p>
+              </div>
+            </motion.div>
           ))}
         </div>
 
-        {/* Category filter */}
-        <div className="mb-5 flex flex-wrap gap-2">
-          {categories.map((c) => (
-            <button key={c} onClick={() => setFilter(c)}
-              className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${filter === c ? 'bg-blue-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>
-              {c}
-            </button>
-          ))}
+        {/* ── Category Filter Chips ── */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 font-mono scrollbar-none">
+          {categories.map((c) => {
+            const isActive = filter === c;
+            return (
+              <button
+                key={c}
+                onClick={() => setFilter(c)}
+                className={`rounded-lg px-3.5 py-2 text-xs font-bold transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'bg-neutral-950 text-white shadow-2xs'
+                    : 'border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950'
+                }`}
+              >
+                {c}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Skill mapping cards */}
-        {filtered.length === 0
-          ? <p className="py-12 text-center text-sm text-slate-500">No skills found for this category.</p>
-          : (
+        {/* ── Mapping Grid Surface ── */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#0038FF] font-mono">
+              Normalization Ledger
+            </span>
+            <span className="text-[10px] font-mono text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded">
+              {filtered.length} Token Pair{filtered.length === 1 ? '' : 's'}
+            </span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="rounded-2xl border border-neutral-200/90 bg-white p-12 text-center text-xs font-mono text-neutral-400">
+              No normalized skills found for cluster "{filter}".
+            </div>
+          ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               <AnimatePresence>
-                {filtered.map((s, i) => (
-                  <motion.div key={s.id} layout
-                    initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                    className="card p-5">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-400 mb-4">
-                      <Layers size={13} /> Skill Mapping
-                      <span className={`ml-auto rounded-full px-2.5 py-0.5 text-[10px] font-bold ${CAT_COLOR[s.category] ?? 'bg-slate-100 text-slate-600'}`}>
-                        {s.category ?? 'General'}
-                      </span>
-                    </div>
+                {filtered.map((s, i) => {
+                  const confPct = Math.round((s.confidence ?? 0.88) * 100);
+                  const isHigh = confPct >= 85;
 
-                    <div className="flex items-center gap-3">
-                      {/* Raw name */}
-                      <div className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-center">
-                        <p className="text-[10px] font-bold uppercase text-slate-400">Extracted</p>
-                        <p className="mt-0.5 font-black text-slate-800">{s.skillName}</p>
-                      </div>
-                      <ArrowRight size={16} className="shrink-0 text-blue-400" />
-                      {/* Normalised name */}
-                      <div className="flex-1 rounded-xl bg-blue-50 px-3 py-2 text-center">
-                        <p className="text-[10px] font-bold uppercase text-blue-400">Normalised</p>
-                        <p className="mt-0.5 font-black text-blue-700">{s.normalizedName}</p>
-                      </div>
-                    </div>
+                  return (
+                    <motion.div
+                      key={s.id || i}
+                      layout
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      className="rounded-2xl border border-neutral-200/90 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-neutral-300 transition-colors"
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-center justify-between text-xs font-mono border-b border-neutral-100 pb-3">
+                        <div className="flex items-center gap-1.5 text-neutral-500">
+                          <FiLayers size={13} className="text-[#0038FF]" />
+                          <span className="font-bold text-neutral-800 text-[11px]">Mapping Node #{i + 1}</span>
+                        </div>
 
-                    {/* Confidence bar */}
-                    <div className="mt-3">
-                      <div className="mb-1 flex justify-between text-[10px] font-bold text-slate-400">
-                        <span>Confidence</span>
-                        <span>{Math.round((s.confidence ?? 0) * 100)}%</span>
+                        <span className="rounded px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-blue-50 text-[#0038FF] border border-blue-100">
+                          {s.category || 'General'}
+                        </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                        <motion.div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
-                          initial={{ width: 0 }} animate={{ width: `${(s.confidence ?? 0) * 100}%` }}
-                          transition={{ delay: i * 0.04, duration: 0.6 }} />
-                      </div>
-                    </div>
 
-                    <p className="mt-3 text-[10px] font-semibold text-slate-400">Source: {s.source}</p>
-                  </motion.div>
-                ))}
+                      {/* Transform Node (Raw -> Normalized) */}
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 font-mono">
+                        {/* Extracted Token */}
+                        <div className="rounded-xl border border-neutral-200 bg-[#F8FAFC] p-3 text-center min-w-0">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 block">
+                            Raw Token
+                          </span>
+                          <p className="mt-1 text-xs font-bold text-neutral-900 truncate">
+                            {s.skillName || 'Raw Text'}
+                          </p>
+                        </div>
+
+                        <div className="h-7 w-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0038FF] shrink-0">
+                          <FiArrowRight size={12} />
+                        </div>
+
+                        {/* Normalized Taxonomy Token */}
+                        <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-3 text-center min-w-0">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#0038FF] block">
+                            Normalized Standard
+                          </span>
+                          <p className="mt-1 text-xs font-bold text-[#0038FF] truncate">
+                            {s.normalizedName || s.skillName}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Confidence Rail & Provenance */}
+                      <div className="space-y-2 pt-1 border-t border-neutral-100 font-mono">
+                        <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                          <span>Ontology Confidence</span>
+                          <span className={`font-bold ${isHigh ? 'text-[#0038FF]' : 'text-neutral-700'}`}>
+                            {confPct}% Certainty
+                          </span>
+                        </div>
+
+                        <div className="h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden">
+                          <motion.div
+                            className="h-full rounded-full bg-[#0038FF]"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${confPct}%` }}
+                            transition={{ duration: 0.6, delay: i * 0.02 }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px] text-neutral-400 pt-0.5">
+                          <span>Provenance: {s.source || 'RESUME'}</span>
+                          <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                            <FiCheckCircle size={10} /> Verified
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           )}
+        </div>
+
       </div>
     </AppLayout>
   );

@@ -1,4 +1,0 @@
--- Prefer DefaultAdminInitializer: it encodes Admin@123 using the configured BCrypt encoder.
--- For a manually created account, generate a BCrypt value at deployment time; never insert a plaintext password.
--- INSERT INTO users (first_name,last_name,email,password,active,account_status,created_at,updated_at)
--- VALUES ('System','Administrator','admin@careerai.com','<BCrypt hash of Admin@123>',true,'ACTIVE',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP);

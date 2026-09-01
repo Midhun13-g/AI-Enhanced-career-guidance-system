@@ -1,20 +1,40 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, ArrowUp, Minus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  FiTrendingUp,
+  FiArrowUpRight,
+  FiMinus,
+  FiShield,
+  FiActivity,
+  FiLayers,
+  FiArrowRight,
+  FiCheckCircle,
+} from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
 } from 'recharts';
 
 const skillGrowth = [
-  { skill: 'Java', before: 60, after: 78, color: 'blue' },
-  { skill: 'Python', before: 45, after: 62, color: 'indigo' },
-  { skill: 'SQL', before: 55, after: 78, color: 'teal' },
-  { skill: 'React', before: 70, after: 82, color: 'green' },
-  { skill: 'Spring Boot', before: 50, after: 68, color: 'purple' },
-  { skill: 'Data Structures', before: 40, after: 58, color: 'amber' },
-  { skill: 'System Design', before: 30, after: 48, color: 'rose' },
-  { skill: 'Problem Solving', before: 65, after: 74, color: 'blue' },
+  { skill: 'Java Architecture', before: 60, after: 78, desc: 'Enterprise patterns & concurrency' },
+  { skill: 'Python Analytics', before: 45, after: 62, desc: 'Scripting, ETL & data pipelines' },
+  { skill: 'SQL & Query Plans', before: 55, after: 78, desc: 'Indexing strategies & ACID constraints' },
+  { skill: 'React Architecture', before: 70, after: 82, desc: 'State hooks & component trees' },
+  { skill: 'Spring Boot Services', before: 50, after: 68, desc: 'JPA persistence & REST endpoints' },
+  { skill: 'Data Structures & Alg', before: 40, after: 58, desc: 'Trees, heaps & graph traversals' },
+  { skill: 'Distributed Systems', before: 30, after: 48, desc: 'Load balancers, queues & caching' },
+  { skill: 'Quantitative Aptitude', before: 65, after: 74, desc: 'Logical inference & problem solving' },
 ];
 
 const timeline = [
@@ -25,135 +45,342 @@ const timeline = [
   { month: 'Jul', technical: 78, aptitude: 72, softSkills: 85, overall: 78 },
 ];
 
-const radarBefore = skillGrowth.map((s) => ({ subject: s.skill, before: s.before, after: s.after }));
+const radarData = skillGrowth.map((s) => ({
+  subject: s.skill.split(' ')[0],
+  Baseline: s.before,
+  Current: s.after,
+  fullMark: 100,
+}));
 
-const colorMap = {
-  blue: { bar: 'bg-blue-600', bg: 'bg-blue-50', text: 'text-blue-700', diff: 'text-blue-600' },
-  indigo: { bar: 'bg-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-700', diff: 'text-indigo-600' },
-  teal: { bar: 'bg-teal-500', bg: 'bg-teal-50', text: 'text-teal-700', diff: 'text-teal-600' },
-  green: { bar: 'bg-green-500', bg: 'bg-green-50', text: 'text-green-700', diff: 'text-green-600' },
-  purple: { bar: 'bg-purple-600', bg: 'bg-purple-50', text: 'text-purple-700', diff: 'text-purple-600' },
-  amber: { bar: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-700', diff: 'text-amber-600' },
-  rose: { bar: 'bg-rose-500', bg: 'bg-rose-50', text: 'text-rose-700', diff: 'text-rose-600' },
+const tooltipStyle = {
+  backgroundColor: '#0F172A',
+  borderRadius: 8,
+  border: 'none',
+  color: '#FFFFFF',
+  fontSize: 11,
+  fontFamily: 'monospace',
 };
 
 export default function SkillVectorGrowth() {
-  const avgBefore = Math.round(skillGrowth.reduce((s, i) => s + i.before, 0) / skillGrowth.length);
-  const avgAfter = Math.round(skillGrowth.reduce((s, i) => s + i.after, 0) / skillGrowth.length);
+  const navigate = useNavigate();
+
+  const avgBefore = Math.round(
+    skillGrowth.reduce((s, i) => s + i.before, 0) / skillGrowth.length
+  );
+  const avgAfter = Math.round(
+    skillGrowth.reduce((s, i) => s + i.after, 0) / skillGrowth.length
+  );
+  const totalDelta = avgAfter - avgBefore;
 
   return (
     <AppLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">Skill Intelligence</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Skill Vector Growth</h1>
-          <p className="mt-1 text-sm text-slate-500">Track how your skill profile has evolved through assessments.</p>
-        </motion.div>
+      <div className="space-y-8 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
+        
+        {/* ── Top Header Ribbon ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-neutral-200/80 pb-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Longitudinal Telemetry
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+                <FiShield size={9} /> Trajectory Audit
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950">
+              Skill Vector Growth & Delta Analysis
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
+              Audited velocity tracking candidate proficiency progression from baseline diagnosis to present assessment attempts.
+            </p>
+          </div>
 
-        {/* Summary Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            { label: 'Average Before', value: `${avgBefore}%`, sub: 'Pre-assessment baseline', color: 'text-slate-600', bg: 'bg-slate-50 border-slate-200' },
-            { label: 'Average After', value: `${avgAfter}%`, sub: 'Post-assessment score', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
-            { label: 'Total Growth', value: `+${avgAfter - avgBefore}%`, sub: 'Skill vector improvement', color: 'text-green-700', bg: 'bg-green-50 border-green-200' },
-          ].map((item, i) => (
-            <motion.div key={item.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }}
-              className={`rounded-2xl border p-5 ${item.bg}`}>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{item.label}</p>
-              <p className={`mt-2 text-3xl font-black ${item.color}`}>{item.value}</p>
-              <p className="mt-1 text-xs text-slate-500">{item.sub}</p>
-            </motion.div>
-          ))}
+          <div className="text-xs font-mono text-neutral-400 flex items-center gap-1.5 shrink-0 self-start sm:self-end">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>Telemetry Calibrated</span>
+          </div>
         </div>
 
-        {/* Skill Comparison Bars */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
+        {/* ── Metric KPI Summary Row ── */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs flex flex-col justify-between space-y-3"
+          >
+            <div className="flex items-center justify-between text-neutral-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Pre-Evaluation Baseline
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600">
+                <FiActivity size={14} />
+              </div>
+            </div>
+            <div>
+              <p className="text-3xl font-black text-neutral-950 font-mono tracking-tight">
+                {avgBefore}%
+              </p>
+              <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                Initial diagnostic mean score
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs flex flex-col justify-between space-y-3"
+          >
+            <div className="flex items-center justify-between text-neutral-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Active Proficiency Mean
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0038FF]">
+                <FiTrendingUp size={14} />
+              </div>
+            </div>
+            <div>
+              <p className="text-3xl font-black text-neutral-950 font-mono tracking-tight">
+                {avgAfter}%
+              </p>
+              <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                Current post-assessment average
+              </p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs flex flex-col justify-between space-y-3"
+          >
+            <div className="flex items-center justify-between text-neutral-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Composite Growth Delta
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                <FiArrowUpRight size={14} />
+              </div>
+            </div>
+            <div>
+              <p className="text-3xl font-black text-emerald-700 font-mono tracking-tight">
+                +{totalDelta}%
+              </p>
+              <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                Aggregate skill vector improvement
+              </p>
+            </div>
+          </motion.div>
+
+        </div>
+
+        {/* ── Section 1: Itemized 2-Column Competency Growth Grid ── */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-7 shadow-xs space-y-6"
         >
-          <h2 className="mb-6 text-base font-extrabold text-slate-900">Before vs After Assessment</h2>
-          <div className="space-y-5">
+          <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Discrete Progression
+              </span>
+              <h2 className="text-sm font-bold text-neutral-950 mt-0.5">
+                Baseline vs. Present Assessment Performance
+              </h2>
+            </div>
+            <span className="text-[10px] font-mono text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded">
+              {skillGrowth.length} Monitored Vectors
+            </span>
+          </div>
+
+          {/* 2-Column Responsive Card Grid */}
+          <div className="grid gap-4 sm:grid-cols-2">
             {skillGrowth.map((item, i) => {
-              const c = colorMap[item.color] || colorMap.blue;
               const diff = item.after - item.before;
               return (
-                <motion.div key={item.skill} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i }}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm font-bold text-slate-700">{item.skill}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-slate-400">{item.before}% → <span className="font-bold text-slate-700">{item.after}%</span></span>
-                      <span className={`flex items-center gap-0.5 text-xs font-bold ${diff > 0 ? 'text-green-600' : 'text-slate-400'}`}>
-                        {diff > 0 ? <ArrowUp size={11} /> : <Minus size={11} />}
-                        {diff > 0 ? `+${diff}%` : `${diff}%`}
+                <div
+                  key={item.skill}
+                  className="rounded-xl border border-neutral-200/80 bg-[#F8FAFC] p-4 flex flex-col justify-between space-y-3.5 hover:border-neutral-300 transition-colors"
+                >
+                  {/* Title & Growth Pill */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-bold text-neutral-900 font-mono truncate">
+                        {item.skill}
+                      </h3>
+                      <p className="text-[11px] text-neutral-500 mt-0.5 leading-tight">
+                        {item.desc}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider shrink-0 border ${
+                        diff > 0
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                          : 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                      }`}
+                    >
+                      {diff > 0 ? <FiArrowUpRight size={10} /> : <FiMinus size={10} />}
+                      {diff > 0 ? `+${diff}%` : `${diff}%`}
+                    </span>
+                  </div>
+
+                  {/* Dual Layered Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="relative h-2 w-full rounded-full bg-neutral-200/80 overflow-hidden">
+                      {/* Current Score Progress */}
+                      <motion.div
+                        className="h-full rounded-full bg-[#0038FF]"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.after}%` }}
+                        transition={{ duration: 0.8, delay: 0.05 * i }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] font-mono text-neutral-500">
+                      <span>
+                        Baseline: <strong className="text-neutral-700">{item.before}%</strong>
+                      </span>
+                      <span>
+                        Current: <strong className="text-neutral-900">{item.after}%</strong>
                       </span>
                     </div>
                   </div>
-                  <div className="relative h-3 w-full rounded-full bg-slate-100">
-                    {/* Before bar */}
-                    <motion.div
-                      className={`absolute top-0 h-3 rounded-full ${c.bar} opacity-25`}
-                      initial={{ width: 0 }} animate={{ width: `${item.before}%` }}
-                      transition={{ duration: 0.8, delay: 0.05 * i }}
-                    />
-                    {/* After bar */}
-                    <motion.div
-                      className={`absolute top-0 h-3 rounded-full ${c.bar}`}
-                      initial={{ width: 0 }} animate={{ width: `${item.after}%` }}
-                      transition={{ duration: 0.9, delay: 0.1 + 0.05 * i }}
-                    />
-                  </div>
-                  <div className="mt-1 flex items-center gap-4 text-[10px] text-slate-400">
-                    <span className="flex items-center gap-1"><span className={`h-2 w-2 rounded-full ${c.bar} opacity-30`} />Before: {item.before}%</span>
-                    <span className="flex items-center gap-1"><span className={`h-2 w-2 rounded-full ${c.bar}`} />After: {item.after}%</span>
-                  </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
-        </motion.div>
 
-        {/* Charts Row */}
+          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 border-t border-neutral-100 pt-3">
+            <span>Progress evaluated against structured test bank attempts.</span>
+            <span className="text-[#0038FF] font-semibold">Active Cohort Sync</span>
+          </div>
+        </motion.section>
+
+        {/* ── Section 2: Visual Telemetry (Timeline + Radar) ── */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Timeline Line Chart */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
-          >
-            <h2 className="mb-4 text-base font-extrabold text-slate-900">Skill Improvement Timeline</h2>
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={timeline}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                <YAxis domain={[40, 100]} tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                <Tooltip formatter={(v) => [`${v}%`]} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="technical" stroke="#2563EB" strokeWidth={2} dot={{ r: 3 }} name="Technical" />
-                <Line type="monotone" dataKey="aptitude" stroke="#4F46E5" strokeWidth={2} dot={{ r: 3 }} name="Aptitude" />
-                <Line type="monotone" dataKey="softSkills" stroke="#14B8A6" strokeWidth={2} dot={{ r: 3 }} name="Soft Skills" />
-                <Line type="monotone" dataKey="overall" stroke="#22C55E" strokeWidth={2.5} dot={{ r: 4 }} name="Overall" strokeDasharray="5 3" />
-              </LineChart>
-            </ResponsiveContainer>
-          </motion.div>
+          
+          {/* Longitudinal Trend Line Chart */}
+          <section className="bg-white border border-neutral-200 rounded-2xl p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                    Temporal Trajectory
+                  </span>
+                  <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Competency Growth Timeline</h2>
+                </div>
+                <span className="text-[10px] font-mono text-neutral-400">Past 5 Months</span>
+              </div>
 
-          {/* Radar Comparison */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-            className="rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
-          >
-            <h2 className="mb-4 text-base font-extrabold text-slate-900">Skill Radar Comparison</h2>
-            <ResponsiveContainer width="100%" height={240}>
-              <RadarChart data={radarBefore}>
-                <PolarGrid stroke="#E2E8F0" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#64748B', fontWeight: 600 }} />
-                <Radar dataKey="before" stroke="#94A3B8" fill="#94A3B8" fillOpacity={0.15} strokeWidth={1.5} name="Before" />
-                <Radar dataKey="after" stroke="#2563EB" fill="#2563EB" fillOpacity={0.2} strokeWidth={2} name="After" />
-                <Tooltip formatter={(v) => [`${v}%`]} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </motion.div>
+              <div className="h-60 w-full pt-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timeline} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                    <YAxis domain={[40, 100]} tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`]} />
+                    <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'monospace' }} />
+                    <Line type="monotone" dataKey="technical" stroke="#0038FF" strokeWidth={2} dot={{ r: 3, fill: '#0038FF' }} name="Technical" />
+                    <Line type="monotone" dataKey="aptitude" stroke="#64748B" strokeWidth={1.5} strokeDasharray="3 3" dot={{ r: 3 }} name="Aptitude" />
+                    <Line type="monotone" dataKey="softSkills" stroke="#94A3B8" strokeWidth={1.5} dot={{ r: 3 }} name="Communication" />
+                    <Line type="monotone" dataKey="overall" stroke="#0F172A" strokeWidth={2} dot={{ r: 3, fill: '#0F172A' }} name="Composite" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-neutral-400 font-mono text-center pt-2 border-t border-neutral-100">
+              Consistent upward trajectory with +20% composite score elevation.
+            </p>
+          </section>
+
+          {/* Radar Vector Overlay */}
+          <section className="bg-white border border-neutral-200 rounded-2xl p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                    Geometric Vector
+                  </span>
+                  <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Baseline vs. Current Radar</h2>
+                </div>
+                <span className="text-[10px] font-mono text-[#0038FF] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
+                  Dual Polyline
+                </span>
+              </div>
+
+              <div className="h-60 w-full flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData} outerRadius="75%">
+                    <PolarGrid stroke="#E5E7EB" />
+                    <PolarAngleAxis
+                      dataKey="subject"
+                      tick={{ fontSize: 10, fill: '#475569', fontFamily: 'monospace' }}
+                    />
+                    <Radar
+                      name="Baseline"
+                      dataKey="Baseline"
+                      stroke="#94A3B8"
+                      fill="#94A3B8"
+                      fillOpacity={0.12}
+                      strokeWidth={1.5}
+                      strokeDasharray="3 3"
+                    />
+                    <Radar
+                      name="Current"
+                      dataKey="Current"
+                      stroke="#0038FF"
+                      fill="#0038FF"
+                      fillOpacity={0.18}
+                      strokeWidth={2}
+                    />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`]} />
+                    <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'monospace' }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-neutral-400 font-mono text-center pt-2 border-t border-neutral-100">
+              Expansion observed across all 8 tested engineering dimensions.
+            </p>
+          </section>
+
         </div>
+
+        {/* ── Section 3: Next Step Action Banner ── */}
+        <div className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-xs font-mono">
+          <div className="space-y-1 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0038FF]">
+                Recommended Trajectory Focus
+              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0038FF]" />
+              <span className="text-[10px] text-neutral-400">High Velocity Area</span>
+            </div>
+            <h3 className="text-sm sm:text-base font-bold text-neutral-950 font-sans">
+              Advance to Distributed Systems Architecture Assessment
+            </h3>
+            <p className="text-xs text-neutral-500 leading-relaxed font-sans">
+              Elevating your Distributed Systems vector from 48% to 65% will close the final prerequisite gap for Senior Backend roles.
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate('/assessments/categories')}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#0038FF] hover:bg-blue-700 active:scale-[0.99] text-white py-2.5 px-5 text-xs font-semibold tracking-wide transition-all shadow-md shadow-blue-500/20 group shrink-0"
+          >
+            <span>Launch Evaluation</span>
+            <FiArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
+
       </div>
     </AppLayout>
   );

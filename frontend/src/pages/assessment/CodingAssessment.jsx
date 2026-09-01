@@ -1,242 +1,420 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Play, Send, ChevronDown, Terminal, CheckCircle2, XCircle,
-  Clock, Cpu, MemoryStick, Maximize2, RotateCcw, BookOpen,
-  AlertCircle, ChevronRight,
-} from 'lucide-react';
-import Badge from '../../components/ui/Badge';
+  FiExternalLink,
+  FiCheckCircle,
+  FiCode,
+  FiShield,
+  FiArrowLeft,
+  FiFilter,
+  FiTarget,
+  FiClock,
+  FiZap,
+  FiAlertTriangle,
+  FiCpu,
+  FiChevronDown,
+} from 'react-icons/fi';
+import AppLayout from '../../components/layout/AppLayout';
+import useAssessment from '../../hooks/useAssessment';
 
-const problem = {
-  title: 'Two Sum',
-  difficulty: 'Easy',
-  category: 'Arrays & Hashing',
-  timeLimit: '1 second',
-  memoryLimit: '256 MB',
-  description: `Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.
-
-You may assume that each input would have exactly one solution, and you may not use the same element twice.
-
-You can return the answer in any order.`,
-  examples: [
-    { input: 'nums = [2,7,11,15], target = 9', output: '[0,1]', explanation: 'nums[0] + nums[1] == 9, return [0, 1].' },
-    { input: 'nums = [3,2,4], target = 6', output: '[1,2]', explanation: 'nums[1] + nums[2] == 6, return [1, 2].' },
-  ],
-  constraints: ['2 ≤ nums.length ≤ 10⁴', '-10⁹ ≤ nums[i] ≤ 10⁹', 'Only one valid answer exists.'],
-};
-
-const testCases = [
-  { id: 1, input: '[2,7,11,15], 9', expected: '[0,1]', status: 'passed', time: '12ms', memory: '42MB' },
-  { id: 2, input: '[3,2,4], 6', expected: '[1,2]', status: 'passed', time: '8ms', memory: '41MB' },
-  { id: 3, input: '[3,3], 6', expected: '[0,1]', status: 'failed', time: '—', memory: '—' },
+// Master problem bank mapped to curriculum competency vectors
+const CURATED_PROBLEM_BANK = [
+  {
+    id: 'PRB-01',
+    title: 'Two Sum & Complement Lookup',
+    skillVector: 'Hash Tables & Arrays',
+    careerTrack: 'Backend Developer',
+    platform: 'LeetCode',
+    difficulty: 'Foundational',
+    timeEstimate: '15 mins',
+    benchmarkGapThreshold: 80, // Flagged if candidate score in this vector < 80%
+    link: 'https://leetcode.com/problems/two-sum/',
+    description: 'Find two indices whose values sum to a specific target. Directly addresses hash table lookup and space-time tradeoffs.',
+    tags: ['Hash Table', 'Array', 'O(n) Target'],
+  },
+  {
+    id: 'PRB-02',
+    title: 'Department Highest & Top 3 Salaries',
+    skillVector: 'SQL Queries',
+    careerTrack: 'Data Engineer',
+    platform: 'LeetCode SQL',
+    difficulty: 'Intermediate',
+    timeEstimate: '25 mins',
+    benchmarkGapThreshold: 75,
+    link: 'https://leetcode.com/problems/department-top-three-salaries/',
+    description: 'Filter grouped analytical results using window ranking functions (DENSE_RANK) without costly subquery table scans.',
+    tags: ['Window Functions', 'JOIN Optimization', 'Schema Design'],
+  },
+  {
+    id: 'PRB-03',
+    title: 'LRU Cache Design & Concurrent Invalidation',
+    skillVector: 'System Design',
+    careerTrack: 'Backend Developer',
+    platform: 'LeetCode',
+    difficulty: 'Advanced',
+    timeEstimate: '45 mins',
+    benchmarkGapThreshold: 70,
+    link: 'https://leetcode.com/problems/lru-cache/',
+    description: 'Synthesize a Least Recently Used eviction strategy using a doubly linked list combined with hash indexing.',
+    tags: ['Doubly Linked List', 'Design', 'O(1) Constraints'],
+  },
+  {
+    id: 'PRB-04',
+    title: 'Valid Parentheses & Syntax Trees',
+    skillVector: 'Stacks & Queues',
+    careerTrack: 'Full Stack Developer',
+    platform: 'LeetCode',
+    difficulty: 'Foundational',
+    timeEstimate: '15 mins',
+    benchmarkGapThreshold: 85,
+    link: 'https://leetcode.com/problems/valid-parentheses/',
+    description: 'Validate bracket symmetry using a strict LIFO stack. Essential for compiler AST and JSON parse verification.',
+    tags: ['Stack', 'State Machine', 'String'],
+  },
+  {
+    id: 'PRB-05',
+    title: 'Binary Tree Level Order Traversal',
+    skillVector: 'Data Structures & Algorithms',
+    careerTrack: 'AI/ML Engineer',
+    platform: 'LeetCode',
+    difficulty: 'Intermediate',
+    timeEstimate: '30 mins',
+    benchmarkGapThreshold: 70,
+    link: 'https://leetcode.com/problems/binary-tree-level-order-traversal/',
+    description: 'Traverse hierarchical node structures level-by-level using queue-based Breadth-First Search (BFS).',
+    tags: ['BFS', 'Queue', 'Graph Traversal'],
+  },
+  {
+    id: 'PRB-06',
+    title: 'Container With Most Water',
+    skillVector: 'Two Pointers & Optimization',
+    careerTrack: 'Backend Developer',
+    platform: 'LeetCode',
+    difficulty: 'Intermediate',
+    timeEstimate: '25 mins',
+    benchmarkGapThreshold: 75,
+    link: 'https://leetcode.com/problems/container-with-most-water/',
+    description: 'Find two vertical boundaries that maximize trapped volume using a two-pointer converging search.',
+    tags: ['Two Pointer', 'Greedy', 'Array'],
+  },
 ];
 
-const languages = ['Java', 'Python', 'JavaScript', 'C++', 'Go'];
-const themes = ['Dark', 'Light', 'Monokai', 'Dracula'];
+const TRACKS = ['All Recommended', 'Identified Gaps Only', 'Backend Developer', 'Data Engineer', 'Full Stack Developer', 'AI/ML Engineer'];
 
-const starterCode = {
-  Java: `class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your solution here\n        \n    }\n}`,
-  Python: `class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        # Write your solution here\n        pass`,
-  JavaScript: `/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    // Write your solution here\n    \n};`,
+const difficultyBadge = (val) => {
+  const level = (val || '').toUpperCase();
+  switch (level) {
+    case 'FOUNDATIONAL':
+    case 'EASY':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+    case 'INTERMEDIATE':
+    case 'MEDIUM':
+      return 'bg-blue-50 text-[#0038FF] border-blue-200/80';
+    case 'ADVANCED':
+    case 'HARD':
+      return 'bg-amber-50 text-amber-700 border-amber-200/80';
+    default:
+      return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+  }
 };
 
 export default function CodingAssessment() {
   const navigate = useNavigate();
-  const [lang, setLang] = useState('Java');
-  const [theme, setTheme] = useState('Dark');
-  const [code, setCode] = useState(starterCode.Java);
-  const [activeTab, setActiveTab] = useState('testcases');
-  const [running, setRunning] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [timeLeft] = useState('28:45');
+  const assessment = useAssessment();
+  const [selectedFilter, setSelectedFilter] = useState('Identified Gaps Only');
+  const [completed, setCompleted] = useState({});
 
-  const handleLangChange = (l) => { setLang(l); setCode(starterCode[l] || starterCode.Java); };
+  // Real or calibrated candidate skill scores from recent assessments
+  const candidateScores = useMemo(() => {
+    return (
+      assessment?.result?.technicalBySkill || {
+        'SQL Queries': 65,
+        'System Design': 45,
+        'Data Structures & Algorithms': 58,
+        'Hash Tables & Arrays': 70,
+        'Stacks & Queues': 88,
+        'Two Pointers & Optimization': 60,
+      }
+    );
+  }, [assessment]);
 
-  const handleRun = () => {
-    setRunning(true);
-    setTimeout(() => { setRunning(false); setActiveTab('output'); }, 1200);
+  // Tag problems dynamically with their personalized remediation priority
+  const enrichedProblems = useMemo(() => {
+    return CURATED_PROBLEM_BANK.map((problem) => {
+      const score = candidateScores[problem.skillVector] ?? 60;
+      const isGap = score < problem.benchmarkGapThreshold;
+      const delta = problem.benchmarkGapThreshold - score;
+      return {
+        ...problem,
+        candidateScore: score,
+        isGap,
+        gapDelta: delta > 0 ? delta : 0,
+      };
+    });
+  }, [candidateScores]);
+
+  const filteredProblems = useMemo(() => {
+    if (selectedFilter === 'Identified Gaps Only') {
+      return enrichedProblems.filter((p) => p.isGap);
+    }
+    if (selectedFilter === 'All Recommended') {
+      return enrichedProblems;
+    }
+    return enrichedProblems.filter((p) => p.careerTrack === selectedFilter);
+  }, [enrichedProblems, selectedFilter]);
+
+  const toggleCompleted = (id) => {
+    setCompleted((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
-  const handleSubmit = () => {
-    setRunning(true);
-    setTimeout(() => { setRunning(false); setSubmitted(true); setActiveTab('output'); }, 1800);
-  };
+  const highPriorityGapsCount = enrichedProblems.filter((p) => p.isGap).length;
+  const solvedCount = Object.values(completed).filter(Boolean).length;
+  const masteryPercentage = Math.round((solvedCount / (enrichedProblems.length || 1)) * 100);
 
   return (
-    <div className="flex h-screen flex-col bg-slate-900 text-white overflow-hidden">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800 px-4 py-2.5 shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white transition-colors">
-            <ChevronRight size={16} className="rotate-180" />
-          </button>
-          <span className="text-sm font-bold text-white">{problem.title}</span>
-          <Badge label={problem.difficulty} />
-          <Badge label={problem.category} variant="indigo" />
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 rounded-lg bg-slate-700 px-3 py-1.5">
-            <Clock size={14} className="text-amber-400" />
-            <span className="text-sm font-bold text-amber-400 tabular-nums">{timeLeft}</span>
+    <AppLayout>
+      <div className="space-y-8 max-w-[1400px] mx-auto pb-16 antialiased selection:bg-[#0038FF] selection:text-white">
+        
+        {/* ── Top Header Ribbon ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-neutral-200/80 pb-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Dynamic Remediation
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+              <FiZap size={14} className="text-[#0038FF]" />
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950">
+              Personalized Coding Practice
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
+              Algorithmic challenges dynamically selected to close your specific diagnostic assessment skill gaps.
+            </p>
           </div>
-          <button onClick={handleRun} disabled={running}
-            className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-1.5 text-sm font-bold hover:bg-teal-500 disabled:opacity-60 transition-colors">
-            <Play size={14} /> {running ? 'Running...' : 'Run Code'}
-          </button>
-          <button onClick={handleSubmit} disabled={running}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-bold hover:bg-blue-500 disabled:opacity-60 transition-colors">
-            <Send size={14} /> Submit
-          </button>
-        </div>
-      </div>
 
-      {/* Main Layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: Problem Statement */}
-        <div className="w-[420px] shrink-0 flex flex-col border-r border-slate-700 overflow-y-auto bg-slate-800">
-          <div className="p-5 space-y-5">
-            {/* Problem Header */}
-            <div>
-              <h1 className="text-lg font-extrabold text-white">{problem.title}</h1>
-              <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
-                <span className="flex items-center gap-1"><Clock size={11} /> {problem.timeLimit}</span>
-                <span className="flex items-center gap-1"><Cpu size={11} /> {problem.timeLimit}</span>
-                <span className="flex items-center gap-1"><MemoryStick size={11} /> {problem.memoryLimit}</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => navigate('/assessments')}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 py-2.5 px-4 font-mono text-xs font-semibold tracking-wide transition-all shadow-2xs"
+            >
+              <FiArrowLeft size={13} />
+              <span>Assessment Hub</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Diagnostic KPI Ribbon ── */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs flex flex-col justify-between space-y-3"
+          >
+            <div className="flex items-center justify-between text-neutral-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Identified Gap Vectors
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600">
+                <FiAlertTriangle size={14} />
               </div>
             </div>
-
-            {/* Description */}
-            <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{problem.description}</div>
-
-            {/* Examples */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">Examples</h3>
-              {problem.examples.map((ex, i) => (
-                <div key={i} className="rounded-xl bg-slate-900 p-4 text-xs font-mono space-y-1.5">
-                  <div><span className="text-slate-400">Input: </span><span className="text-green-400">{ex.input}</span></div>
-                  <div><span className="text-slate-400">Output: </span><span className="text-blue-400">{ex.output}</span></div>
-                  <div><span className="text-slate-400">Explanation: </span><span className="text-slate-300">{ex.explanation}</span></div>
-                </div>
-              ))}
-            </div>
-
-            {/* Constraints */}
             <div>
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">Constraints</h3>
-              <ul className="space-y-1">
-                {problem.constraints.map((c) => (
-                  <li key={c} className="flex items-start gap-2 text-xs text-slate-300">
-                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
-                    <code className="font-mono">{c}</code>
-                  </li>
-                ))}
-              </ul>
+              <p className="text-3xl font-black text-neutral-950 font-mono tracking-tight">
+                {highPriorityGapsCount} <span className="text-sm font-normal text-neutral-400 font-sans">Priority Areas</span>
+              </p>
+              <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                Curated based on scores below benchmark
+              </p>
             </div>
-          </div>
-        </div>
+          </motion.div>
 
-        {/* Right: Editor + Output */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Editor Toolbar */}
-          <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800 px-4 py-2 shrink-0">
-            <div className="flex items-center gap-2">
-              {languages.map((l) => (
-                <button key={l} onClick={() => handleLangChange(l)}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${lang === l ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>
-                  {l}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <select value={theme} onChange={(e) => setTheme(e.target.value)}
-                  className="appearance-none rounded-lg bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-300 focus:outline-none cursor-pointer">
-                  {themes.map((t) => <option key={t}>{t}</option>)}
-                </select>
-                <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs flex flex-col justify-between space-y-3"
+          >
+            <div className="flex items-center justify-between text-neutral-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Remediated Challenges
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                <FiCheckCircle size={14} />
               </div>
-              <button className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="Reset code">
-                <RotateCcw size={14} />
-              </button>
-              <button className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="Fullscreen">
-                <Maximize2 size={14} />
-              </button>
             </div>
-          </div>
-
-          {/* Code Editor Area */}
-          <div className="flex-1 overflow-hidden bg-slate-900">
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              spellCheck={false}
-              className="h-full w-full resize-none bg-transparent p-5 font-mono text-sm text-slate-100 focus:outline-none leading-relaxed"
-              style={{ tabSize: 2 }}
-            />
-          </div>
-
-          {/* Output Panel */}
-          <div className="h-52 shrink-0 border-t border-slate-700 bg-slate-800 flex flex-col">
-            <div className="flex items-center gap-1 border-b border-slate-700 px-4 py-2">
-              {['testcases', 'output'].map((tab) => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold capitalize transition-colors ${activeTab === tab ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}>
-                  {tab === 'testcases' ? 'Test Cases' : 'Output'}
-                </button>
-              ))}
-              <Terminal size={13} className="ml-auto text-slate-500" />
+            <div>
+              <p className="text-3xl font-black text-neutral-950 font-mono tracking-tight">
+                {solvedCount} <span className="text-sm font-normal text-neutral-400 font-sans">/ {enrichedProblems.length}</span>
+              </p>
+              <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                Verified external completions
+              </p>
             </div>
+          </motion.div>
 
-            <div className="flex-1 overflow-y-auto p-4">
-              {activeTab === 'testcases' ? (
-                <div className="space-y-2">
-                  {testCases.map((tc) => (
-                    <div key={tc.id} className="flex items-center gap-3 rounded-lg bg-slate-900 px-3 py-2 text-xs">
-                      {tc.status === 'passed'
-                        ? <CheckCircle2 size={14} className="text-green-400 shrink-0" />
-                        : <XCircle size={14} className="text-red-400 shrink-0" />}
-                      <span className="text-slate-400 font-mono">Case {tc.id}:</span>
-                      <span className="text-slate-300 font-mono flex-1 truncate">{tc.input}</span>
-                      {tc.status === 'passed' && (
-                        <>
-                          <span className="text-slate-500">{tc.time}</span>
-                          <span className="text-slate-500">{tc.memory}</span>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {submitted ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="flex items-center gap-3 rounded-xl bg-green-900/30 border border-green-700 p-3">
-                      <CheckCircle2 size={18} className="text-green-400" />
-                      <div>
-                        <p className="text-sm font-bold text-green-400">Accepted</p>
-                        <p className="text-xs text-slate-400">2/3 test cases passed · Runtime: 12ms · Memory: 42MB</p>
-                      </div>
-                    </motion.div>
-                  ) : running ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
-                        <RotateCcw size={14} />
-                      </motion.div>
-                      Executing code...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <AlertCircle size={14} />
-                      Run your code to see output here.
-                    </div>
-                  )}
-                </div>
-              )}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs flex flex-col justify-between space-y-3"
+          >
+            <div className="flex items-center justify-between text-neutral-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Remediation Index
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0038FF]">
+                <FiTarget size={14} />
+              </div>
             </div>
-          </div>
+            <div>
+              <p className="text-3xl font-black text-[#0038FF] font-mono tracking-tight">
+                {masteryPercentage}%
+              </p>
+              <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                Progress towards standard readiness
+              </p>
+            </div>
+          </motion.div>
+
         </div>
+
+        {/* ── Curated Filter Bar ── */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/80 pb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-mono font-bold text-neutral-400 uppercase mr-1 flex items-center gap-1">
+              <FiFilter size={12} /> Target:
+            </span>
+            {TRACKS.map((track) => (
+              <button
+                key={track}
+                onClick={() => setSelectedFilter(track)}
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-mono font-semibold transition-all ${
+                  selectedFilter === track
+                    ? 'bg-[#0038FF] text-white shadow-xs'
+                    : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:border-neutral-300'
+                }`}
+              >
+                {track === 'Identified Gaps Only' ? `⚡ ${track}` : track}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-[11px] font-mono text-neutral-400">
+            Showing {filteredProblems.length} curated problems
+          </span>
+        </div>
+
+        {/* ── Dynamic Problems Grid ── */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredProblems.map((prob) => {
+            const isDone = !!completed[prob.id];
+            return (
+              <motion.article
+                key={prob.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`rounded-2xl border bg-white p-6 shadow-xs flex flex-col justify-between space-y-5 transition-all group ${
+                  isDone
+                    ? 'border-emerald-200 bg-emerald-50/20'
+                    : prob.isGap
+                    ? 'border-neutral-200 hover:border-[#0038FF]/60 hover:shadow-md hover:shadow-blue-500/5'
+                    : 'border-neutral-200 hover:border-neutral-300'
+                }`}
+              >
+                <div className="space-y-4">
+                  {/* Top Header Tag: Platform & Difficulty & Gap Indicator */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="rounded border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-neutral-600">
+                        {prob.platform}
+                      </span>
+                      <span
+                        className={`rounded border px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider ${difficultyBadge(
+                          prob.difficulty
+                        )}`}
+                      >
+                        {prob.difficulty}
+                      </span>
+                    </div>
+
+                    {prob.isGap && !isDone && (
+                      <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-[9px] font-mono font-bold uppercase text-amber-800">
+                        <FiAlertTriangle size={9} /> -{prob.gapDelta}% Gap
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title & Vector Info */}
+                  <div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[#0038FF]">
+                      <span>Target Vector: {prob.skillVector}</span>
+                    </div>
+                    <h3 className="text-base font-bold text-neutral-950 mt-1 leading-snug group-hover:text-[#0038FF] transition-colors">
+                      {prob.title}
+                    </h3>
+                  </div>
+
+                  {/* Problem Description */}
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    {prob.description}
+                  </p>
+
+                  {/* Competency Tags */}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {prob.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-mono text-neutral-600"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card Footer Actions */}
+                <div className="pt-4 border-t border-neutral-100 flex items-center justify-between gap-3">
+                  <button
+                    onClick={() => toggleCompleted(prob.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-all ${
+                      isDone
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                        : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
+                    }`}
+                  >
+                    <FiCheckCircle
+                      size={12}
+                      className={isDone ? 'text-emerald-600' : 'text-neutral-400'}
+                    />
+                    <span>{isDone ? 'Resolved' : 'Mark Done'}</span>
+                  </button>
+
+                  <a
+                    href={prob.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#0038FF] hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-mono font-semibold shadow-xs transition-all group/link"
+                  >
+                    <span>Solve on {prob.platform.split(' ')[0]}</span>
+                    <FiExternalLink
+                      size={12}
+                      className="transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5"
+                    />
+                  </a>
+                </div>
+              </motion.article>
+            );
+          })}
+        </div>
+
       </div>
-    </div>
+    </AppLayout>
   );
 }

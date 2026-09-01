@@ -1,20 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit3, Layers, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
+import { 
+  FiEdit2, FiLayers, FiLoader, FiPlus, FiSearch, 
+  FiTrash2, FiX, FiShield, FiChevronDown, FiBookOpen, 
+  FiCheck, FiAlertCircle 
+} from 'react-icons/fi';
 import { adminService } from '../../services/adminService';
 
-const CAT_COLOR = {
-  Frontend:    'bg-blue-50 text-blue-700',
-  Backend:     'bg-purple-50 text-purple-700',
-  Database:    'bg-teal-50 text-teal-700',
-  Language:    'bg-indigo-50 text-indigo-700',
-  DevOps:      'bg-orange-50 text-orange-700',
-  Cloud:       'bg-sky-50 text-sky-700',
-  'AI/ML':     'bg-pink-50 text-pink-700',
-  Tools:       'bg-slate-100 text-slate-600',
-};
-
 const CATEGORIES = ['Frontend', 'Backend', 'Database', 'Language', 'DevOps', 'Cloud', 'AI/ML', 'Tools', 'General'];
+
+const inputCls =
+  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#0038FF] transition-all shadow-2xs font-sans';
+const selectCls =
+  'w-full appearance-none rounded-lg border border-neutral-200 bg-white pl-3.5 pr-9 py-2.5 text-sm text-neutral-900 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0038FF] transition-all shadow-2xs cursor-pointer font-sans';
 
 function SkillModal({ skill, onClose, onSave, saving }) {
   const [form, setForm] = useState(
@@ -25,42 +23,89 @@ function SkillModal({ skill, onClose, onSave, saving }) {
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-black text-slate-900">{skill ? 'Edit Skill' : 'Add Skill'}</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-slate-100"><X size={18} /></button>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-neutral-950/40 backdrop-blur-xs p-4" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 sm:p-7 shadow-2xl space-y-5">
+        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[#0038FF]" />
+            <h2 className="text-sm font-bold text-neutral-950 font-sans">
+              {skill ? 'Edit Competency Node' : 'Register New Taxonomy Skill'}
+            </h2>
+          </div>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-700 p-1">
+            <FiX size={15} />
+          </button>
         </div>
+
         <div className="space-y-4">
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-bold text-slate-600">Skill Name (raw)</span>
-            <input value={form.skillName} onChange={(e) => set('skillName', e.target.value)}
-              className="input-field py-2.5" placeholder="e.g. ReactJS" />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-bold text-slate-600">Normalised Name</span>
-            <input value={form.normalizedName} onChange={(e) => set('normalizedName', e.target.value)}
-              className="input-field py-2.5" placeholder="e.g. React.js" />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-bold text-slate-600">Category</span>
-            <select value={form.category} onChange={(e) => set('category', e.target.value)} className="input-field py-2.5">
-              {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-bold text-slate-600">Description</span>
-            <input value={form.description} onChange={(e) => set('description', e.target.value)}
-              className="input-field py-2.5" placeholder="Optional description" />
-          </label>
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 font-mono">
+              Raw Extracted Variant <span className="text-rose-500">*</span>
+            </label>
+            <input 
+              value={form.skillName} 
+              onChange={(e) => set('skillName', e.target.value)}
+              className={inputCls} 
+              placeholder="e.g. ReactJS, react.js, React-JS" 
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 font-mono">
+              Canonical Normalized Label <span className="text-rose-500">*</span>
+            </label>
+            <input 
+              value={form.normalizedName} 
+              onChange={(e) => set('normalizedName', e.target.value)}
+              className={inputCls} 
+              placeholder="e.g. React" 
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 font-mono">
+              Domain Category
+            </label>
+            <div className="relative">
+              <select 
+                value={form.category} 
+                onChange={(e) => set('category', e.target.value)} 
+                className={selectCls}
+              >
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <FiChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 font-mono">
+              Context / Description (Optional)
+            </label>
+            <input 
+              value={form.description} 
+              onChange={(e) => set('description', e.target.value)}
+              className={inputCls} 
+              placeholder="e.g. Declarative component-based UI library" 
+            />
+          </div>
         </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
+
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-neutral-100 font-mono">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="rounded-lg border border-neutral-200 px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-all"
+          >
             Cancel
           </button>
-          <button onClick={() => onSave(form)} disabled={saving || !form.skillName || !form.normalizedName}
-            className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save'}
+          <button 
+            type="button"
+            onClick={() => onSave(form)} 
+            disabled={saving || !form.skillName || !form.normalizedName}
+            className="rounded-lg bg-[#0038FF] hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold shadow-xs transition-all disabled:opacity-60"
+          >
+            {saving ? 'Processing…' : skill ? 'Update Node' : 'Save Skill Node'}
           </button>
         </div>
       </div>
@@ -84,7 +129,7 @@ export default function SkillTaxonomyAdmin() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, []);
 
   const save = async (form) => {
     setSaving(true);
@@ -107,91 +152,180 @@ export default function SkillTaxonomyAdmin() {
     setSkills((p) => p.filter((s) => s.id !== id));
   };
 
-  const categories = ['All', ...new Set(skills.map((s) => s.category).filter(Boolean))];
-  const filtered = skills.filter((s) => {
+  const categories = useMemo(() => ['All', ...new Set(skills.map((s) => s.category).filter(Boolean))], [skills]);
+  const filtered = useMemo(() => skills.filter((s) => {
     const matchQ = !query || s.skillName?.toLowerCase().includes(query.toLowerCase()) || s.normalizedName?.toLowerCase().includes(query.toLowerCase());
     const matchC = catFilter === 'All' || s.category === catFilter;
     return matchQ && matchC;
-  });
+  }), [skills, query, catFilter]);
 
   return (
-    <>
-      <header className="mb-7">
-        <p className="text-sm font-semibold text-indigo-600">SKILL TAXONOMY</p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">Skill Taxonomy Management</h1>
-        <p className="mt-2 text-slate-500">Manage the normalised skill database used for NLP extraction mapping.</p>
-      </header>
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
+      
+      {/* ── Top Header Ribbon ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Curriculum & Extraction Engine
+            </span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+              <FiShield size={9} /> Taxonomy Core
+            </span>
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-neutral-950 mt-0.5">
+            Skill Taxonomy & Normalization
+          </h1>
+          <p className="text-xs text-neutral-500 mt-1 font-mono">
+            Manage canonical technology clusters, canonical alias mapping, and NLP extraction entity links.
+          </p>
+        </div>
 
-      {/* Toolbar */}
-      <div className="mb-5 flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && load()}
-            placeholder="Search skills… (Enter to search)"
-            className="input-field pl-9 py-2.5" />
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setModal('add')}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0038FF] hover:bg-blue-700 active:scale-[0.99] text-white text-xs font-semibold px-4 py-2 transition-all shadow-md shadow-blue-500/20"
+          >
+            <FiPlus size={14} />
+            <span>Add Skill Node</span>
+          </button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((c) => (
-            <button key={c} onClick={() => setCatFilter(c)}
-              className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${catFilter === c ? 'bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>
-              {c}
-            </button>
-          ))}
-        </div>
-        <button onClick={() => setModal('add')}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">
-          <Plus size={16} /> Add Skill
-        </button>
       </div>
 
-      {/* Table */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-        <div className="hidden grid-cols-[2fr_1.5fr_2fr_auto] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-400 sm:grid">
-          <span>Skill</span><span>Normalised</span><span>Category</span><span>Actions</span>
+      {/* ── Toolbar & Filter Strip ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative max-w-md flex-1">
+          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" size={14} />
+          <input 
+            value={query} 
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && load()}
+            placeholder="Search raw variants or normalized entities… (Enter to query)"
+            className="w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3.5 py-2 text-xs text-neutral-900 placeholder-neutral-400 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0038FF] transition-all shadow-2xs font-sans"
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-white p-1 text-xs font-mono">
+            {categories.map((c) => (
+              <button 
+                key={c} 
+                onClick={() => setCatFilter(c)}
+                className={`px-2.5 py-1 rounded font-semibold transition-all ${
+                  catFilter === c 
+                    ? 'bg-neutral-950 text-white shadow-xs' 
+                    : 'text-neutral-500 hover:text-neutral-900'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Taxonomy Registry Table Container ── */}
+      <div className="bg-white border border-neutral-200 rounded-2xl shadow-xs overflow-hidden">
+        <div className="border-b border-neutral-100 bg-[#F8FAFC] px-6 py-3.5 flex items-center justify-between text-xs font-mono text-neutral-500">
+          <span>Displaying {filtered.length} registered entity node{filtered.length !== 1 ? 's' : ''}</span>
+          <span>ESCO / O*NET Calibrated</span>
         </div>
 
         {loading ? (
-          <div className="flex h-40 items-center justify-center gap-2 text-slate-400">
-            <Loader2 className="animate-spin" size={20} /> Loading…
+          <div className="py-16 text-center space-y-3">
+            <FiLoader className="mx-auto text-neutral-400 animate-spin" size={22} />
+            <p className="text-xs text-neutral-500 font-mono">Querying canonical taxonomy index...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 text-center text-sm text-slate-400">No skills found.</div>
+          <div className="py-16 text-center space-y-2">
+            <FiAlertCircle size={24} className="mx-auto text-neutral-400" />
+            <h3 className="text-sm font-bold text-neutral-900">No Skill Nodes Found</h3>
+            <p className="text-xs text-neutral-500 font-mono">No entities match your search or domain category filter.</p>
+          </div>
         ) : (
-          <div className="divide-y divide-slate-50">
-            <AnimatePresence>
-              {filtered.map((s) => (
-                <motion.div key={s.id} layout
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="flex flex-wrap items-center gap-4 px-6 py-4">
-                  <div className="flex min-w-[140px] flex-1 items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50">
-                      <Layers size={15} className="text-indigo-600" />
-                    </div>
-                    <p className="font-black text-slate-900">{s.skillName}</p>
-                  </div>
-                  <p className="flex-1 text-sm font-semibold text-blue-700">{s.normalizedName}</p>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${CAT_COLOR[s.category] ?? 'bg-slate-100 text-slate-600'}`}>
-                    {s.category ?? 'General'}
-                  </span>
-                  <div className="flex gap-1">
-                    <button onClick={() => setModal(s)}
-                      className="rounded-lg p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600" aria-label="Edit">
-                      <Edit3 size={16} />
-                    </button>
-                    <button onClick={() => remove(s.id)}
-                      className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600" aria-label="Delete">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-xs">
+              <thead>
+                <tr className="border-b border-neutral-100 bg-[#F8FAFC] text-[10px] font-mono uppercase tracking-wider text-neutral-400">
+                  <th className="px-6 py-3.5 font-semibold">Raw Variant / Source Token</th>
+                  <th className="px-6 py-3.5 font-semibold">Normalized Canonical Entity</th>
+                  <th className="px-6 py-3.5 font-semibold">Domain Classification</th>
+                  <th className="px-6 py-3.5 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100 font-mono">
+                <AnimatePresence>
+                  {filtered.map((s) => (
+                    <motion.tr 
+                      key={s.id} 
+                      layout
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }} 
+                      exit={{ opacity: 0 }}
+                      className="hover:bg-neutral-50/70 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="grid h-7 w-7 shrink-0 place-items-center rounded bg-blue-50 text-[11px] text-[#0038FF] border border-blue-100">
+                            <FiLayers size={13} />
+                          </div>
+                          <div>
+                            <p className="font-bold text-neutral-950 font-sans text-xs">{s.skillName}</p>
+                            {s.description && (
+                              <p className="text-[11px] text-neutral-400 truncate max-w-xs">{s.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-100 border border-neutral-200 text-neutral-800 text-xs font-semibold">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#0038FF]" />
+                          {s.normalizedName}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-bold bg-blue-50 text-[#0038FF] border border-blue-100">
+                          {s.category ?? 'General'}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button 
+                            onClick={() => setModal(s)}
+                            className="p-1.5 text-neutral-400 hover:text-[#0038FF] hover:bg-blue-50 rounded-lg transition-colors" 
+                            aria-label="Edit node"
+                          >
+                            <FiEdit2 size={13} />
+                          </button>
+                          <button 
+                            onClick={() => remove(s.id)}
+                            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
+                            aria-label="Delete node"
+                          >
+                            <FiTrash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {modal && <SkillModal skill={modal === 'add' ? null : modal} onClose={() => setModal(null)} onSave={save} saving={saving} />}
-    </>
+      {modal && (
+        <SkillModal 
+          skill={modal === 'add' ? null : modal} 
+          onClose={() => setModal(null)} 
+          onSave={save} 
+          saving={saving} 
+        />
+      )}
+    </div>
   );
 }

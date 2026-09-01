@@ -1,26 +1,272 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Search } from 'lucide-react';
+import {
+  FiSearch,
+  FiBookOpen,
+  FiClock,
+  FiArrowRight,
+  FiLayers,
+  FiAlertCircle,
+  FiTarget,
+} from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
 import api from '../../services/api';
 
-const categoryTone = value => {
-  const name = (value || '').toLowerCase();
-  if (name.includes('technical')) return { icon: 'bg-blue-600', border: 'border-blue-200', pill: 'bg-blue-100 text-blue-700', button: 'bg-blue-600 hover:bg-blue-700' };
-  if (name.includes('aptitude')) return { icon: 'bg-violet-600', border: 'border-violet-200', pill: 'bg-violet-100 text-violet-700', button: 'bg-violet-600 hover:bg-violet-700' };
-  if (name.includes('personality')) return { icon: 'bg-rose-600', border: 'border-rose-200', pill: 'bg-rose-100 text-rose-700', button: 'bg-rose-600 hover:bg-rose-700' };
-  if (name.includes('soft') || name.includes('communication')) return { icon: 'bg-teal-600', border: 'border-teal-200', pill: 'bg-teal-100 text-teal-700', button: 'bg-teal-600 hover:bg-teal-700' };
-  return { icon: 'bg-amber-500', border: 'border-amber-200', pill: 'bg-amber-100 text-amber-700', button: 'bg-amber-500 hover:bg-amber-600' };
+const difficultyBadge = (val) => {
+  const level = (val || '').toUpperCase();
+  switch (level) {
+    case 'EASY':
+    case 'FOUNDATIONAL':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+    case 'MEDIUM':
+    case 'INTERMEDIATE':
+      return 'bg-blue-50 text-[#0038FF] border-blue-200/80';
+    case 'HARD':
+    case 'ADVANCED':
+      return 'bg-amber-50 text-amber-700 border-amber-200/80';
+    case 'EXPERT':
+      return 'bg-rose-50 text-rose-700 border-rose-200/80';
+    default:
+      return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+  }
 };
-const difficultyTone = value => ({ EASY: 'bg-emerald-100 text-emerald-700', MEDIUM: 'bg-amber-100 text-amber-700', HARD: 'bg-rose-100 text-rose-700', EXPERT: 'bg-fuchsia-100 text-fuchsia-700' }[(value || '').toUpperCase()] || 'bg-slate-100 text-slate-700');
 
 export default function AssessmentCategories() {
-  const navigate = useNavigate(); const [assessments, setAssessments] = useState([]); const [query, setQuery] = useState(''); const [loading, setLoading] = useState(true); const [error, setError] = useState('');
-  useEffect(() => { api.get('/api/assessment/published').then(({ data }) => setAssessments(data || [])).catch(() => setError('Unable to load published assessments.')).finally(() => setLoading(false)); }, []);
-  const visible = useMemo(() => assessments.filter(item => `${item.title} ${item.description} ${item.category} ${item.difficulty}`.toLowerCase().includes(query.toLowerCase())), [assessments, query]);
-  const open = assessment => navigate('/assessments/details', { state: { assessment: { title: assessment.title, description: assessment.description, category: assessment.category, difficulty: assessment.difficulty, duration: `${assessment.durationMinutes} minutes`, questions: assessment.totalQuestions, passingScore: assessment.passingPercentage, maxAttempts: assessment.maximumAttempts, instructions: assessment.instructions, id: assessment.id } } });
-  return <AppLayout><div className="space-y-7"><header><p className="text-xs font-bold uppercase tracking-widest text-blue-600">Assessment Engine</p><h1 className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Available Assessments</h1><p className="mt-1 text-sm text-slate-500">Only assessments published by your administrator are shown here.</p></header>
-    <label className="relative block max-w-md"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search available assessments..." className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
-    {loading ? <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{[1, 2, 3].map(id => <div key={id} className="h-72 animate-pulse rounded-2xl bg-slate-100" />)}</div> : error ? <p className="rounded-xl bg-rose-50 p-4 text-sm font-medium text-rose-700">{error}</p> : visible.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center"><BookOpen className="mx-auto text-slate-300" size={36} /><h2 className="mt-3 font-bold text-slate-700">No published assessments</h2><p className="mt-1 text-sm text-slate-500">Your administrator has not published an assessment yet.</p></div> : <><p className="text-sm text-slate-500"><b className="text-slate-800">{visible.length}</b> assessment{visible.length === 1 ? '' : 's'} available</p><div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{visible.map((assessment, index) => { const tone = categoryTone(assessment.category); return <motion.article key={assessment.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }} className={`rounded-2xl border ${tone.border} bg-white p-5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-md`}><div className="flex items-start justify-between gap-3"><div className={`grid h-12 w-12 place-items-center rounded-2xl ${tone.icon} text-white shadow-sm`}><BookOpen size={22} /></div><div className="flex flex-col items-end gap-1"><span className={`rounded-full px-3 py-1 text-xs font-bold ${tone.pill}`}>{assessment.category}</span><span className={`rounded-full px-3 py-1 text-xs font-bold ${difficultyTone(assessment.difficulty)}`}>{assessment.difficulty}</span></div></div><h2 className="mt-5 font-extrabold leading-snug text-slate-900">{assessment.title}</h2><p className="mt-2 line-clamp-2 min-h-10 text-sm leading-relaxed text-slate-500">{assessment.description || 'No description provided.'}</p><p className="mt-4 flex items-center gap-1 text-xs font-semibold text-slate-500"><BookOpen size={13} />{assessment.totalQuestions} questions · {assessment.durationMinutes} min</p><button onClick={() => open(assessment)} className={`mt-5 w-full rounded-xl py-2.5 text-sm font-bold text-white shadow-sm transition ${tone.button}`}>View Assessment</button></motion.article>; })}</div></>}</div></AppLayout>;
+  const navigate = useNavigate();
+  const [assessments, setAssessments] = useState([]);
+  const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('ALL');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api
+      .get('/api/assessment/published')
+      .then(({ data }) => setAssessments(data || []))
+      .catch(() => setError('Unable to load standard examination modules.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const categories = useMemo(() => {
+    const set = new Set(assessments.map((a) => a.category).filter(Boolean));
+    return ['ALL', ...Array.from(set)];
+  }, [assessments]);
+
+  const visible = useMemo(() => {
+    return assessments.filter((item) => {
+      const matchesSearch = `${item.title} ${item.description} ${item.category} ${item.difficulty}`
+        .toLowerCase()
+        .includes(query.toLowerCase());
+      const matchesCategory =
+        activeCategory === 'ALL' ||
+        (item.category || '').toLowerCase() === activeCategory.toLowerCase();
+      return matchesSearch && matchesCategory;
+    });
+  }, [assessments, query, activeCategory]);
+
+  const openAssessment = (assessment) => {
+    navigate('/assessments/details', {
+      state: {
+        assessment: {
+          title: assessment.title,
+          description: assessment.description,
+          category: assessment.category,
+          difficulty: assessment.difficulty,
+          duration: `${assessment.durationMinutes} minutes`,
+          questions: assessment.totalQuestions,
+          passingScore: assessment.passingPercentage,
+          maxAttempts: assessment.maximumAttempts,
+          instructions: assessment.instructions,
+          id: assessment.id,
+        },
+      },
+    });
+  };
+
+  return (
+    <AppLayout>
+      <div className="space-y-8 max-w-[1400px] mx-auto antialiased selection:bg-[#0038FF] selection:text-white">
+        
+        {/* ── Editorial Header ── */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-neutral-200/80 pb-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Evaluation Directory
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+                <FiTarget size={9} /> Standardized Benchmarks
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950">
+              Diagnostic & Competency Assessments
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
+              Curated evaluations designed to validate technical proficiency, structural problem-solving, and domain readiness against academic criteria.
+            </p>
+          </div>
+
+          <div className="text-xs font-mono text-neutral-400 flex items-center gap-1.5 shrink-0 self-start md:self-end">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>Repository Online</span>
+          </div>
+        </div>
+
+        {/* ── Search & Filter Controls ── */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="relative w-full max-w-md">
+            <FiSearch
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search assessment modules, topics, or tiers..."
+              className="w-full rounded-lg border border-neutral-200 bg-white pl-10 pr-4 py-2.5 text-xs sm:text-sm text-neutral-900 placeholder-neutral-400 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0038FF] transition-all shadow-2xs"
+            />
+          </div>
+
+          {/* Track Filter Pills */}
+          {categories.length > 1 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto py-1 overscroll-contain">
+              {categories.map((cat) => {
+                const active = activeCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-mono transition-all uppercase tracking-wider shrink-0 ${
+                      active
+                        ? 'bg-[#0038FF] text-white font-bold shadow-xs'
+                        : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-950'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── Content States ── */}
+        {loading ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((idx) => (
+              <div
+                key={idx}
+                className="h-64 animate-pulse rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-xs"
+              >
+                <div className="flex justify-between">
+                  <div className="h-10 w-10 rounded-xl bg-neutral-100" />
+                  <div className="h-5 w-20 rounded bg-neutral-100" />
+                </div>
+                <div className="mt-6 space-y-2.5">
+                  <div className="h-4 w-3/4 rounded bg-neutral-100" />
+                  <div className="h-3 w-full rounded bg-neutral-100" />
+                  <div className="h-3 w-5/6 rounded bg-neutral-100" />
+                </div>
+                <div className="mt-8 h-9 rounded-lg bg-neutral-100" />
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/50 p-6 text-xs text-rose-700 font-mono">
+            <FiAlertCircle size={18} className="shrink-0 text-rose-600" />
+            <span>{error}</span>
+          </div>
+        ) : visible.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-neutral-200 bg-white p-16 text-center shadow-xs">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
+              <FiBookOpen size={22} />
+            </div>
+            <h2 className="mt-4 text-sm font-bold text-neutral-900">
+              No Matching Assessments Found
+            </h2>
+            <p className="mt-1 text-xs text-neutral-500 max-w-sm mx-auto">
+              No published examination modules match your query. Adjust search terms or check back once faculty post new modules.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs font-mono text-neutral-400 px-1">
+              <span>
+                Showing <strong className="text-neutral-900">{visible.length}</strong> available module{visible.length === 1 ? '' : 's'}
+              </span>
+              <span>Passing Standard: 60%+</span>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map((assessment, index) => {
+                return (
+                  <motion.article
+                    key={assessment.id || index}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                    className="flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-6 shadow-xs hover:border-[#0038FF]/40 hover:shadow-md hover:shadow-blue-500/5 transition-all group"
+                  >
+                    <div>
+                      {/* Card Header & Badges */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50/80 border border-blue-100 text-[#0038FF] group-hover:bg-[#0038FF] group-hover:text-white transition-colors">
+                          <FiBookOpen size={18} />
+                        </div>
+                        <div className="flex flex-wrap items-center justify-end gap-1.5">
+                          <span className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-neutral-600">
+                            {assessment.category || 'General'}
+                          </span>
+                          <span
+                            className={`rounded-md border px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider ${difficultyBadge(
+                              assessment.difficulty
+                            )}`}
+                          >
+                            {assessment.difficulty || 'Intermediate'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Title & Description */}
+                      <h2 className="mt-4 text-base font-bold tracking-tight text-neutral-950 group-hover:text-[#0038FF] transition-colors leading-snug">
+                        {assessment.title}
+                      </h2>
+                      <p className="mt-2 line-clamp-2 text-xs text-neutral-500 leading-relaxed">
+                        {assessment.description || 'Structured assessment benchmarking core domain proficiencies and algorithmic reasoning.'}
+                      </p>
+                    </div>
+
+                    {/* Meta Specifications & Action */}
+                    <div className="mt-6 pt-4 border-t border-neutral-100 space-y-4">
+                      <div className="flex items-center justify-between text-xs font-mono text-neutral-500">
+                        <span className="flex items-center gap-1.5">
+                          <FiLayers size={13} className="text-neutral-400" />
+                          {assessment.totalQuestions || 20} Questions
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <FiClock size={13} className="text-neutral-400" />
+                          {assessment.durationMinutes || 30} mins
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => openAssessment(assessment)}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white hover:bg-[#0038FF] hover:border-[#0038FF] text-neutral-800 hover:text-white py-2.5 text-xs font-semibold tracking-wide font-mono transition-all shadow-2xs hover:shadow-md hover:shadow-blue-500/20"
+                      >
+                        <span>Examine Module</span>
+                        <FiArrowRight size={13} className="transition-transform group-hover:translate-x-0.5 text-neutral-400 group-hover:text-white" />
+                      </button>
+                    </div>
+                  </motion.article>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </AppLayout>
+  );
 }

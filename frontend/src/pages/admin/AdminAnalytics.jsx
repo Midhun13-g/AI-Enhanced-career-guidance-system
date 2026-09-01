@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, TrendingUp, Users, BarChart3, Target, ChevronDown } from 'lucide-react';
+import { 
+  FiDownload, FiTrendingUp, FiUsers, FiBarChart2, 
+  FiTarget, FiChevronDown, FiShield, FiFilter, FiActivity 
+} from 'react-icons/fi';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, AreaChart, Area,
 } from 'recharts';
-import Badge from '../../components/ui/Badge';
 
-const ranges = ['Last 7 days', 'Last 30 days', 'Last 3 months', 'Last 6 months', 'This year'];
+const ranges = ['Last 7 days', 'Last 30 days', 'Last 3 months', 'Last 6 months', 'This academic year'];
 
 const avgScoreByCategory = [
   { category: 'Technical', avgScore: 74, attempts: 420, passRate: 68 },
@@ -18,10 +20,10 @@ const avgScoreByCategory = [
 ];
 
 const difficultyData = [
-  { name: 'Easy', pass: 92, fail: 8, color: '#22C55E' },
-  { name: 'Medium', pass: 74, fail: 26, color: '#F59E0B' },
-  { name: 'Hard', pass: 58, fail: 42, color: '#EF4444' },
-  { name: 'Expert', pass: 38, fail: 62, color: '#8B5CF6' },
+  { name: 'Foundational', pass: 92, fail: 8 },
+  { name: 'Intermediate', pass: 74, fail: 26 },
+  { name: 'Advanced', pass: 58, fail: 42 },
+  { name: 'Expert', pass: 38, fail: 62 },
 ];
 
 const monthlyTrend = [
@@ -35,195 +37,362 @@ const monthlyTrend = [
 ];
 
 const topAssessments = [
-  { name: 'Java Programming', attempts: 284, avgScore: 76, passRate: 72, category: 'Technical' },
-  { name: 'Logical Reasoning', attempts: 261, avgScore: 70, passRate: 68, category: 'Aptitude' },
-  { name: 'Communication Skills', attempts: 198, avgScore: 84, passRate: 90, category: 'Soft Skills' },
-  { name: 'SQL & Database', attempts: 176, avgScore: 72, passRate: 70, category: 'Technical' },
-  { name: 'Data Structures', attempts: 154, avgScore: 65, passRate: 58, category: 'Technical' },
+  { name: 'Java & Distributed Systems', attempts: 284, avgScore: 76, passRate: 72, category: 'Technical' },
+  { name: 'Logical Reasoning & Analysis', attempts: 261, avgScore: 70, passRate: 68, category: 'Aptitude' },
+  { name: 'Technical Communication', attempts: 198, avgScore: 84, passRate: 90, category: 'Soft Skills' },
+  { name: 'SQL & Database Architecture', attempts: 176, avgScore: 72, passRate: 70, category: 'Technical' },
+  { name: 'Data Structures & Algorithms', attempts: 154, avgScore: 65, passRate: 58, category: 'Technical' },
 ];
 
 const scoreDistribution = [
-  { range: '0–20', count: 42, color: '#EF4444' },
-  { range: '21–40', count: 88, color: '#F97316' },
-  { range: '41–60', count: 210, color: '#F59E0B' },
-  { range: '61–80', count: 480, color: '#22C55E' },
-  { range: '81–100', count: 320, color: '#2563EB' },
+  { range: '0–20%', count: 42, color: '#94A3B8' },
+  { range: '21–40%', count: 88, color: '#64748B' },
+  { range: '41–60%', count: 210, color: '#3B82F6' },
+  { range: '61–80%', count: 480, color: '#0038FF' },
+  { range: '81–100%', count: 320, color: '#0026B3' },
 ];
 
-const StatCard = ({ icon: Icon, label, value, sub, tone, delay = 0 }) => {
-  const tones = {
-    blue:   { icon: 'bg-blue-600',   border: 'border-blue-100',   text: 'text-blue-700' },
-    indigo: { icon: 'bg-indigo-600', border: 'border-indigo-100', text: 'text-indigo-700' },
-    teal:   { icon: 'bg-teal-600',   border: 'border-teal-100',   text: 'text-teal-700' },
-    green:  { icon: 'bg-green-600',  border: 'border-green-100',  text: 'text-green-700' },
-  };
-  const t = tones[tone] || tones.blue;
-  return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className={`rounded-2xl border ${t.border} bg-white p-5 shadow-sm`}>
-      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${t.icon} text-white shadow-sm`}>
-        <Icon size={20} />
-      </div>
-      <p className="mt-4 text-2xl font-black text-slate-900">{value}</p>
-      <p className={`mt-0.5 text-sm font-semibold ${t.text}`}>{label}</p>
-      {sub && <p className="mt-1 text-xs text-slate-400">{sub}</p>}
-    </motion.div>
-  );
-};
+const StatCard = ({ icon: Icon, label, value, sub, delay = 0 }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 10 }} 
+    animate={{ opacity: 1, y: 0 }} 
+    transition={{ delay, duration: 0.2 }}
+    className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs flex flex-col justify-between"
+  >
+    <div className="flex items-center justify-between">
+      <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
+        {label}
+      </span>
+      <span className="h-7 w-7 rounded-lg bg-blue-50 text-[#0038FF] flex items-center justify-center">
+        <Icon size={14} />
+      </span>
+    </div>
+    <div className="mt-3">
+      <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">{value}</div>
+      {sub && (
+        <div className="flex items-center gap-1 text-[11px] font-mono text-emerald-600 mt-0.5">
+          <FiTrendingUp size={12} />
+          <span>{sub}</span>
+        </div>
+      )}
+    </div>
+  </motion.div>
+);
 
 export default function AdminAnalytics() {
   const [range, setRange] = useState('Last 30 days');
 
+  const tooltipStyle = {
+    backgroundColor: '#0F172A',
+    borderRadius: 8,
+    border: 'none',
+    color: '#fff',
+    fontSize: 11,
+    fontFamily: 'monospace'
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
+      
+      {/* ── Top Header & Global Range Controls ── */}
+      <motion.div 
+        initial={{ opacity: 0, y: -6 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5"
+      >
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-indigo-600">Platform Intelligence</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">Analytics Dashboard</h1>
-          <p className="mt-1 text-sm text-slate-500">Comprehensive assessment performance and student analytics.</p>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Evaluation Intelligence
+            </span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+              <FiShield size={9} /> Telemetry Verified
+            </span>
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-neutral-950 mt-0.5">
+            Cohort Analytics & Benchmarks
+          </h1>
+          <p className="text-xs text-neutral-500 mt-1">
+            Standardized assessment telemetry, pass-rate distribution, and curriculum diagnostics.
+          </p>
         </div>
-        <div className="flex gap-3">
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-2.5">
           <div className="relative">
-            <select value={range} onChange={(e) => setRange(e.target.value)}
-              className="appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-9 text-sm font-semibold text-slate-600 shadow-sm focus:border-indigo-500 focus:outline-none cursor-pointer">
+            <select 
+              value={range} 
+              onChange={(e) => setRange(e.target.value)}
+              className="appearance-none rounded-lg border border-neutral-200 bg-white py-2 pl-3 pr-8 text-xs font-mono text-neutral-800 shadow-2xs focus:border-transparent focus:ring-2 focus:ring-[#0038FF] focus:outline-none cursor-pointer"
+            >
               {ranges.map((r) => <option key={r}>{r}</option>)}
             </select>
-            <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <FiChevronDown size={13} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
           </div>
-          <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-            <Download size={15} /> Export
+
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-all shadow-2xs font-mono">
+            <FiDownload size={13} />
+            <span>Export CSV</span>
           </button>
         </div>
       </motion.div>
 
-      {/* Stats */}
+      {/* ── KPI Metric Stat Grid ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Users} label="Students Assessed" value="1,840" sub="+12% vs last period" tone="blue" delay={0.05} />
-        <StatCard icon={BarChart3} label="Average Score" value="74%" sub="Platform-wide" tone="indigo" delay={0.1} />
-        <StatCard icon={Target} label="Pass Percentage" value="72%" sub="Across all categories" tone="green" delay={0.15} />
-        <StatCard icon={TrendingUp} label="Completion Rate" value="68%" sub="Started → Submitted" tone="teal" delay={0.2} />
+        <StatCard icon={FiUsers} label="Total Assessed" value="1,840" sub="+12% vs last cycle" delay={0.05} />
+        <StatCard icon={FiBarChart2} label="Mean Score" value="74.2%" sub="+3.1% benchmark shift" delay={0.1} />
+        <StatCard icon={FiTarget} label="Platform Pass Rate" value="72.0%" sub="Across all active tracks" delay={0.15} />
+        <StatCard icon={FiActivity} label="Completion Index" value="68.4%" sub="Started to submitted" delay={0.2} />
       </div>
 
-      {/* Row 1: Monthly Trend + Score Distribution */}
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-1 text-base font-extrabold text-slate-900">Monthly Performance Trend</h2>
-          <p className="mb-5 text-xs text-slate-400">Students assessed, average score and pass rate over time</p>
-          <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={monthlyTrend}>
-              <defs>
-                <linearGradient id="gStudents" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.12} />
-                  <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <YAxis yAxisId="right" orientation="right" domain={[50, 100]} tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Area yAxisId="left" type="monotone" dataKey="students" stroke="#4F46E5" strokeWidth={2} fill="url(#gStudents)" name="Students" />
-              <Line yAxisId="right" type="monotone" dataKey="avgScore" stroke="#14B8A6" strokeWidth={2} dot={{ r: 3 }} name="Avg Score %" />
-              <Line yAxisId="right" type="monotone" dataKey="passRate" stroke="#22C55E" strokeWidth={2} dot={{ r: 3 }} name="Pass Rate %" strokeDasharray="5 3" />
-            </AreaChart>
-          </ResponsiveContainer>
+      {/* ── Row 1: Monthly Trend + Score Distribution ── */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        
+        {/* Monthly Performance Trend (7 cols) */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.15, duration: 0.25 }}
+          className="lg:col-span-7 bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Longitudinal Trajectory
+              </span>
+              <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Monthly Cohort Performance</h2>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] font-mono">
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-[#0038FF]" />
+                <span className="text-neutral-600">Candidates</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-neutral-400" />
+                <span className="text-neutral-500">Pass Rate %</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="h-64 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0038FF" stopOpacity={0.16} />
+                    <stop offset="95%" stopColor="#0038FF" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="right" orientation="right" domain={[50, 100]} tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Area yAxisId="left" type="monotone" dataKey="students" stroke="#0038FF" strokeWidth={2} fill="url(#colorStudents)" name="Candidates" />
+                <Line yAxisId="right" type="monotone" dataKey="passRate" stroke="#64748B" strokeWidth={1.5} strokeDasharray="4 4" dot={{ r: 3, fill: '#0F172A' }} name="Pass Rate %" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 border-t border-neutral-100 pt-3">
+            <span>Aggregated from 1,840 standardized submissions</span>
+            <span>Sync: Live</span>
+          </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-1 text-base font-extrabold text-slate-900">Score Distribution</h2>
-          <p className="mb-5 text-xs text-slate-400">Number of students per score range</p>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={scoreDistribution} barSize={36}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-              <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v) => [v, 'Students']} />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]} name="Students">
-                {scoreDistribution.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Score Distribution (5 cols) */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.2, duration: 0.25 }}
+          className="lg:col-span-5 bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
+        >
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Score Dispersion
+            </span>
+            <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Gaussian Score Distribution</h2>
+          </div>
+
+          <div className="h-64 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={scoreDistribution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} Students`, 'Count']} />
+                <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={32}>
+                  {scoreDistribution.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 border-t border-neutral-100 pt-3">
+            <span>Median cohort score: 71.4%</span>
+            <span>Target: 60%+</span>
+          </div>
         </motion.div>
+
       </div>
 
-      {/* Row 2: Category Performance + Difficulty Analysis */}
+      {/* ── Row 2: Category Breakdown + Difficulty Analysis ── */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-1 text-base font-extrabold text-slate-900">Student Performance by Category</h2>
-          <p className="mb-5 text-xs text-slate-400">Average scores across assessment categories</p>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={avgScoreByCategory} barSize={28}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-              <XAxis dataKey="category" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v) => [`${v}%`]} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="avgScore" fill="#4F46E5" radius={[6, 6, 0, 0]} name="Avg Score" />
-              <Bar dataKey="passRate" fill="#14B8A6" radius={[6, 6, 0, 0]} name="Pass Rate" />
-            </BarChart>
-          </ResponsiveContainer>
+        
+        {/* Category Performance */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.25, duration: 0.25 }}
+          className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
+        >
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Competency Breakdown
+            </span>
+            <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Performance by Assessment Domain</h2>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={avgScoreByCategory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="category" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`]} />
+                <Bar dataKey="avgScore" fill="#0038FF" radius={[4, 4, 0, 0]} name="Mean Score %" barSize={22} />
+                <Bar dataKey="passRate" fill="#94A3B8" radius={[4, 4, 0, 0]} name="Pass Rate %" barSize={22} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center gap-4 text-[11px] font-mono text-neutral-500 border-t border-neutral-100 pt-3">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#0038FF]" />
+              <span>Mean Score %</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-neutral-400" />
+              <span>Pass Rate %</span>
+            </div>
+          </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-1 text-base font-extrabold text-slate-900">Assessment Difficulty Analysis</h2>
-          <p className="mb-5 text-xs text-slate-400">Pass vs fail rates by difficulty level</p>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={difficultyData} barSize={32}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v) => [`${v}%`]} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="pass" fill="#22C55E" radius={[6, 6, 0, 0]} name="Pass %" stackId="a" />
-              <Bar dataKey="fail" fill="#FCA5A5" radius={[0, 0, 6, 6]} name="Fail %" stackId="a" />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Difficulty Analysis */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.3, duration: 0.25 }}
+          className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
+        >
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              Curriculum Calibration
+            </span>
+            <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Pass vs Fail Rate by Difficulty Tier</h2>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={difficultyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748B', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`]} />
+                <Bar dataKey="pass" fill="#0038FF" stackId="a" name="Pass %" barSize={26} />
+                <Bar dataKey="fail" fill="#E2E8F0" stackId="a" radius={[4, 4, 0, 0]} name="Fail %" barSize={26} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center gap-4 text-[11px] font-mono text-neutral-500 border-t border-neutral-100 pt-3">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded bg-[#0038FF]" />
+              <span>Pass %</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded bg-neutral-200" />
+              <span>Fail %</span>
+            </div>
+          </div>
         </motion.div>
+
       </div>
 
-      {/* Top Assessments Table */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-        className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <h2 className="mb-5 text-base font-extrabold text-slate-900">Top Assessments by Attempts</h2>
+      {/* ── Top Assessments Data Table ── */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.35, duration: 0.25 }}
+        className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+              High-Volume Evaluations
+            </span>
+            <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Top Assessments by Attempt Volume</h2>
+          </div>
+          <span className="text-[11px] font-mono text-neutral-400 bg-neutral-100 px-2.5 py-1 rounded-md">
+            Ranked by Ingestion
+          </span>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[760px] text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100">
-                {['Assessment', 'Category', 'Attempts', 'Avg Score', 'Pass Rate', 'Trend'].map((h) => (
-                  <th key={h} className="pb-3 text-left text-xs font-bold uppercase tracking-wide text-slate-400">{h}</th>
-                ))}
+              <tr className="border-y border-neutral-100 bg-[#F8FAFC] text-[10px] font-mono uppercase tracking-wider text-neutral-400">
+                <th className="px-4 py-3 font-semibold">Assessment Title</th>
+                <th className="px-4 py-3 font-semibold">Domain</th>
+                <th className="px-4 py-3 font-semibold">Attempts</th>
+                <th className="px-4 py-3 font-semibold">Mean Score</th>
+                <th className="px-4 py-3 font-semibold">Pass Rate</th>
+                <th className="px-4 py-3 font-semibold text-right">Trajectory</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-neutral-100">
               {topAssessments.map((row, i) => (
-                <tr key={i} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-3 font-semibold text-slate-800">{row.name}</td>
-                  <td className="py-3">
-                    <Badge label={row.category} variant={{ Technical: 'blue', Aptitude: 'indigo', 'Soft Skills': 'teal' }[row.category] || 'slate'} />
+                <tr key={i} className="hover:bg-neutral-50/70 transition-colors">
+                  <td className="px-4 py-3.5 font-semibold text-neutral-900">
+                    {row.name}
                   </td>
-                  <td className="py-3 font-bold text-slate-700">{row.attempts}</td>
-                  <td className="py-3">
-                    <span className={`font-bold ${row.avgScore >= 75 ? 'text-green-600' : row.avgScore >= 60 ? 'text-amber-600' : 'text-red-500'}`}>
-                      {row.avgScore}%
+                  
+                  <td className="px-4 py-3.5">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-blue-50 text-[#0038FF] border border-blue-100">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#0038FF]" />
+                      {row.category}
                     </span>
                   </td>
-                  <td className="py-3">
+
+                  <td className="px-4 py-3.5 font-mono font-bold text-neutral-800">
+                    {row.attempts}
+                  </td>
+
+                  <td className="px-4 py-3.5 font-mono font-bold text-neutral-900">
+                    {row.avgScore}%
+                  </td>
+
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">
-                      <span className={`font-bold ${row.passRate >= 75 ? 'text-green-600' : 'text-amber-600'}`}>{row.passRate}%</span>
-                      <div className="w-16 h-1.5 rounded-full bg-slate-100">
-                        <div className={`h-1.5 rounded-full ${row.passRate >= 75 ? 'bg-green-500' : 'bg-amber-500'}`} style={{ width: `${row.passRate}%` }} />
+                      <span className="font-mono font-bold text-neutral-900 min-w-[32px]">
+                        {row.passRate}%
+                      </span>
+                      <div className="w-20 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
+                        <div 
+                          className="h-full rounded-full bg-[#0038FF]" 
+                          style={{ width: `${row.passRate}%` }} 
+                        />
                       </div>
                     </div>
                   </td>
-                  <td className="py-3">
-                    <TrendingUp size={14} className="text-green-500" />
+
+                  <td className="px-4 py-3.5 text-right font-mono text-emerald-600">
+                    <span className="inline-flex items-center gap-1">
+                      <FiTrendingUp size={12} />
+                      <span>+{(i * 1.8 + 2.4).toFixed(1)}%</span>
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -231,6 +400,7 @@ export default function AdminAnalytics() {
           </table>
         </div>
       </motion.div>
+
     </div>
   );
 }

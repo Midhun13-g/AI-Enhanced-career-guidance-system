@@ -1,6 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Edit3, Send } from 'lucide-react';
+import {
+  FiCheckCircle,
+  FiEdit2,
+  FiSend,
+  FiShield,
+  FiAlertCircle,
+  FiHelpCircle,
+  FiArrowLeft,
+  FiLayers,
+} from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
 import ConfirmationModal from '../../components/assessment/ConfirmationModal';
 import LoadingAnimation from '../../components/common/LoadingAnimation';
@@ -9,9 +18,12 @@ import { assessmentSections } from '../../utils/assessmentData';
 import { useToast } from '../../context/ToastContext';
 
 function formatAnswer(answer, question) {
-  if (Array.isArray(answer)) return answer.join(', ');
+  if (Array.isArray(answer)) return answer.length ? answer.join(', ') : 'Not answered';
   if (answer === undefined || answer === '') return 'Not answered';
-  return question.options?.find((option) => String(option.value) === String(answer))?.label || String(answer);
+  return (
+    question?.options?.find((option) => String(option.value) === String(answer))?.label ||
+    String(answer)
+  );
 }
 
 export default function AssessmentReview() {
@@ -19,19 +31,31 @@ export default function AssessmentReview() {
   const toast = useToast();
   const assessment = useAssessment();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const questions = assessment.questions;
+  const questions = assessment.questions || [];
 
-  const grouped = useMemo(() => assessmentSections.map((section) => ({
-    ...section,
-    questions: questions.filter((question) => question.sectionId === section.id),
-  })), [questions]);
-  const missingQuestions = useMemo(
-    () => questions.filter((question) => {
-      const answer = assessment.answers[question.id];
-      return question.required && (Array.isArray(answer) ? answer.length === 0 : answer === undefined || answer === '');
-    }),
-    [questions, assessment.answers],
+  const grouped = useMemo(
+    () =>
+      assessmentSections.map((section) => ({
+        ...section,
+        questions: questions.filter((question) => question.sectionId === section.id),
+      })),
+    [questions]
   );
+
+  const missingQuestions = useMemo(
+    () =>
+      questions.filter((question) => {
+        const answer = assessment.answers[question.id];
+        return (
+          question.required &&
+          (Array.isArray(answer)
+            ? answer.length === 0
+            : answer === undefined || answer === '')
+        );
+      }),
+    [questions, assessment.answers]
+  );
+
   const isComplete = questions.length > 0 && missingQuestions.length === 0;
 
   const editQuestion = (questionId) => {
@@ -42,7 +66,7 @@ export default function AssessmentReview() {
 
   const submit = async () => {
     if (!isComplete) {
-      toast?.('Please complete all required questions before submitting.', 'error');
+      toast?.('Please complete all mandatory questions prior to submission.', 'error');
       setConfirmOpen(false);
       return;
     }
@@ -57,54 +81,126 @@ export default function AssessmentReview() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Review Answers</p>
-            <h1 className="mt-1 text-2xl font-extrabold text-slate-950 sm:text-3xl">Confirm before submission</h1>
-            <p className="mt-2 text-sm text-slate-600">Review each response and edit any answer before the final analysis.</p>
+      <div className="space-y-8 max-w-5xl mx-auto pb-16 antialiased selection:bg-[#0038FF] selection:text-white">
+        
+        {/* ── Top Header Ribbon & Submit Trigger ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-neutral-200/80 pb-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
+                Verification Ledger
+              </span>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 border border-blue-100 text-[#0038FF] text-[9px] font-bold font-mono uppercase">
+                <FiShield size={9} /> Pre-Submission Audit
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950">
+              Audit & Confirm Responses
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
+              Verify your committed answers across all assessment sections. You can edit any individual question before final synthesis.
+            </p>
           </div>
-          <button
-            onClick={() => setConfirmOpen(true)}
-            disabled={!isComplete}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            <Send size={17} /> Submit Assessment
-          </button>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => navigate('/assessment/quiz')}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 py-2.5 px-4 font-mono text-xs font-semibold tracking-wide transition-all shadow-2xs"
+            >
+              <FiArrowLeft size={13} />
+              <span>Return to Quiz</span>
+            </button>
+
+            <button
+              onClick={() => setConfirmOpen(true)}
+              disabled={!isComplete}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0038FF] hover:bg-blue-700 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 px-5 font-mono text-xs font-semibold tracking-wide transition-all shadow-md shadow-blue-500/20 group"
+            >
+              <FiSend size={13} className="transition-transform group-hover:translate-x-0.5" />
+              <span>Finalize & Submit</span>
+            </button>
+          </div>
         </div>
 
+        {/* ── Status Banner for Missing Items ── */}
         {!isComplete && (
-          <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-            Submit is disabled until all required questions are answered. Missing: {missingQuestions.length}
+          <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs font-mono text-amber-800">
+            <FiAlertCircle size={16} className="shrink-0 text-amber-600" />
+            <span>
+              Submission is locked until all mandatory items are committed. Missing: <strong>{missingQuestions.length} required item{missingQuestions.length === 1 ? '' : 's'}</strong>.
+            </span>
           </div>
         )}
 
-        <div className="space-y-5">
-          {grouped.map((section) => (
-            <section key={section.id} className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between gap-3">
+        {/* ── Question Breakdown by Section ── */}
+        <div className="space-y-6">
+          {grouped.map((section, idx) => (
+            <section
+              key={section.id}
+              className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-7 shadow-xs space-y-5"
+            >
+              {/* Section Header */}
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-blue-600">{section.eyebrow}</p>
-                  <h2 className="text-lg font-extrabold text-slate-950">{section.title}</h2>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#0038FF] font-mono">
+                    {section.eyebrow || `Part 0${idx + 1}`}
+                  </span>
+                  <h2 className="text-base font-bold text-neutral-950 mt-0.5">
+                    {section.title}
+                  </h2>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{section.questions.length} questions</span>
+                <span className="text-[10px] font-mono text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded">
+                  {section.questions.length} Items Total
+                </span>
               </div>
-              <div className="divide-y divide-slate-100">
-                {section.questions.map((question) => {
+
+              {/* Item Rows */}
+              <div className="divide-y divide-neutral-100">
+                {section.questions.map((question, qIdx) => {
                   const answer = assessment.answers[question.id];
-                  const answered = Array.isArray(answer) ? answer.length > 0 : answer !== undefined && answer !== '';
+                  const answered = Array.isArray(answer)
+                    ? answer.length > 0
+                    : answer !== undefined && answer !== '';
+                  const formatted = formatAnswer(answer, question);
+
                   return (
-                    <div key={question.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 size={16} className={answered ? 'text-emerald-500' : 'text-slate-300'} aria-hidden="true" />
-                          <p className="text-sm font-bold text-slate-900">{question.title}</p>
+                    <div
+                      key={question.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 first:pt-0 last:pb-0 group"
+                    >
+                      <div className="space-y-1.5 min-w-0 flex-1">
+                        <div className="flex items-start gap-2.5">
+                          <span className={`mt-0.5 shrink-0 ${answered ? 'text-emerald-600' : 'text-neutral-300'}`}>
+                            <FiCheckCircle size={15} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm font-semibold text-neutral-950 leading-snug">
+                              <span className="font-mono text-neutral-400 mr-1.5">{qIdx + 1}.</span>
+                              {question.title}
+                            </p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="text-[11px] font-mono uppercase text-neutral-400">Response:</span>
+                              <span
+                                className={`inline-block rounded px-2 py-0.5 text-xs font-mono font-medium ${
+                                  answered
+                                    ? 'bg-blue-50 text-[#0038FF] border border-blue-100'
+                                    : 'bg-neutral-100 text-neutral-400 border border-neutral-200 italic'
+                                }`}
+                              >
+                                {formatted}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <p className="mt-2 text-sm text-slate-600">{formatAnswer(answer, question)}</p>
-                        <p className="mt-1 text-xs font-medium text-slate-400">{section.title}</p>
                       </div>
-                      <button onClick={() => editQuestion(question.id)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <Edit3 size={15} /> Edit Answer
+
+                      {/* Modify Answer Action */}
+                      <button
+                        onClick={() => editQuestion(question.id)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white hover:border-[#0038FF] hover:text-[#0038FF] hover:bg-blue-50/40 text-neutral-700 px-3 py-1.5 font-mono text-xs font-semibold tracking-wide transition-all shadow-2xs shrink-0 self-start sm:self-auto"
+                      >
+                        <FiEdit2 size={12} className="text-neutral-400 group-hover:text-[#0038FF]" />
+                        <span>Edit Item</span>
                       </button>
                     </div>
                   );
@@ -113,13 +209,15 @@ export default function AssessmentReview() {
             </section>
           ))}
         </div>
+
       </div>
 
+      {/* ── Submission Confirmation Modal ── */}
       <ConfirmationModal
         open={confirmOpen}
-        title="Submit assessment?"
-        message="Your responses will be analyzed to generate scores, personality insights, interest distribution, and career previews."
-        confirmLabel="Submit"
+        title="Finalize & Submit Assessment?"
+        message="Your committed answers will be analyzed by the diagnostic engine to generate skill vectors, gap telemetry, and career path recommendations."
+        confirmLabel="Confirm Submission"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={submit}
       />
