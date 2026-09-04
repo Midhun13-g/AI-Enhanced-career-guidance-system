@@ -330,15 +330,21 @@ public class HuggingFaceAIClient {
                 for (Object item : rawMatches) {
                     if (item instanceof Map<?, ?> rawItemMap) {
                         Map<String, Object> itemMap = (Map<String, Object>) rawItemMap;
+                        Map<String, Object> job = getMap(itemMap.get("job"));
+                        Map<String, Object> source = job.isEmpty() ? itemMap : job;
                         JobMatchResponse jm = new JobMatchResponse();
                         jm.setRank(itemMap.get("rank") instanceof Number n ? n.intValue() : 1);
-                        jm.setJobTitle(String.valueOf(itemMap.getOrDefault("job_title", itemMap.getOrDefault("title", "Career Role"))));
-                        jm.setCompany(String.valueOf(itemMap.getOrDefault("company", "")));
-                        jm.setDomain(String.valueOf(itemMap.getOrDefault("domain", "")));
-                        jm.setJobSummary(String.valueOf(itemMap.getOrDefault("job_summary", "")));
+                        jm.setJobTitle(String.valueOf(source.getOrDefault("job_title", source.getOrDefault("title", "Career Role"))));
+                        jm.setCompany(String.valueOf(source.getOrDefault("company", source.getOrDefault("organization", ""))));
+                        jm.setDomain(String.valueOf(source.getOrDefault("domain", source.getOrDefault("career_domain", ""))));
+                        Map<String, Object> roleExplanation = getMap(itemMap.get("role_explanation"));
+                        jm.setJobSummary(String.valueOf(source.getOrDefault("job_summary",
+                                source.getOrDefault("summary", roleExplanation.getOrDefault("summary", "")))));
 
                         double score = 0.0;
                         if (itemMap.get("match_score") instanceof Number n) {
+                            score = n.doubleValue() > 1.0 ? n.doubleValue() : n.doubleValue() * 100.0;
+                        } else if (source.get("final_role_score") instanceof Number n) {
                             score = n.doubleValue() > 1.0 ? n.doubleValue() : n.doubleValue() * 100.0;
                         } else if (itemMap.get("job_match_score") instanceof Number n) {
                             score = n.doubleValue() > 1.0 ? n.doubleValue() : n.doubleValue() * 100.0;
@@ -353,14 +359,18 @@ public class HuggingFaceAIClient {
 
                         if (itemMap.get("semantic_similarity") instanceof Number n) {
                             jm.setSemanticSimilarity(n.doubleValue());
+                        } else if (source.get("semantic_similarity") instanceof Number n) {
+                            jm.setSemanticSimilarity(n.doubleValue());
                         }
 
-                        if (itemMap.get("matched_skills") instanceof List<?> mList) {
+                        Object matchedSkills = itemMap.containsKey("matched_skills") ? itemMap.get("matched_skills") : roleExplanation.get("skills_you_have");
+                        if (matchedSkills instanceof List<?> mList) {
                             List<String> list = new ArrayList<>();
                             for (Object o : mList) list.add(String.valueOf(o));
                             jm.setMatchedSkills(list);
                         }
-                        if (itemMap.get("missing_skills") instanceof List<?> msList) {
+                        Object missingSkills = itemMap.containsKey("missing_skills") ? itemMap.get("missing_skills") : roleExplanation.get("main_skill_gaps");
+                        if (missingSkills instanceof List<?> msList) {
                             List<String> list = new ArrayList<>();
                             for (Object o : msList) list.add(String.valueOf(o));
                             jm.setMissingSkills(list);
@@ -420,6 +430,14 @@ public class HuggingFaceAIClient {
                     learningPriorities.add(String.valueOf(lp));
                 }
             }
+            if (learningPriorities.isEmpty()) {
+                for (Object item : asList(selectedRole.get("skills_to_learn"))) {
+                    Map<String, Object> skill = getMap(item);
+                    String value = skill.isEmpty() ? String.valueOf(item)
+                            : String.valueOf(skill.getOrDefault("skill", skill.getOrDefault("canonical_skill", "")));
+                    if (!value.isBlank()) learningPriorities.add(value);
+                }
+            }
             response.setSkillGaps(skillGaps);
             response.setLearningPriorities(learningPriorities);
 
@@ -443,14 +461,29 @@ public class HuggingFaceAIClient {
                         CourseRecommendationResponse cr = new CourseRecommendationResponse();
                         cr.setCourseName(String.valueOf(source.getOrDefault("course_name", source.getOrDefault("title", source.getOrDefault("name", "")))));
                         cr.setProvider(String.valueOf(source.getOrDefault("provider", source.getOrDefault("platform", ""))));
+                        cr.setDomain(String.valueOf(source.getOrDefault("domain", source.getOrDefault("category", ""))));
+                        cr.setRecommendationType(String.valueOf(cm.getOrDefault("recommendation_type", source.getOrDefault("recommendation_type", "course"))));
                         cr.setTargetSkill(String.valueOf(cm.getOrDefault("target_skill", cm.getOrDefault("canonical_skill", cm.getOrDefault("skill", source.getOrDefault("target_skill", ""))))));
                         cr.setDifficulty(String.valueOf(source.getOrDefault("difficulty", "")));
                         cr.setDuration(String.valueOf(source.getOrDefault("duration", source.getOrDefault("duration_hours", ""))));
-                        cr.setReason(String.valueOf(cm.getOrDefault("reason", cm.getOrDefault("description", source.getOrDefault("description", "")))));
+                        cr.setCourseUrl(String.valueOf(source.getOrDefault("course_url",
+                                source.getOrDefault("courseUrl", source.getOrDefault("url",
+                                        source.getOrDefault("link", source.getOrDefault("course_link",
+                                                source.getOrDefault("courseLink", cm.getOrDefault("course_url", cm.getOrDefault("url", cm.getOrDefault("link", "")))))))));
+                        Map<String, Object> explanation = getMap(cm.get("explanation"));
+                        cr.setReason(String.valueOf(cm.getOrDefault("reason", cm.getOrDefault("description",
+                                explanation.getOrDefault("why_this_course", explanation.getOrDefault("why_you_need_it", source.getOrDefault("description", "")))))));
                         if (cm.get("recommendation_score") instanceof Number n) {
                             cr.setRecommendationScore(n.doubleValue());
                         } else if (source.get("recommendation_score") instanceof Number n) {
                             cr.setRecommendationScore(n.doubleValue());
+                        } else if (source.get("final_score") instanceof Number n) {
+                            cr.setRecommendationScore(n.doubleValue());
+                        }
+                        if (cm.get("semantic_similarity") instanceof Number n) {
+                            cr.setSemanticSimilarity(n.doubleValue());
+                        } else if (source.get("semantic_similarity") instanceof Number n) {
+                            cr.setSemanticSimilarity(n.doubleValue());
                         }
                         coursesList.add(cr);
                     }
@@ -467,6 +500,14 @@ public class HuggingFaceAIClient {
                         ExplanationResponse er = new ExplanationResponse();
                         er.setRecommendation(String.valueOf(em.getOrDefault("recommendation", em.getOrDefault("factor", ""))));
                         er.setHumanReadableExplanation(String.valueOf(em.getOrDefault("human_readable_explanation", em.getOrDefault("explanation", ""))));
+                        er.setExplanationType(String.valueOf(em.getOrDefault("explanation_type", em.getOrDefault("type", ""))));
+                        if (em.get("feature_contributions") instanceof Map<?, ?> features) {
+                            Map<String, Double> contributions = new LinkedHashMap<>();
+                            features.forEach((key, value) -> {
+                                if (value instanceof Number n) contributions.put(String.valueOf(key), n.doubleValue());
+                            });
+                            er.setFeatureContributions(contributions);
+                        }
                         explanationsList.add(er);
                     }
                 }
@@ -479,6 +520,14 @@ public class HuggingFaceAIClient {
                     ExplanationResponse er = new ExplanationResponse();
                     er.setRecommendation(String.valueOf(cm.getOrDefault("canonical_skill", cm.getOrDefault("skill", ""))));
                     er.setHumanReadableExplanation(String.valueOf(explanation.getOrDefault("why_this_course", explanation.getOrDefault("why_you_need_it", explanation.getOrDefault("human_readable_explanation", "")))));
+                    er.setExplanationType(String.valueOf(explanation.getOrDefault("explanation_type", explanation.getOrDefault("type", ""))));
+                    if (explanation.get("feature_contributions") instanceof Map<?, ?> features) {
+                        Map<String, Double> contributions = new LinkedHashMap<>();
+                        features.forEach((key, value) -> {
+                            if (value instanceof Number n) contributions.put(String.valueOf(key), n.doubleValue());
+                        });
+                        er.setFeatureContributions(contributions);
+                    }
                     explanationsList.add(er);
                 }
             }
@@ -487,6 +536,8 @@ public class HuggingFaceAIClient {
             // Map Career Guidance & Analysis
             if (finalResult.get("career_analysis") instanceof Map<?, ?> ca) {
                 response.setCareerAnalysis((Map<String, Object>) ca);
+            } else if (finalResult.get("career_profile") instanceof Map<?, ?> cp) {
+                response.setCareerAnalysis((Map<String, Object>) cp);
             }
 
             CareerGuidanceResponse guidance = new CareerGuidanceResponse();
@@ -527,9 +578,11 @@ public class HuggingFaceAIClient {
                     if (pObj instanceof Map<?, ?> rawPMap) {
                         Map<String, Object> pMap = (Map<String, Object>) rawPMap;
                         RoadmapResponse rm = new RoadmapResponse();
-                        rm.setPhase(pMap.get("phase") instanceof Number n ? n.intValue() : 1);
-                        rm.setTitle(String.valueOf(pMap.getOrDefault("title", "Phase " + rm.getPhase())));
-                        rm.setExpectedOutcome(String.valueOf(pMap.getOrDefault("expected_outcome", "")));
+                        rm.setPhase(pMap.get("phase") instanceof Number n ? n.intValue()
+                                : (pMap.get("phase_number") instanceof Number n ? n.intValue() : 1));
+                        rm.setTitle(String.valueOf(pMap.getOrDefault("title", pMap.getOrDefault("phase_name", "Phase " + rm.getPhase()))));
+                        rm.setDuration(String.valueOf(pMap.getOrDefault("duration", pMap.getOrDefault("estimated_duration", ""))));
+                        rm.setExpectedOutcome(String.valueOf(pMap.getOrDefault("expected_outcome", pMap.getOrDefault("expectedOutcome", pMap.getOrDefault("learning_objective", "")))));
                         if (pMap.get("skills_to_learn") instanceof List<?> sl) {
                             List<String> list = new ArrayList<>();
                             for (Object o : sl) list.add(String.valueOf(o));

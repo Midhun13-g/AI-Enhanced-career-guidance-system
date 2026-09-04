@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiPlus, FiSearch, FiEdit2, FiTrash2, FiUpload, FiX, 
-  FiChevronDown, FiHelpCircle, FiCheck, FiCheckCircle, 
+  FiPlus, FiSearch, FiEdit2, FiTrash2, FiUpload, FiX,
+  FiChevronDown, FiHelpCircle, FiCheck, FiCheckCircle,
   FiFilter, FiBookOpen, FiShield, FiLayers, FiList, FiAlertCircle
 } from 'react-icons/fi';
 import { adminService } from '../../services/adminService';
@@ -10,17 +10,13 @@ import { adminService } from '../../services/adminService';
 const CATEGORIES = ['All', 'Technical', 'Aptitude', 'Soft Skills', 'Personality'];
 const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard', 'Expert'];
 const TYPES = ['MCQ', 'True/False', 'Rating', 'Likert Scale', 'Multi-Select'];
-
-const seed = [
-  { id: 1, question: 'Which data structure uses LIFO ordering?', category: 'Technical', type: 'MCQ', difficulty: 'Easy', marks: 2, options: ['Stack', 'Queue', 'Tree', 'Graph'], answer: 'Stack', status: 'Active' },
-  { id: 2, question: 'If A > B and B > C, which is true?', category: 'Aptitude', type: 'MCQ', difficulty: 'Medium', marks: 2, options: ['C > A', 'A > C', 'A = C', 'B is smallest'], answer: 'A > C', status: 'Active' },
-  { id: 3, question: 'I enjoy solving complex problems independently.', category: 'Personality', type: 'Likert Scale', difficulty: 'Easy', marks: 1, options: [], answer: '', status: 'Active' },
-  { id: 4, question: 'Rate your proficiency in Java.', category: 'Technical', type: 'Rating', difficulty: 'Easy', marks: 1, options: [], answer: '', status: 'Active' },
-  { id: 5, question: 'Which SQL clause filters grouped results?', category: 'Technical', type: 'MCQ', difficulty: 'Medium', marks: 2, options: ['WHERE', 'HAVING', 'ORDER BY', 'LIMIT'], answer: 'HAVING', status: 'Active' },
-  { id: 6, question: 'Select domains you are most interested in.', category: 'Aptitude', type: 'Multi-Select', difficulty: 'Easy', marks: 1, options: ['AI', 'Data Science', 'Cloud', 'DevOps'], answer: '', status: 'Disabled' },
-  { id: 7, question: 'I prefer working in a team over working alone.', category: 'Soft Skills', type: 'Likert Scale', difficulty: 'Easy', marks: 1, options: [], answer: '', status: 'Active' },
-  { id: 8, question: 'What is the time complexity of binary search?', category: 'Technical', type: 'MCQ', difficulty: 'Hard', marks: 3, options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'], answer: 'O(log n)', status: 'Active' },
-];
+const normalizeQuestion = (question) => ({
+  ...question,
+  category: typeof question.category === 'object' ? question.category?.name : question.category,
+  type: question.questionType || question.type,
+  status: question.isActive === false ? 'Disabled' : 'Active',
+  options: question.options?.map((option) => typeof option === 'string' ? option : option.optionText) || [],
+});
 
 const emptyForm = { question: '', category: 'Technical', type: 'MCQ', difficulty: 'Medium', marks: 2, options: ['', '', '', ''], answer: '', status: 'Active' };
 
@@ -30,7 +26,7 @@ const selectCls =
   'w-full appearance-none rounded-lg border border-neutral-200 bg-white pl-3.5 pr-9 py-2.5 text-xs text-neutral-900 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0038FF] transition-all shadow-2xs cursor-pointer font-sans';
 
 export default function QuestionBankManagement() {
-  const [rows, setRows] = useState(seed);
+  const [rows, setRows] = useState([]);
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState('All');
   const [diffFilter, setDiffFilter] = useState('All');
@@ -43,8 +39,8 @@ export default function QuestionBankManagement() {
 
   useEffect(() => {
     adminService.getQuestions()
-      .then((d) => setRows(d.content || d || seed))
-      .catch(() => {});
+      .then((d) => setRows((d.content || d || []).map(normalizeQuestion)))
+      .catch(() => setRows([]));
   }, []);
 
   const filtered = useMemo(() => {
@@ -56,10 +52,10 @@ export default function QuestionBankManagement() {
   }, [rows, catFilter, diffFilter, query]);
 
   const openAdd = () => { setForm(emptyForm); setEditRow(null); setModalOpen(true); };
-  const openEdit = (row) => { 
-    setForm({ ...row, options: row.options?.length ? [...row.options] : ['', '', '', ''] }); 
-    setEditRow(row); 
-    setModalOpen(true); 
+  const openEdit = (row) => {
+    setForm({ ...row, options: row.options?.length ? [...row.options] : ['', '', '', ''] });
+    setEditRow(row);
+    setModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -67,22 +63,23 @@ export default function QuestionBankManagement() {
     setSaving(true);
     try {
       if (editRow) {
-        await adminService.updateQuestion(editRow.id, form).catch(() => {});
-        setRows((r) => r.map((x) => (x.id === editRow.id ? { ...x, ...form } : x)));
+        const updated = await adminService.updateQuestion(editRow.id, { ...form, questionType: form.type, displayOrder: editRow.displayOrder || 1 });
+        setRows((r) => r.map((x) => (x.id === editRow.id ? normalizeQuestion(updated) : x)));
       } else {
-        const created = await adminService.createQuestion(form).catch(() => ({ ...form, id: Date.now() }));
-        setRows((r) => [created, ...r]);
+        const created = await adminService.createQuestion({ ...form, questionType: form.type, displayOrder: 1 });
+        setRows((r) => [normalizeQuestion(created), ...r]);
       }
     } catch {
-      setRows((r) => editRow ? r.map((x) => (x.id === editRow.id ? { ...x, ...form } : x)) : [{ ...form, id: Date.now() }, ...r]);
     }
     setSaving(false);
     setModalOpen(false);
   };
 
   const handleDelete = async () => {
-    try { await adminService.deleteQuestion(deleteRow.id); } catch {}
-    setRows((r) => r.filter((x) => x.id !== deleteRow.id));
+    try {
+      await adminService.deleteQuestion(deleteRow.id);
+      setRows((r) => r.filter((x) => x.id !== deleteRow.id));
+    } catch { }
     setDeleteRow(null);
   };
 
@@ -94,7 +91,7 @@ export default function QuestionBankManagement() {
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
-      
+
       {/* ── Top Header Ribbon ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
         <div>
@@ -212,11 +209,10 @@ export default function QuestionBankManagement() {
               <button
                 key={c}
                 onClick={() => setCatFilter(c)}
-                className={`px-2.5 py-1 rounded font-semibold transition-all ${
-                  catFilter === c
+                className={`px-2.5 py-1 rounded font-semibold transition-all ${catFilter === c
                     ? 'bg-neutral-950 text-white shadow-xs'
                     : 'text-neutral-500 hover:text-neutral-900'
-                }`}
+                  }`}
               >
                 {c}
               </button>
@@ -288,11 +284,10 @@ export default function QuestionBankManagement() {
                           return (
                             <span
                               key={opt}
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-sans border ${
-                                isCorrect
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-sans border ${isCorrect
                                   ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium'
                                   : 'bg-neutral-50 text-neutral-600 border-neutral-200/70'
-                              }`}
+                                }`}
                             >
                               {isCorrect && <FiCheck size={12} className="text-emerald-600" />}
                               <span>{opt}</span>
@@ -306,11 +301,10 @@ export default function QuestionBankManagement() {
 
                 {/* Right Action Controls */}
                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${
-                    row.status === 'Active'
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${row.status === 'Active'
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                       : 'bg-neutral-100 text-neutral-500 border-neutral-200'
-                  }`}>
+                    }`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${row.status === 'Active' ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
                     {row.status}
                   </span>

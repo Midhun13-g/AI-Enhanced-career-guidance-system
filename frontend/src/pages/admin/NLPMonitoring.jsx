@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FiActivity, FiAlertCircle, FiCheck, FiClock, 
-  FiLoader, FiRefreshCw, FiShield, FiCpu, FiFileText 
+import {
+  FiActivity, FiAlertCircle, FiCheck, FiClock,
+  FiLoader, FiRefreshCw, FiShield, FiCpu, FiFileText
 } from 'react-icons/fi';
-import { nlpMonitoring } from '../resume/resumeData';
+import { adminService } from '../../services/adminService';
 
 const STATUS_CONFIG = {
   Success: {
@@ -26,29 +27,36 @@ const STATUS_CONFIG = {
   },
 };
 
-const MODEL_METRICS = [
-  { label: 'Named Entity Recognition (NER)', value: 94.2, baseline: '90.0% Target' },
-  { label: 'Skill Taxonomy Extraction Precision', value: 91.8, baseline: '88.0% Target' },
-  { label: 'Institutional & Education Parsing', value: 96.5, baseline: '92.0% Target' },
-  { label: 'Project & Experience Segmentation', value: 88.3, baseline: '85.0% Target' },
-  { label: 'Accreditation & Certificate Mapping', value: 93.1, baseline: '90.0% Target' },
-];
-
 export default function NLPMonitoring() {
-  const successJobs = nlpMonitoring.filter((j) => j.status === 'Success');
+  const [jobs, setJobs] = useState([]);
+
+  useEffect(() => {
+    adminService.getResumes()
+      .then((data) => setJobs((Array.isArray(data) ? data : data?.content || []).map((resume) => ({
+        id: resume.id,
+        file: resume.fileName,
+        status: resume.status === 'ANALYZED' ? 'Success' : resume.status === 'PROCESSING' ? 'Pending' : resume.status === 'FAILED' ? 'Failed' : resume.status,
+        accuracy: resume.resumeScore,
+        duration: null,
+        time: resume.uploadTime ? new Date(resume.uploadTime).toLocaleString() : '—',
+      }))))
+      .catch(() => setJobs([]));
+  }, []);
+
+  const successJobs = jobs.filter((j) => j.status === 'Success');
   const successCount = successJobs.length;
-  const failedCount = nlpMonitoring.filter((j) => j.status === 'Failed').length;
-  const pendingCount = nlpMonitoring.filter((j) => j.status === 'Pending').length;
-  
+  const failedCount = jobs.filter((j) => j.status === 'Failed').length;
+  const pendingCount = jobs.filter((j) => j.status === 'Pending').length;
+
   const avgAccuracy = successCount > 0
     ? Math.round(successJobs.reduce((a, j) => a + (j.accuracy || 0), 0) / successCount)
-    : 92;
+    : null;
 
   const fadeUp = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
-      
+
       {/* ── Top Header Ribbon ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
         <div>
@@ -82,7 +90,7 @@ export default function NLPMonitoring() {
 
       {/* ── KPI Metric Stat Grid ── */}
       <motion.div {...fadeUp} transition={{ duration: 0.2 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        
+
         <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">Successful Parses</span>
@@ -130,15 +138,15 @@ export default function NLPMonitoring() {
             </span>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">{avgAccuracy}%</div>
-            <p className="text-[11px] text-neutral-400 font-mono mt-0.5">Target confidence: 90%+</p>
+            <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">{avgAccuracy == null ? '—' : `${avgAccuracy}%`}</div>
+            <p className="text-[11px] text-neutral-400 font-mono mt-0.5">Derived from available resume scores</p>
           </div>
         </div>
 
       </motion.div>
 
       {/* ── Model Layer Precision Metrics ── */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, delay: 0.05 }}
@@ -158,16 +166,11 @@ export default function NLPMonitoring() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {[
-            { label: 'Named Entity Recognition (NER)', value: 94.2, baseline: 90.0, desc: 'Candidate, Degree, Institution, Date extraction' },
-            { label: 'Skill Taxonomy Precision', value: 91.8, baseline: 88.0, desc: 'Direct mapping to ESCO / O*NET frameworks' },
-            { label: 'Education & Credential Parsing', value: 96.5, baseline: 92.0, desc: 'CGPA normalization & accreditation detection' },
-            { label: 'Experience Segmentation', value: 88.3, baseline: 85.0, desc: 'Role hierarchy, tenure calculation & bullet parsing' },
-          ].map((m, i) => {
+          {[].map((m, i) => {
             const delta = (m.value - m.baseline).toFixed(1);
             return (
-              <div 
-                key={m.label} 
+              <div
+                key={m.label}
                 className="rounded-xl border border-neutral-200/80 bg-[#F8FAFC] p-4 flex flex-col justify-between space-y-3 hover:border-neutral-300 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">
@@ -222,7 +225,7 @@ export default function NLPMonitoring() {
                 </div>
                 <span className="text-[10px] font-mono text-neutral-400 block text-right">Target: 90.0%</span>
               </div>
-              <span className="text-base font-black text-neutral-950 font-mono">93.1%</span>
+              <span className="text-base font-black text-neutral-950 font-mono">—</span>
             </div>
           </div>
         </div>
@@ -234,8 +237,8 @@ export default function NLPMonitoring() {
       </motion.div>
 
       {/* ── Processing Job Stream Table ── */}
-      <motion.div 
-        {...fadeUp} 
+      <motion.div
+        {...fadeUp}
         transition={{ duration: 0.25, delay: 0.1 }}
         className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-4"
       >
@@ -264,7 +267,7 @@ export default function NLPMonitoring() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {nlpMonitoring.map((job) => {
+              {jobs.map((job) => {
                 const config = STATUS_CONFIG[job.status] || STATUS_CONFIG.Pending;
                 const StatusIcon = config.icon;
 

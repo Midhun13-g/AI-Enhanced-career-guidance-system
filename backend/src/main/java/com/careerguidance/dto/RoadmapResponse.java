@@ -6,6 +6,7 @@ import java.util.List;
 public class RoadmapResponse {
     private int phase;
     private String title;
+    private String duration;
     @JsonProperty("skills_to_learn")
     private List<String> skillsToLearn;
     @JsonProperty("recommended_courses")
@@ -19,6 +20,9 @@ public class RoadmapResponse {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+
+    public String getDuration() { return duration; }
+    public void setDuration(String duration) { this.duration = duration; }
 
     public List<String> getSkillsToLearn() { return skillsToLearn; }
     public void setSkillsToLearn(List<String> skillsToLearn) { this.skillsToLearn = skillsToLearn; }

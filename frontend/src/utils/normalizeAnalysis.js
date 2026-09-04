@@ -184,7 +184,8 @@ export function normalizeAnalysisResponse(raw) {
       difficulty: courseObj.difficulty || 'Intermediate',
       duration: courseObj.duration || (courseObj.duration_hours ? `${courseObj.duration_hours} hrs` : ''),
       reason: c.explanation?.why_this_course || c.explanation?.why_you_need_it || c.reason || courseObj.reason || '',
-      url: courseObj.url || courseObj.link || null,
+      url: courseObj.course_url || courseObj.courseUrl || courseObj.url || courseObj.link
+        || courseObj.course_link || courseObj.courseLink || courseObj.href || null,
       score: normalizeScore(courseObj.final_score || courseObj.score_percentage || c.recommendation_score || c.score || 0),
     };
   });

@@ -1,5 +1,6 @@
 package com.careerguidance.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CourseRecommendationResponse {
@@ -13,6 +14,9 @@ public class CourseRecommendationResponse {
     private String domain;
     private String difficulty;
     private String duration;
+    @JsonProperty("course_url")
+    @JsonAlias({"courseUrl", "url", "link", "course_link", "courseLink", "href"})
+    private String courseUrl;
     @JsonProperty("recommendation_score")
     private double recommendationScore;
     @JsonProperty("semantic_similarity")
@@ -39,6 +43,9 @@ public class CourseRecommendationResponse {
 
     public String getDuration() { return duration; }
     public void setDuration(String duration) { this.duration = duration; }
+
+    public String getCourseUrl() { return courseUrl; }
+    public void setCourseUrl(String courseUrl) { this.courseUrl = courseUrl; }
 
     public double getRecommendationScore() { return recommendationScore; }
     public void setRecommendationScore(double recommendationScore) { this.recommendationScore = recommendationScore; }

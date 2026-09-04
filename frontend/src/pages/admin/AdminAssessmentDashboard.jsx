@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -10,45 +11,13 @@ import {
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
+import { adminService } from '../../services/adminService';
 
-const participationData = [
-  { month: 'Feb', attempts: 320, completions: 280 },
-  { month: 'Mar', attempts: 410, completions: 360 },
-  { month: 'Apr', attempts: 380, completions: 330 },
-  { month: 'May', attempts: 520, completions: 470 },
-  { month: 'Jun', attempts: 610, completions: 555 },
-  { month: 'Jul', attempts: 740, completions: 680 },
-];
-
-const performanceTrends = [
-  { month: 'Feb', technical: 62, aptitude: 58, softSkills: 72 },
-  { month: 'Mar', technical: 65, aptitude: 61, softSkills: 74 },
-  { month: 'Apr', technical: 68, aptitude: 64, softSkills: 76 },
-  { month: 'May', technical: 71, aptitude: 67, softSkills: 78 },
-  { month: 'Jun', technical: 74, aptitude: 70, softSkills: 80 },
-  { month: 'Jul', technical: 76, aptitude: 72, softSkills: 82 },
-];
-
-const completionRate = [
-  { name: 'Completed', value: 68, color: '#0038FF' },
-  { name: 'In Progress', value: 18, color: '#60A5FA' },
-  { name: 'Abandoned', value: 14, color: '#E2E8F0' },
-];
-
-const categoryStats = [
-  { category: 'Technical & Systems', assessments: 42, avgScore: 74, passRate: 68 },
-  { category: 'Aptitude & Logic', assessments: 28, avgScore: 70, passRate: 72 },
-  { category: 'Professional Skills', assessments: 18, avgScore: 82, passRate: 88 },
-  { category: 'Domain Personality', assessments: 12, avgScore: 78, passRate: 94 },
-];
-
-const recentActivity = [
-  { student: 'Aarav Mehta', assessment: 'Java Programming & Architecture', score: 88, status: 'Passed', time: '2 hrs ago' },
-  { student: 'Ananya Sharma', assessment: 'Logical Reasoning & Deduction', score: 74, status: 'Passed', time: '3 hrs ago' },
-  { student: 'Rohan Gupta', assessment: 'Data Structures & Algorithms', score: 52, status: 'Failed', time: '5 hrs ago' },
-  { student: 'Priya Nair', assessment: 'Technical Communication', score: 91, status: 'Passed', time: '6 hrs ago' },
-  { student: 'Karan Singh', assessment: 'SQL Database Architecture', score: 67, status: 'Passed', time: '8 hrs ago' },
-];
+const participationData = [];
+const performanceTrends = [];
+const completionRate = [];
+const categoryStats = [];
+const recentActivity = [];
 
 const StatCard = ({ icon: Icon, label, value, sub, delay = 0 }) => (
   <motion.div
@@ -79,6 +48,13 @@ const StatCard = ({ icon: Icon, label, value, sub, delay = 0 }) => (
 
 export default function AdminAssessmentDashboard() {
   const navigate = useNavigate();
+  const [assessments, setAssessments] = useState([]);
+
+  useEffect(() => {
+    adminService.getAssessments().then((data) => {
+      setAssessments(Array.isArray(data) ? data : data?.content || []);
+    }).catch(() => setAssessments([]));
+  }, []);
 
   const tooltipStyle = {
     backgroundColor: '#0F172A',
@@ -124,7 +100,7 @@ export default function AdminAssessmentDashboard() {
             <FiBarChart2 size={13} />
             <span>Telemetry</span>
           </button>
-          
+
           <button
             onClick={() => navigate('/admin/assessments/create')}
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#0038FF] hover:bg-blue-700 active:scale-[0.99] px-4 py-2 text-xs font-semibold text-white transition-all shadow-md shadow-blue-500/20"
@@ -137,15 +113,15 @@ export default function AdminAssessmentDashboard() {
 
       {/* ── Top Metric Stat Row ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={FiClipboard} label="Total Evaluations" value="100" sub="All categories published" delay={0.05} />
-        <StatCard icon={FiCheckCircle} label="Active Test Banks" value="24" sub="Live on student portal" delay={0.1} />
-        <StatCard icon={FiUsers} label="Total Submissions" value="1,840" sub="+12% this cycle" delay={0.15} />
-        <StatCard icon={FiTarget} label="Platform Mean Score" value="74.2%" sub="+3.1% benchmark shift" delay={0.2} />
+        <StatCard icon={FiClipboard} label="Total Evaluations" value={assessments.length} delay={0.05} />
+        <StatCard icon={FiCheckCircle} label="Active Test Banks" value={assessments.filter((item) => ['PUBLISHED', 'ACTIVE'].includes(item.status)).length} delay={0.1} />
+        <StatCard icon={FiUsers} label="Total Submissions" value="—" delay={0.15} />
+        <StatCard icon={FiTarget} label="Platform Mean Score" value="—" delay={0.2} />
       </div>
 
       {/* ── Analytical Row 1: Ingestion vs Completions & Completion Ratio ── */}
       <div className="grid gap-6 lg:grid-cols-12">
-        
+
         {/* Participation Velocity Chart (8 cols) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -245,7 +221,7 @@ export default function AdminAssessmentDashboard() {
 
       {/* ── Analytical Row 2: Category Breakdown & Performance Trajectories ── */}
       <div className="grid gap-6 lg:grid-cols-2">
-        
+
         {/* Performance Trends by Track */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -377,7 +353,7 @@ export default function AdminAssessmentDashboard() {
                   <td className="px-4 py-3.5 font-semibold text-neutral-900">
                     {row.student}
                   </td>
-                  
+
                   <td className="px-4 py-3.5 text-neutral-600 font-medium">
                     {row.assessment}
                   </td>
@@ -387,14 +363,12 @@ export default function AdminAssessmentDashboard() {
                   </td>
 
                   <td className="px-4 py-3.5">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${
-                      row.status === 'Passed'
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${row.status === 'Passed'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                         : 'bg-rose-50 text-rose-700 border-rose-200/80'
-                    }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${
-                        row.status === 'Passed' ? 'bg-emerald-500' : 'bg-rose-500'
-                      }`} />
+                      }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${row.status === 'Passed' ? 'bg-emerald-500' : 'bg-rose-500'
+                        }`} />
                       {row.status}
                     </span>
                   </td>

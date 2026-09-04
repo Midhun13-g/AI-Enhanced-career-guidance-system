@@ -33,7 +33,10 @@ export default function CourseRecommendations({ courseRecommendations }) {
         {recommendations.map((rec, idx) => {
           const courseName = rec.course_name || rec.title || null;
           const targetSkill = rec.target_skill || rec.skill || 'Key Competency';
-          const isLearningTarget = !courseName || rec.recommendation_type === 'FALLBACK';
+          const isLearningTarget = !courseName
+            || ['fallback', 'learning_target', 'learning-target'].includes(
+              String(rec.recommendation_type || rec.recommendationType || '').toLowerCase(),
+            );
 
           const provider = rec.provider || null;
           const difficulty = rec.difficulty || null;
@@ -42,7 +45,8 @@ export default function CourseRecommendations({ courseRecommendations }) {
           const rawScore = rec.recommendation_score ?? rec.score ?? null;
           const score = rawScore !== null ? Math.round(Number(rawScore) * (Number(rawScore) <= 1 ? 100 : 1)) : null;
           const reason = rec.reason || null;
-          const url = rec.course_url || rec.url || null;
+          const url = rec.course_url || rec.courseUrl || rec.url || rec.link
+            || rec.course_link || rec.courseLink || rec.href || null;
 
           if (isLearningTarget) {
             return (

@@ -12,42 +12,15 @@ import {
 } from 'react-icons/fi';
 import { adminService } from '../../services/adminService';
 
-// ── Fallback / Sample Mock Datasets ──────────────────────────────────────────
-const sampleStudents = [
-  { id: 1, firstName: 'Aarav', lastName: 'Mehta', email: 'aarav@college.edu', collegeName: 'Apex Institute of Tech', cgpa: 8.7, active: true },
-  { id: 2, firstName: 'Ananya', lastName: 'Sharma', email: 'ananya@college.edu', collegeName: 'National Engineering College', cgpa: 9.1, active: true },
-  { id: 3, firstName: 'Rohan', lastName: 'Gupta', email: 'rohan@college.edu', collegeName: 'State Tech University', cgpa: 7.9, active: true },
-  { id: 4, firstName: 'Priya', lastName: 'Nair', email: 'priya@college.edu', collegeName: 'City Science Institute', cgpa: 8.4, active: false }
-];
-
-const sampleQuestions = [
-  { id: 1, question: 'Which data structure enforces strict LIFO ordering in execution stacks?', category: 'Technical Skills', type: 'MCQ', status: 'Enabled' },
-  { id: 2, question: 'I actively seek ambiguity and thrive in unconstrained problem-solving domains.', category: 'Personality', type: 'Likert Scale', status: 'Enabled' },
-  { id: 3, question: 'Evaluate your proficiency and interest in distributed backend architectures.', category: 'Interest', type: 'Rating', status: 'Disabled' }
-];
-
-const sampleResumes = [
-  { id: 1, name: 'Aarav Mehta', file: 'aarav_mehta_resume.pdf', uploaded: 'Jul 28, 2026', score: 88, ats: 91, status: 'Analyzed' },
-  { id: 2, name: 'Ananya Sharma', file: 'ananya_sharma.pdf', uploaded: 'Jul 27, 2026', score: 82, ats: 86, status: 'Analyzed' },
-  { id: 3, name: 'Rohan Gupta', file: 'rohan_resume.pdf', uploaded: 'Jul 26, 2026', score: 74, ats: 78, status: 'Review Needed' }
-];
-
-const registrations = [
-  { m: 'Jan', n: 42 },
-  { m: 'Feb', n: 58 },
-  { m: 'Mar', n: 76 },
-  { m: 'Apr', n: 68 },
-  { m: 'May', n: 104 },
-  { m: 'Jun', n: 121 },
-  { m: 'Jul', n: 137 }
-];
-
-const interest = [
-  { name: 'Technology & Systems', value: 38, color: '#0038FF' },
-  { name: 'Business Analysis', value: 25, color: '#2563EB' },
-  { name: 'Product Design', value: 19, color: '#60A5FA' },
-  { name: 'Data Sciences', value: 18, color: '#94A3B8' }
-];
+const registrations = [];
+const interest = [];
+const normalizeQuestion = (question) => ({
+  ...question,
+  category: typeof question.category === 'object' ? question.category?.name : question.category,
+  type: question.questionType || question.type,
+  status: question.isActive === false ? 'Disabled' : 'Enabled',
+  options: question.options?.map((option) => typeof option === 'string' ? option : option.optionText) || [],
+});
 
 // ── Reusable Micro-Components ────────────────────────────────────────────────
 const Card = ({ label, value, trend, icon: Icon }) => (
@@ -162,7 +135,7 @@ export function AdminDashboard() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    adminService.getDashboard().then(setData).catch(() => {});
+    adminService.getDashboard().then(setData).catch(() => { });
   }, []);
 
   const metrics = data?.metrics || data || {};
@@ -200,10 +173,10 @@ export function AdminDashboard() {
 
       {/* KPI Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card label="Total Candidates" value={metrics.totalStudents ?? '2,486'} trend="12.5%" icon={FiUsers} />
-        <Card label="Resumes Indexed" value={metrics.uploadedResumes ?? '1,874'} trend="8.2%" icon={FiFileText} />
-        <Card label="Evaluations Run" value={metrics.completedAssessments ?? '1,628'} trend="16.4%" icon={FiCheckSquare} />
-        <Card label="Mean ATS Index" value={`${metrics.averageAtsScore ?? 78}%`} trend="3.1%" icon={FiDownload} />
+        <Card label="Total Candidates" value={metrics.totalStudents ?? 0} icon={FiUsers} />
+        <Card label="Resumes Indexed" value={metrics.totalResumes ?? 0} icon={FiFileText} />
+        <Card label="Evaluations Run" value={metrics.totalAssessments ?? 0} icon={FiCheckSquare} />
+        <Card label="Mean ATS Index" value={`${metrics.averageAtsScore ?? 0}%`} icon={FiDownload} />
       </div>
 
       {/* Analytical Charts */}
@@ -293,7 +266,7 @@ export function AdminDashboard() {
             </ResponsiveContainer>
 
             <div className="absolute flex flex-col items-center justify-center pointer-events-none select-none">
-              <span className="text-xl font-black text-neutral-950 font-mono tracking-tight">100%</span>
+              <span className="text-xl font-black text-neutral-950 font-mono tracking-tight">{interest.length ? '100%' : '0%'}</span>
               <span className="text-[9px] uppercase tracking-widest font-mono text-neutral-400">Total Cohort</span>
             </div>
           </div>
@@ -349,7 +322,10 @@ export function StudentsPage() {
     setLoading(true);
     adminService.getStudents({ size: 100 })
       .then(x => setRecords(x.content || x || []))
-      .catch(() => setRecords(sampleStudents))
+      .catch(() => {
+        setRecords([]);
+        setError('Unable to load student profiles from the server.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -363,7 +339,7 @@ export function StudentsPage() {
       await adminService.deleteStudent(del.id);
       setRecords(r => r.filter(x => x.id !== del.id));
     } catch {
-      setRecords(r => r.filter(x => x.id !== del.id));
+      setError('Unable to delete the student profile from the server.');
     }
     setDel(null);
   };
@@ -439,11 +415,10 @@ export function StudentsPage() {
                       </td>
 
                       <td className="px-4 py-3.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border ${
-                          x.active !== false
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border ${x.active !== false
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                             : 'bg-neutral-100 text-neutral-600 border-neutral-200'
-                        }`}>
+                          }`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${x.active !== false ? 'bg-emerald-500' : 'bg-neutral-400'}`} />
                           {x.active !== false ? 'Active' : 'Disabled'}
                         </span>
@@ -475,22 +450,24 @@ export function StudentsPage() {
 
 // ── 3. Question Bank Management Page ────────────────────────────────────────
 export function QuestionsPage() {
-  const [rows, setRows] = useState(sampleQuestions);
+  const [rows, setRows] = useState([]);
   const [query, setQuery] = useState('');
   const [del, setDel] = useState(null);
   const [form, setForm] = useState(false);
 
   useEffect(() => {
     adminService.getQuestions()
-      .then(x => setRows(x.content || x))
-      .catch(() => {});
+      .then(x => setRows((x.content || x || []).map(normalizeQuestion)))
+      .catch(() => setRows([]));
   }, []);
 
   const shown = rows.filter(x => JSON.stringify(x).toLowerCase().includes(query.toLowerCase()));
 
   const remove = async () => {
-    try { await adminService.deleteQuestion(del.id); } catch {}
-    setRows(x => x.filter(q => q.id !== del.id));
+    try {
+      await adminService.deleteQuestion(del.id);
+      setRows(x => x.filter(q => q.id !== del.id));
+    } catch { }
     setDel(null);
   };
 
@@ -542,11 +519,10 @@ export function QuestionsPage() {
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border ${
-                  q.status === 'Enabled'
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border ${q.status === 'Enabled'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                     : 'bg-neutral-100 text-neutral-500 border-neutral-200'
-                }`}>
+                  }`}>
                   {q.status}
                 </span>
 
@@ -568,11 +544,9 @@ export function QuestionsPage() {
           onClose={() => setForm(false)}
           onSave={async data => {
             try {
-              const v = await adminService.createQuestion(data);
-              setRows(r => [v, ...r]);
-            } catch {
-              setRows(r => [{ ...data, id: Date.now(), status: 'Enabled' }, ...r]);
-            }
+              const v = await adminService.createQuestion({ ...data, questionType: data.type, displayOrder: 1 });
+              setRows(r => [normalizeQuestion(v), ...r]);
+            } catch { }
             setForm(false);
           }}
         />
@@ -677,21 +651,30 @@ function QuestionModal({ onClose, onSave }) {
 
 // ── 4. Resumes Management Page ──────────────────────────────────────────────
 export function ResumesPage() {
-  const [rows, setRows] = useState(sampleResumes);
+  const [rows, setRows] = useState([]);
   const [query, setQuery] = useState('');
   const [del, setDel] = useState(null);
 
   useEffect(() => {
     adminService.getResumes()
-      .then(x => setRows(x.content || x))
-      .catch(() => {});
+      .then(x => setRows((x.content || x || []).map(resume => ({
+        ...resume,
+        name: resume.studentName,
+        file: resume.fileName,
+        uploaded: resume.uploadTime ? new Date(resume.uploadTime).toLocaleDateString() : '—',
+        score: resume.resumeScore,
+        ats: resume.atsScore,
+      }))))
+      .catch(() => setRows([]));
   }, []);
 
   const shown = rows.filter(x => JSON.stringify(x).toLowerCase().includes(query.toLowerCase()));
 
   const remove = async () => {
-    try { await adminService.deleteResume(del.id); } catch {}
-    setRows(x => x.filter(r => r.id !== del.id));
+    try {
+      await adminService.deleteResume(del.id);
+      setRows(x => x.filter(r => r.id !== del.id));
+    } catch { }
     setDel(null);
   };
 
@@ -764,7 +747,7 @@ export function ResumesPage() {
                   <td className="px-4 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => adminService.downloadResume(x.id).catch(() => {})}
+                        onClick={() => adminService.downloadResume(x.id).catch(() => { })}
                         className="text-neutral-400 hover:text-[#0038FF] p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
                         aria-label="Download resume"
                       >

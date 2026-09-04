@@ -1,13 +1,14 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, CartesianGrid,
 } from 'recharts';
-import { 
-  FiFileText, FiCpu, FiBarChart2, FiCheckCircle, 
-  FiTrendingUp, FiShield, FiDownload, FiLayers, FiActivity 
+import {
+  FiFileText, FiCpu, FiBarChart2, FiCheckCircle,
+  FiTrendingUp, FiShield, FiDownload, FiLayers, FiActivity
 } from 'react-icons/fi';
-import { adminResumeStats } from '../resume/resumeData';
+import { adminService } from '../../services/adminService';
 
 const STATUS_PALETTE = ['#0038FF', '#94A3B8', '#EF4444'];
 
@@ -23,8 +24,8 @@ const tooltipStyle = {
 function StatCard({ icon: Icon, label, value, sub, delay = 0 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }} 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.2 }}
       className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs flex flex-col justify-between"
     >
@@ -50,11 +51,35 @@ function StatCard({ icon: Icon, label, value, sub, delay = 0 }) {
 }
 
 export default function ResumeAdminDashboard() {
-  const s = adminResumeStats;
+  const [resumes, setResumes] = useState([]);
+
+  useEffect(() => {
+    adminService.getResumes()
+      .then((data) => setResumes(Array.isArray(data) ? data : data?.content || []))
+      .catch(() => setResumes([]));
+  }, []);
+
+  const analyzed = resumes.filter((resume) => resume.resumeScore != null);
+  const averageScore = analyzed.length
+    ? analyzed.reduce((total, resume) => total + resume.resumeScore, 0) / analyzed.length
+    : null;
+  const s = {
+    totalUploaded: resumes.length,
+    totalSkillsExtracted: null,
+    avgScore: averageScore,
+    successRate: null,
+    uploadTrend: [],
+    skillDistribution: [],
+    processingStatus: Object.entries(resumes.reduce((counts, resume) => {
+      const status = resume.status || 'UNKNOWN';
+      counts[status] = (counts[status] || 0) + 1;
+      return counts;
+    }, {})).map(([status, value]) => ({ status, value })),
+  };
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
-      
+
       {/* ── Top Header Ribbon ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
         <div>
@@ -76,45 +101,41 @@ export default function ResumeAdminDashboard() {
 
         <div className="flex items-center gap-2 text-xs font-mono text-neutral-600 bg-neutral-100 px-3 py-1.5 rounded-lg border border-neutral-200/80">
           <FiActivity className="text-[#0038FF]" size={13} />
-          <span>{s.totalUploaded?.toLocaleString() || '1,874'} Documents Indexed</span>
+          <span>{s.totalUploaded.toLocaleString()} Documents Indexed</span>
         </div>
       </div>
 
       {/* ── KPI Stat Cards ── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard 
-          icon={FiFileText} 
-          label="Total Ingested Resumes" 
-          value={s.totalUploaded ? s.totalUploaded.toLocaleString() : '1,874'} 
-          sub="+14.2% vs last period" 
-          delay={0.05} 
+        <StatCard
+          icon={FiFileText}
+          label="Total Ingested Resumes"
+          value={s.totalUploaded.toLocaleString()}
+          delay={0.05}
         />
-        <StatCard 
-          icon={FiCpu} 
-          label="Extracted Skill Tokens" 
-          value={s.totalSkillsExtracted ? s.totalSkillsExtracted.toLocaleString() : '24,810'} 
-          sub="+18.7% taxonomy expansion" 
-          delay={0.1} 
+        <StatCard
+          icon={FiCpu}
+          label="Extracted Skill Tokens"
+          value={s.totalSkillsExtracted == null ? '—' : s.totalSkillsExtracted.toLocaleString()}
+          delay={0.1}
         />
-        <StatCard 
-          icon={FiBarChart2} 
-          label="Mean Resume Score" 
-          value={`${s.avgScore || 78}%`} 
-          sub="+2.3% quality improvement" 
-          delay={0.15} 
+        <StatCard
+          icon={FiBarChart2}
+          label="Mean Resume Score"
+          value={s.avgScore == null ? '—' : `${s.avgScore.toFixed(1)}%`}
+          delay={0.15}
         />
-        <StatCard 
-          icon={FiCheckCircle} 
-          label="Parsing Success Rate" 
-          value={`${s.successRate || 96.4}%`} 
-          sub="+0.8% parser stability" 
-          delay={0.2} 
+        <StatCard
+          icon={FiCheckCircle}
+          label="Parsing Success Rate"
+          value={s.successRate == null ? '—' : `${s.successRate}%`}
+          delay={0.2}
         />
       </div>
 
       {/* ── Analytical Row 1: Ingestion Velocity & Parsing Status ── */}
       <div className="grid gap-6 xl:grid-cols-12">
-        
+
         {/* Ingestion Velocity Area Chart (8 cols) */}
         <section className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs xl:col-span-8 flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between">
@@ -166,12 +187,12 @@ export default function ResumeAdminDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Tooltip contentStyle={tooltipStyle} />
-                <Pie 
-                  data={s.processingStatus} 
-                  dataKey="value" 
-                  nameKey="status" 
-                  innerRadius={50} 
-                  outerRadius={70} 
+                <Pie
+                  data={s.processingStatus}
+                  dataKey="value"
+                  nameKey="status"
+                  innerRadius={50}
+                  outerRadius={70}
                   paddingAngle={3}
                   stroke="none"
                   tabIndex={-1}
@@ -192,9 +213,9 @@ export default function ResumeAdminDashboard() {
             {s.processingStatus?.map((item, i) => (
               <div key={item.status} className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">
-                  <span 
-                    className="h-2 w-2 rounded-full shrink-0" 
-                    style={{ backgroundColor: STATUS_PALETTE[i % STATUS_PALETTE.length] }} 
+                  <span
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: STATUS_PALETTE[i % STATUS_PALETTE.length] }}
                   />
                   <span className="text-neutral-700">{item.status}</span>
                 </div>

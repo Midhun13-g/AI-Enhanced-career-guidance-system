@@ -1,61 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FiDownload, FiTrendingUp, FiUsers, FiBarChart2, 
-  FiTarget, FiChevronDown, FiShield, FiFilter, FiActivity 
+import {
+  FiDownload, FiTrendingUp, FiUsers, FiBarChart2,
+  FiTarget, FiChevronDown, FiShield, FiFilter, FiActivity
 } from 'react-icons/fi';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, AreaChart, Area,
 } from 'recharts';
+import { adminService } from '../../services/adminService';
 
 const ranges = ['Last 7 days', 'Last 30 days', 'Last 3 months', 'Last 6 months', 'This academic year'];
 
-const avgScoreByCategory = [
-  { category: 'Technical', avgScore: 74, attempts: 420, passRate: 68 },
-  { category: 'Aptitude', avgScore: 70, attempts: 310, passRate: 72 },
-  { category: 'Soft Skills', avgScore: 82, attempts: 220, passRate: 88 },
-  { category: 'Personality', avgScore: 78, attempts: 180, passRate: 94 },
-];
-
-const difficultyData = [
-  { name: 'Foundational', pass: 92, fail: 8 },
-  { name: 'Intermediate', pass: 74, fail: 26 },
-  { name: 'Advanced', pass: 58, fail: 42 },
-  { name: 'Expert', pass: 38, fail: 62 },
-];
-
-const monthlyTrend = [
-  { month: 'Jan', students: 180, avgScore: 68, passRate: 64 },
-  { month: 'Feb', students: 220, avgScore: 70, passRate: 67 },
-  { month: 'Mar', students: 290, avgScore: 71, passRate: 69 },
-  { month: 'Apr', students: 340, avgScore: 72, passRate: 70 },
-  { month: 'May', students: 410, avgScore: 73, passRate: 72 },
-  { month: 'Jun', students: 480, avgScore: 74, passRate: 74 },
-  { month: 'Jul', students: 560, avgScore: 76, passRate: 76 },
-];
-
-const topAssessments = [
-  { name: 'Java & Distributed Systems', attempts: 284, avgScore: 76, passRate: 72, category: 'Technical' },
-  { name: 'Logical Reasoning & Analysis', attempts: 261, avgScore: 70, passRate: 68, category: 'Aptitude' },
-  { name: 'Technical Communication', attempts: 198, avgScore: 84, passRate: 90, category: 'Soft Skills' },
-  { name: 'SQL & Database Architecture', attempts: 176, avgScore: 72, passRate: 70, category: 'Technical' },
-  { name: 'Data Structures & Algorithms', attempts: 154, avgScore: 65, passRate: 58, category: 'Technical' },
-];
-
-const scoreDistribution = [
-  { range: '0–20%', count: 42, color: '#94A3B8' },
-  { range: '21–40%', count: 88, color: '#64748B' },
-  { range: '41–60%', count: 210, color: '#3B82F6' },
-  { range: '61–80%', count: 480, color: '#0038FF' },
-  { range: '81–100%', count: 320, color: '#0026B3' },
-];
+const avgScoreByCategory = [];
+const difficultyData = [];
+const monthlyTrend = [];
+const topAssessments = [];
+const scoreDistribution = [];
 
 const StatCard = ({ icon: Icon, label, value, sub, delay = 0 }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 10 }} 
-    animate={{ opacity: 1, y: 0 }} 
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.2 }}
     className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs flex flex-col justify-between"
   >
@@ -81,6 +48,13 @@ const StatCard = ({ icon: Icon, label, value, sub, delay = 0 }) => (
 
 export default function AdminAnalytics() {
   const [range, setRange] = useState('Last 30 days');
+  const [assessments, setAssessments] = useState([]);
+
+  useEffect(() => {
+    adminService.getAssessments().then((data) => {
+      setAssessments(Array.isArray(data) ? data : data?.content || []);
+    }).catch(() => setAssessments([]));
+  }, []);
 
   const tooltipStyle = {
     backgroundColor: '#0F172A',
@@ -93,10 +67,10 @@ export default function AdminAnalytics() {
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
-      
+
       {/* ── Top Header & Global Range Controls ── */}
-      <motion.div 
-        initial={{ opacity: 0, y: -6 }} 
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5"
       >
@@ -120,8 +94,8 @@ export default function AdminAnalytics() {
         {/* Action Controls */}
         <div className="flex items-center gap-2.5">
           <div className="relative">
-            <select 
-              value={range} 
+            <select
+              value={range}
               onChange={(e) => setRange(e.target.value)}
               className="appearance-none rounded-lg border border-neutral-200 bg-white py-2 pl-3 pr-8 text-xs font-mono text-neutral-800 shadow-2xs focus:border-transparent focus:ring-2 focus:ring-[#0038FF] focus:outline-none cursor-pointer"
             >
@@ -139,19 +113,19 @@ export default function AdminAnalytics() {
 
       {/* ── KPI Metric Stat Grid ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={FiUsers} label="Total Assessed" value="1,840" sub="+12% vs last cycle" delay={0.05} />
-        <StatCard icon={FiBarChart2} label="Mean Score" value="74.2%" sub="+3.1% benchmark shift" delay={0.1} />
-        <StatCard icon={FiTarget} label="Platform Pass Rate" value="72.0%" sub="Across all active tracks" delay={0.15} />
-        <StatCard icon={FiActivity} label="Completion Index" value="68.4%" sub="Started to submitted" delay={0.2} />
+        <StatCard icon={FiUsers} label="Total Assessed" value="—" delay={0.05} />
+        <StatCard icon={FiBarChart2} label="Mean Score" value="—" delay={0.1} />
+        <StatCard icon={FiTarget} label="Platform Pass Rate" value="—" delay={0.15} />
+        <StatCard icon={FiActivity} label="Published Assessments" value={assessments.filter((item) => ['PUBLISHED', 'ACTIVE'].includes(item.status)).length} delay={0.2} />
       </div>
 
       {/* ── Row 1: Monthly Trend + Score Distribution ── */}
       <div className="grid gap-6 lg:grid-cols-12">
-        
+
         {/* Monthly Performance Trend (7 cols) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }} 
-          animate={{ opacity: 1, y: 0 }} 
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.25 }}
           className="lg:col-span-7 bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
         >
@@ -195,15 +169,15 @@ export default function AdminAnalytics() {
           </div>
 
           <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400 border-t border-neutral-100 pt-3">
-            <span>Aggregated from 1,840 standardized submissions</span>
+            <span>No submission history available</span>
             <span>Sync: Live</span>
           </div>
         </motion.div>
 
         {/* Score Distribution (5 cols) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }} 
-          animate={{ opacity: 1, y: 0 }} 
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.25 }}
           className="lg:col-span-5 bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
         >
@@ -240,11 +214,11 @@ export default function AdminAnalytics() {
 
       {/* ── Row 2: Category Breakdown + Difficulty Analysis ── */}
       <div className="grid gap-6 lg:grid-cols-2">
-        
+
         {/* Category Performance */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }} 
-          animate={{ opacity: 1, y: 0 }} 
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.25 }}
           className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
         >
@@ -281,9 +255,9 @@ export default function AdminAnalytics() {
         </motion.div>
 
         {/* Difficulty Analysis */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }} 
-          animate={{ opacity: 1, y: 0 }} 
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.25 }}
           className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-4"
         >
@@ -322,9 +296,9 @@ export default function AdminAnalytics() {
       </div>
 
       {/* ── Top Assessments Data Table ── */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }} 
-        animate={{ opacity: 1, y: 0 }} 
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35, duration: 0.25 }}
         className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-4"
       >
@@ -358,7 +332,7 @@ export default function AdminAnalytics() {
                   <td className="px-4 py-3.5 font-semibold text-neutral-900">
                     {row.name}
                   </td>
-                  
+
                   <td className="px-4 py-3.5">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-blue-50 text-[#0038FF] border border-blue-100">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#0038FF]" />
@@ -380,9 +354,9 @@ export default function AdminAnalytics() {
                         {row.passRate}%
                       </span>
                       <div className="w-20 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
-                        <div 
-                          className="h-full rounded-full bg-[#0038FF]" 
-                          style={{ width: `${row.passRate}%` }} 
+                        <div
+                          className="h-full rounded-full bg-[#0038FF]"
+                          style={{ width: `${row.passRate}%` }}
                         />
                       </div>
                     </div>
