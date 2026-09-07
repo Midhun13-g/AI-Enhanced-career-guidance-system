@@ -466,10 +466,15 @@ public class HuggingFaceAIClient {
                         cr.setTargetSkill(String.valueOf(cm.getOrDefault("target_skill", cm.getOrDefault("canonical_skill", cm.getOrDefault("skill", source.getOrDefault("target_skill", ""))))));
                         cr.setDifficulty(String.valueOf(source.getOrDefault("difficulty", "")));
                         cr.setDuration(String.valueOf(source.getOrDefault("duration", source.getOrDefault("duration_hours", ""))));
+                      
                         cr.setCourseUrl(String.valueOf(source.getOrDefault("course_url",
                                 source.getOrDefault("courseUrl", source.getOrDefault("url",
                                         source.getOrDefault("link", source.getOrDefault("course_link",
-                                                source.getOrDefault("courseLink", cm.getOrDefault("course_url", cm.getOrDefault("url", cm.getOrDefault("link", "")))))))));
+                                                source.getOrDefault("courseLink",
+                                                        cm.getOrDefault("course_url",
+                                                                cm.getOrDefault("url",
+                                                                        cm.getOrDefault("link", "")))))))))));
+
                         Map<String, Object> explanation = getMap(cm.get("explanation"));
                         cr.setReason(String.valueOf(cm.getOrDefault("reason", cm.getOrDefault("description",
                                 explanation.getOrDefault("why_this_course", explanation.getOrDefault("why_you_need_it", source.getOrDefault("description", "")))))));

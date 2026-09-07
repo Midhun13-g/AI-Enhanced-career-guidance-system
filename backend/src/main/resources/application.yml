@@ -72,8 +72,8 @@ huggingface:
     analyze-endpoint: ${HF_ANALYZE_ENDPOINT:/api/resume/analyze}
   token: ${HF_TOKEN:}
   timeout:
-    connect-seconds: ${HF_CONNECT_TIMEOUT:15}
-    read-seconds: ${HF_READ_TIMEOUT:180}
+    connect-seconds: ${HF_CONNECT_TIMEOUT:60}
+    read-seconds: ${HF_READ_TIMEOUT:300}
   retry:
     max-attempts: ${HF_MAX_RETRIES:3}
     backoff-ms: ${HF_RETRY_BACKOFF_MS:2000}
