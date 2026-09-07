@@ -53,7 +53,7 @@ public class HuggingFaceProperties {
 
     public static class Timeout {
         private int connectSeconds = 60;
-        private int readSeconds = 30g0;
+        private int readSeconds = 300;
 
         public int getConnectSeconds() {
             return connectSeconds;
