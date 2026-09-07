@@ -17,7 +17,7 @@ public class UserDetailsImpl implements UserDetails {
     private final Collection<? extends GrantedAuthority> authorities;
 
     public UserDetailsImpl(Long id, String email, String firstName, String lastName, String password,
-                           Collection<? extends GrantedAuthority> authorities) {
+            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -32,6 +32,12 @@ public class UserDetailsImpl implements UserDetails {
                 // Store every application role in that canonical form.
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
                 .collect(Collectors.toList());
+
+        // Ensure user has at least one role; default to STUDENT if none exist
+        if (authorities.isEmpty()) {
+            authorities = java.util.Collections.singletonList(
+                    new SimpleGrantedAuthority("ROLE_STUDENT"));
+        }
 
         return new UserDetailsImpl(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(),
                 user.getPassword(), authorities);

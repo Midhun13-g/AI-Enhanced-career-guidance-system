@@ -36,7 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository,
-                           RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
+            RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -48,7 +48,8 @@ public class AuthServiceImpl implements AuthService {
     public JwtResponse login(LoginRequest request) {
         User account = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new com.careerguidance.exception.UnauthorizedException("Invalid email or password"));
-        if (account.getAccountStatus() == AccountStatus.REJECTED || account.getAccountStatus() == AccountStatus.DISABLED) {
+        if (account.getAccountStatus() == AccountStatus.REJECTED
+                || account.getAccountStatus() == AccountStatus.DISABLED) {
             throw new com.careerguidance.exception.UnauthorizedException("This account is not permitted to sign in");
         }
         Authentication authentication = authenticationManager.authenticate(
@@ -62,10 +63,12 @@ public class AuthServiceImpl implements AuthService {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        JwtResponse response = new JwtResponse(jwt, userDetails.getId(), userDetails.getFirstName(), userDetails.getLastName(),
+        JwtResponse response = new JwtResponse(jwt, userDetails.getId(), userDetails.getFirstName(),
+                userDetails.getLastName(),
                 userDetails.getEmail(), roles);
         response.setAccountStatus(account.getAccountStatus());
-        if (account.getAccountStatus() == AccountStatus.PENDING_VERIFICATION) response.setMessage("Your mentor account is pending administrator verification.");
+        if (account.getAccountStatus() == AccountStatus.PENDING_VERIFICATION)
+            response.setMessage("Your mentor account is pending administrator verification.");
         return response;
     }
 
@@ -90,10 +93,17 @@ public class AuthServiceImpl implements AuthService {
         user.setLocation(request.getLocation());
 
         Role studentRole = roleRepository.findByName(RoleName.STUDENT)
-                .orElseThrow(() -> new BadRequestException("Role not found"));
+                .orElseThrow(() -> new BadRequestException(
+                        "STUDENT role not found. Ensure database roles are initialized."));
         user.setRoles(Set.of(studentRole));
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Verify role was saved properly
+        if (savedUser.getRoles().isEmpty()) {
+            throw new BadRequestException("Failed to assign STUDENT role to user");
+        }
+
         return new MessageResponse("User registered successfully");
     }
 }
