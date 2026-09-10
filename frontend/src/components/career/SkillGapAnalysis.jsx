@@ -28,8 +28,14 @@ const PRIORITY_CONFIG = {
   },
 };
 
-export default function SkillGapAnalysis({ skillGaps }) {
+export default function SkillGapAnalysis({ skillGaps, coverage, summary }) {
   const gaps = Array.isArray(skillGaps) ? skillGaps : [];
+
+  const tiers = coverage ? [
+    { key: 'required', label: 'Required', data: coverage.required, tone: 'bg-red-500' },
+    { key: 'preferred', label: 'Preferred', data: coverage.preferred, tone: 'bg-amber-500' },
+    { key: 'soft', label: 'Soft skills', data: coverage.soft, tone: 'bg-blue-500' },
+  ].filter((t) => t.data) : [];
 
   // Group by priority from backend response
   const grouped = {
@@ -63,6 +69,32 @@ export default function SkillGapAnalysis({ skillGaps }) {
           ✓ Excellent! No critical skill gaps detected for your target domain.
         </div>
       ) : (
+        <>
+          {tiers.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {tiers.map((t) => {
+                const cov = Math.round(Number(t.data.coverage_percentage ?? 0));
+                const matched = (t.data.matched_skills || []).length;
+                const total = Number(t.data.total ?? (matched + (t.data.missing_skills || []).length)) || 0;
+                return (
+                  <div key={t.key} className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                      <span className="uppercase tracking-wider">{t.label} coverage</span>
+                      <span>{cov}% ({matched}/{total})</span>
+                    </div>
+                    <div className="mt-2 h-2 w-full rounded-full bg-slate-200/80 overflow-hidden">
+                      <div className={`h-full rounded-full ${t.tone}`} style={{ width: `${cov}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {summary && (
+            <p className="text-[11px] font-mono text-slate-400">
+              {summary.skills_you_have_count ?? '?'} skills verified • {summary.skills_to_learn_count ?? '?'} to learn • {summary.required_missing_count ?? 0} required missing
+            </p>
+          )}
         <div className="grid gap-6 md:grid-cols-3">
           {['HIGH', 'MEDIUM', 'LOW'].map((prioKey) => {
             const config = PRIORITY_CONFIG[prioKey];
@@ -116,6 +148,7 @@ export default function SkillGapAnalysis({ skillGaps }) {
             );
           })}
         </div>
+        </>
       )}
     </div>
   );

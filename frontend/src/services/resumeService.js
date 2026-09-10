@@ -14,8 +14,7 @@ export const analyzeResumeAI = (file) => {
   return api.post('/api/resumes/analyze', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
-// Direct aliases
-export const analyzeResume = analyzeResumeAI;
+// Direct alias (kept for backwards-compat; prefer analyzeResumeAI)
 export const getAiAnalysisHistory = () => api.get('/api/resumes/history');
 export const getAiAnalysis = (analysisId) => api.get(`/api/resumes/${analysisId}/full`);
 export const deleteAiAnalysis = (analysisId) => api.delete(`/api/resumes/analyses/${analysisId}`);

@@ -69,6 +69,15 @@ export default function ResumeHistory() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Career Twin lite: readiness trajectory from real ledger rows (no mock data).
+  const trajectory = items
+    .filter((i) => i.status === 'COMPLETED' && i.topMatchScore != null && i.createdAt)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .slice(-6);
+  const twinDelta = trajectory.length >= 2
+    ? Math.round(Number(trajectory[trajectory.length - 1].topMatchScore) - Number(trajectory[0].topMatchScore))
+    : null;
+
   const handleRemove = async (analysisId) => {
     if (!analysisId) return;
     setDeletingId(analysisId);
@@ -169,6 +178,37 @@ export default function ResumeHistory() {
 
         </div>
 
+        {/* ── Career Twin: readiness trajectory (real ledger data) ── */}
+        {trajectory.length >= 2 && (
+          <div className="rounded-2xl border border-neutral-200/90 bg-white shadow-xs p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0038FF] font-mono">Career Twin • live profile</span>
+                <h2 className="text-sm font-bold text-neutral-950 mt-0.5">Readiness trajectory across {trajectory.length} analyses</h2>
+              </div>
+              {twinDelta != null && (
+                <span className={`rounded-lg px-3 py-1.5 text-xs font-mono font-bold border ${twinDelta >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                  {twinDelta >= 0 ? '+' : ''}{twinDelta}% since first
+                </span>
+              )}
+            </div>
+            <div className="mt-4 space-y-2">
+              {trajectory.map((t, i) => {
+                const score = Math.round(Number(t.topMatchScore));
+                return (
+                  <div key={t.analysisId || i} className="flex items-center gap-3 text-[11px] font-mono">
+                    <span className="w-24 shrink-0 truncate text-neutral-500">{new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <div className="h-2 flex-1 rounded-full bg-neutral-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-[#0038FF]" style={{ width: `${Math.min(100, Math.max(0, score))}%` }} />
+                    </div>
+                    <span className="w-28 shrink-0 truncate text-neutral-700 font-bold">{t.topJobRole || '—'} {score}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Ledger Data Table Surface ── */}
         <div className="rounded-2xl border border-neutral-200/90 bg-white shadow-xs overflow-hidden">
           
@@ -227,16 +267,16 @@ export default function ResumeHistory() {
               {/* Table Rows */}
               {paged.map((item, i) => {
                 const analysisId = item.analysisId || item.id || i;
-                const fileName = item.originalFileName || item.fileName || 'Kabilan-Resume.pdf';
-                const domain = item.topJobRole || item.recommendedDomain || 'Python Backend Engineer';
-                const skillsCount = item.skillCount ?? item.extractedSkillsCount ?? item.skillsExtracted ?? 5;
+                const fileName = item.originalFileName || item.fileName || 'Untitled resume';
+                const domain = item.topJobRole || item.recommendedDomain || '—';
+                const skillsCount = item.skillCount ?? item.extractedSkillsCount ?? item.skillsExtracted ?? 0;
                 const dateStr = item.createdAt
                   ? new Date(item.createdAt).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
                     })
-                  : 'Aug 31, 2026';
+                  : '—';
                 const status = item.status || 'COMPLETED';
                 const isDeleting = deletingId === analysisId;
 

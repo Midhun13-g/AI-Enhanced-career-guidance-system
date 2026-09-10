@@ -1,9 +1,10 @@
 import React from 'react';
 import { Cpu, Wrench, Layers, Tag } from 'lucide-react';
 
-export default function SkillsAnalysis({ resume, careerAnalysis }) {
+export default function SkillsAnalysis({ resume, careerAnalysis, matchedSkills, evidenceNote }) {
   const resumeData = resume ?? {};
   const careerData = careerAnalysis ?? {};
+  const verifiedSet = new Set((matchedSkills || []).map((s) => String(s).toLowerCase()));
 
   // Extract skills lists safely
   const rawSkills = Array.isArray(resumeData.skills)
@@ -31,6 +32,7 @@ export default function SkillsAnalysis({ resume, careerAnalysis }) {
           </h2>
           <p className="text-sm text-slate-500 mt-1">
             Normalized skill extraction via Hugging Face AI & NLP taxonomy matching.
+            {evidenceNote && <span className="block text-[11px] text-slate-400 mt-0.5">{evidenceNote}</span>}
           </p>
         </div>
         <span className="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 border border-blue-100">
@@ -45,15 +47,21 @@ export default function SkillsAnalysis({ resume, careerAnalysis }) {
         </h3>
         {technicalSkills.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {technicalSkills.map((sk, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-xs font-bold text-blue-800 shadow-sm"
-              >
-                <Tag size={12} className="text-blue-500" />
-                {typeof sk === 'string' ? sk : sk.name || JSON.stringify(sk)}
-              </span>
-            ))}
+            {technicalSkills.map((sk, idx) => {
+              const label = typeof sk === 'string' ? sk : sk.name || JSON.stringify(sk);
+              const roleRelevant = verifiedSet.has(String(label).toLowerCase());
+              return (
+                <span
+                  key={idx}
+                  title={roleRelevant ? 'Verified: in resume + matched to target role' : 'Verified: extracted from resume'}
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold shadow-sm ${roleRelevant ? 'border-emerald-200 bg-emerald-50/70 text-emerald-800' : 'border-blue-200 bg-blue-50/70 text-blue-800'}`}
+                >
+                  <Tag size={12} className={roleRelevant ? 'text-emerald-500' : 'text-blue-500'} />
+                  {label}
+                  {roleRelevant && <span className="text-[10px] font-black">✓ role</span>}
+                </span>
+              );
+            })}
           </div>
         ) : (
           <p className="text-sm text-slate-400 italic">No technical skills extracted.</p>

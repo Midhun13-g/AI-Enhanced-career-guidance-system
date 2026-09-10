@@ -31,6 +31,8 @@ export default function CareerAnalysis({ career, careerAnalysis, careerGuidance 
 
   // Dynamic domain score breakdown from API
   const domainScores = analysis.domainScores || analysis.domain_scores || guidance.domain_analysis || analysis.domains || null;
+  const ambiguity = analysis.ambiguity || {};
+  const secondaryDomains = Array.isArray(analysis.secondaryDomains) ? analysis.secondaryDomains : [];
 
   const radarData = domainScores && typeof domainScores === 'object'
     ? Object.entries(domainScores).map(([domain, val]) => ({
@@ -80,9 +82,29 @@ export default function CareerAnalysis({ career, careerAnalysis, careerGuidance 
             )}
           </div>
 
+          {/* Ambiguity + secondary domains (Step-9 career_profile) */}
+          {(ambiguity.isAmbiguous || secondaryDomains.length > 0) && (
+            <div className="rounded-2xl border border-amber-200/70 bg-amber-50/50 p-4 text-xs">
+              {ambiguity.isAmbiguous && (
+                <p className="font-bold text-amber-800">
+                  Profile spans multiple domains{(ambiguity.ambiguousDomains || []).length > 0 && `: ${(ambiguity.ambiguousDomains || []).join(' • ').replaceAll('_', ' ')}`}
+                  {ambiguity.margin != null && <span className="font-semibold text-amber-700"> (margin {Number(ambiguity.margin).toFixed(2)})</span>}
+                </p>
+              )}
+              {secondaryDomains.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {secondaryDomains.map((s, i) => (
+                    <span key={i} className="rounded-lg bg-white border border-amber-200 px-2 py-0.5 font-bold text-amber-800">
+                      {String(s.domain || s).replaceAll('_', ' ')}{s.confidence != null && ` • ${Math.round(Number(s.confidence) * 100)}%`}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Strong Areas */}
-          {strongAreas.length > 0 && (
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+          {strongAreas.length > 0 && (            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                 <CheckCircle2 size={14} className="text-emerald-500" /> Key Strengths
               </h4>

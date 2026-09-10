@@ -29,17 +29,37 @@ public class SkillTaxonomyService {
         this.userRepo = userRepo;
     }
 
-    /** Finds or creates a taxonomy entry for the given raw skill name. */
+    /** Finds or creates a taxonomy entry for the given raw skill name.
+     * Central normalization (Feature: skill normalization): "Java", "JAVA",
+     * "Java Programming" and "Core Java" resolve to one canonical entry so
+     * career recommendation, job matching, skill-gap and roadmap all share
+     * the same skill identity instead of re-implementing matching per module. */
     @Transactional
     public SkillTaxonomy normalizeSkill(String rawSkillName) {
-        return taxonomyRepo.findBySkillNameIgnoreCase(rawSkillName.trim())
+        String canonical = canonicalKey(rawSkillName);
+        return taxonomyRepo.findBySkillNameIgnoreCase(canonical)
+                .or(() -> taxonomyRepo.findBySkillNameIgnoreCase(rawSkillName.trim()))
                 .orElseGet(() -> {
                     SkillTaxonomy entry = new SkillTaxonomy();
-                    entry.setSkillName(rawSkillName.trim());
-                    entry.setNormalizedName(rawSkillName.trim());
+                    entry.setSkillName(canonical);
+                    entry.setNormalizedName(canonical);
                     entry.setCategory("General");
                     return taxonomyRepo.save(entry);
                 });
+    }
+
+    /** Canonical form: lowercase, strip punctuation and generic qualifier
+     * words so related spellings collapse ("Spring Framework" -> "spring"). */
+    static String canonicalKey(String raw) {
+        if (raw == null) return "";
+        String key = raw.trim().toLowerCase().replaceAll("[^a-z0-9#+. ]", " ");
+        key = key.replaceAll("\\s+", " ").trim();
+        for (String qualifier : new String[]{
+                "programming language", "programming", "framework", "library",
+                "core", "advanced", "basic", "fundamentals", "fundamental"}) {
+            key = key.replaceAll("(^| )" + qualifier + "( |$)", " ").trim().replaceAll("\\s+", " ");
+        }
+        return key.isEmpty() ? raw.trim().toLowerCase() : key;
     }
 
     /** Replaces all RESUME-sourced student skills with the newly extracted set. */

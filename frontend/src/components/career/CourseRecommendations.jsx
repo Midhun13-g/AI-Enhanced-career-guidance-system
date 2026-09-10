@@ -45,10 +45,16 @@ export default function CourseRecommendations({ courseRecommendations }) {
           const rawScore = rec.recommendation_score ?? rec.score ?? null;
           const score = rawScore !== null ? Math.round(Number(rawScore) * (Number(rawScore) <= 1 ? 100 : 1)) : null;
           const reason = rec.reason || null;
-          const url = rec.course_url || rec.courseUrl || rec.url || rec.link
+          const directUrl = rec.course_url || rec.courseUrl || rec.url || rec.link
             || rec.course_link || rec.courseLink || rec.href || null;
+          const fallbackUrl = courseName
+            ? `https://www.google.com/search?q=${encodeURIComponent(`${courseName} ${provider || ''} online course`.trim())}`
+            : null;
+          const url = directUrl || fallbackUrl;
+          const isFallback = !directUrl && !!fallbackUrl;
 
           if (isLearningTarget) {
+            const targetSearch = `https://www.google.com/search?q=${encodeURIComponent(`${targetSkill} online course tutorial`.trim())}`;
             return (
               <div
                 key={idx}
@@ -67,6 +73,16 @@ export default function CourseRecommendations({ courseRecommendations }) {
                   <p className="text-xs text-amber-900/80 mt-2 leading-relaxed">
                     {reason || `Focus on mastering ${targetSkill} to bridge high-priority career requirements.`}
                   </p>
+                </div>
+                <div className="pt-3">
+                  <a
+                    href={url || targetSearch}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800 hover:underline"
+                  >
+                    Search Learning Resources <ExternalLink size={12} />
+                  </a>
                 </div>
               </div>
             );
@@ -130,7 +146,46 @@ export default function CourseRecommendations({ courseRecommendations }) {
                     {reason}
                   </p>
                 )}
+
+                {rec.whatYouCanGain && (
+                  <p className="text-xs text-emerald-800 mt-2 leading-relaxed bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl">
+                    <span className="font-bold">What you gain: </span>{rec.whatYouCanGain}
+                  </p>
+                )}
+
+                {(rec.rating || rec.reviews || (rec.courseSkills?.length > 0)) && (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
+                    {rec.rating != null && (
+                      <span className="rounded-md bg-amber-50 px-2 py-0.5 font-bold text-amber-700 border border-amber-200/60">
+                        ★ {Number(rec.rating).toFixed(1)}{rec.reviews != null && ` (${Number(rec.reviews).toLocaleString()} reviews)`}
+                      </span>
+                    )}
+                    {(rec.courseSkills || []).slice(0, 4).map((s, i) => (
+                      <span key={i} className="rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">{s}</span>
+                    ))}
+                  </div>
+                )}
+
+                {(rec.topFactors?.length > 0) && (
+                  <p className="mt-2 text-[11px] font-mono text-slate-400">
+                    Ranking factors: {rec.topFactors.join(' • ')}
+                  </p>
+                )}
               </div>
+
+              {rec.alternatives?.length > 0 && (
+                <div className="pt-2 border-t border-slate-100">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Alternative courses</p>
+                  <div className="space-y-1.5">
+                    {rec.alternatives.slice(0, 2).map((alt, aIdx) => (
+                      <div key={aIdx} className="flex items-center justify-between gap-2 text-xs">
+                        <span className="font-semibold text-slate-700 truncate">{alt.title}{alt.provider && <span className="text-slate-400"> • {alt.provider}</span>}</span>
+                        {alt.url && <a href={alt.url} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center gap-1 font-bold text-indigo-600 hover:underline">Open <ExternalLink size={11} /></a>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {url && (
                 <div className="pt-2">
@@ -140,7 +195,7 @@ export default function CourseRecommendations({ courseRecommendations }) {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline"
                   >
-                    View Course Content <ExternalLink size={12} />
+                    {isFallback ? 'Search Course Online' : 'View Course Content'} <ExternalLink size={12} />
                   </a>
                 </div>
               )}

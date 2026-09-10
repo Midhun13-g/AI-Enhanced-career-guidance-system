@@ -2,7 +2,14 @@ import React, { useState } from 'react';
 import { Briefcase, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Sparkles, Building2 } from 'lucide-react';
 
 export default function JobMatches({ jobMatches }) {
-  const matches = Array.isArray(jobMatches) ? jobMatches : [];
+  const matches = (Array.isArray(jobMatches) ? [...jobMatches] : []).sort((a, b) => {
+    const scoreA = a.matchScore ?? Math.round((a.match_score ?? 0) * (a.match_score <= 1 ? 100 : 1));
+    const scoreB = b.matchScore ?? Math.round((b.match_score ?? 0) * (b.match_score <= 1 ? 100 : 1));
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    const mA = Array.isArray(a.matchedSkills) ? a.matchedSkills.length : (Array.isArray(a.matched_skills) ? a.matched_skills.length : 0);
+    const mB = Array.isArray(b.matchedSkills) ? b.matchedSkills.length : (Array.isArray(b.matched_skills) ? b.matched_skills.length : 0);
+    return mB - mA;
+  });
   const [expandedIndex, setExpandedIndex] = useState(0);
 
   if (matches.length === 0) {
@@ -33,7 +40,7 @@ export default function JobMatches({ jobMatches }) {
 
       <div className="grid gap-4">
         {matches.map((job, idx) => {
-          const rank = job.rank ?? (idx + 1);
+          const rank = idx + 1;
           const title = job.jobTitle || job.job_title || job.title || 'Role Recommendation';
           const company = job.company || '';
           const domain = job.domain || '';
@@ -146,6 +153,24 @@ export default function JobMatches({ jobMatches }) {
                       <p className="text-xs text-emerald-700 font-semibold">No missing skills detected for this role!</p>
                     )}
                   </div>
+
+                  {/* Ranking transparency (Step-9 scores, formula, quality) */}
+                  {(job.qualityLabel || job.rankingFormula || job.finalRoleScore != null || job.readiness != null) && (
+                    <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-4">
+                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2">Why ranked here</h4>
+                      <div className="flex flex-wrap gap-2 text-[11px] font-mono">
+                        {job.jobId && <span className="rounded-md bg-slate-100 px-2 py-0.5 font-bold text-slate-600">{job.jobId}</span>}
+                        {job.qualityLabel && <span className="rounded-md bg-indigo-50 border border-indigo-100 px-2 py-0.5 font-bold text-indigo-700">{String(job.qualityLabel).replaceAll('_', ' ')}</span>}
+                        {job.finalRoleScore != null && <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">final {Number(job.finalRoleScore).toFixed(2)}</span>}
+                        {job.combinedScore != null && <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">match {Number(job.combinedScore).toFixed(2)}</span>}
+                        {job.readiness != null && <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">readiness {Math.round(Number(job.readiness))}%</span>}
+                        {job.domainScore != null && <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">domain {Number(job.domainScore).toFixed(1)}</span>}
+                        {job.gapPercentage != null && <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">gap {Number(job.gapPercentage).toFixed(1)}%</span>}
+                      </div>
+                      {job.rankingFormula && <p className="mt-2 text-[11px] font-mono text-slate-500 break-all">{job.rankingFormula}</p>}
+                      {job.whyRankedHere && <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">{job.whyRankedHere}</p>}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

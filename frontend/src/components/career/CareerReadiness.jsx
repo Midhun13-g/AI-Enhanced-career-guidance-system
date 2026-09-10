@@ -11,8 +11,11 @@ function Metric({ label, value, icon: Icon, tone }) {
   );
 }
 
-export default function CareerReadiness({ selectedRole }) {
+export default function CareerReadiness({ selectedRole, skillGaps }) {
   if (!selectedRole?.title) return null;
+  const blockers = (Array.isArray(skillGaps) ? skillGaps : [])
+    .filter((g) => (g.priority || '').toUpperCase() === 'HIGH')
+    .slice(0, 5);
   return (
     <section className="card p-6">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
@@ -30,6 +33,21 @@ export default function CareerReadiness({ selectedRole }) {
         <Metric label="Domain alignment" value={selectedRole.domainAlignment} icon={Trophy} tone="text-emerald-600" />
         <Metric label="Final role score" value={selectedRole.finalRoleScore} icon={Trophy} tone="text-blue-600" />
       </div>
+      {selectedRole.whyRankedHere && (
+        <p className="mt-4 text-xs font-mono text-slate-500 leading-relaxed">{selectedRole.whyRankedHere}</p>
+      )}
+      {blockers.length > 0 && (
+        <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">What is lowering this score</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {blockers.map((b, i) => (
+              <span key={i} className="rounded-lg bg-white border border-amber-200 px-2.5 py-1 text-xs font-bold text-amber-800">
+                {b.skill || b} — close this gap to raise readiness
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

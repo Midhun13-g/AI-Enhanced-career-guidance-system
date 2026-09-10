@@ -33,7 +33,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping({"/api/resumes", "/api/resume"})
+@RequestMapping("/api/resumes")
 @Tag(name = "AI Resume Analysis Integration", description = "Endpoints for orchestrating AI Resume Analysis via Hugging Face AI Service")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasRole('STUDENT')")

@@ -43,7 +43,7 @@ class SkillTaxonomyServiceTest {
 
     @Test
     void normalizeSkill_existingEntry_returnsExisting() {
-        when(taxonomyRepo.findBySkillNameIgnoreCase("ReactJS")).thenReturn(Optional.of(reactSkill));
+        when(taxonomyRepo.findBySkillNameIgnoreCase("reactjs")).thenReturn(Optional.of(reactSkill));
 
         SkillTaxonomy result = service.normalizeSkill("ReactJS");
 
@@ -53,14 +53,25 @@ class SkillTaxonomyServiceTest {
 
     @Test
     void normalizeSkill_unknownSkill_createsNewEntry() {
+        when(taxonomyRepo.findBySkillNameIgnoreCase("rust")).thenReturn(Optional.empty());
         when(taxonomyRepo.findBySkillNameIgnoreCase("Rust")).thenReturn(Optional.empty());
         when(taxonomyRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         SkillTaxonomy result = service.normalizeSkill("Rust");
 
-        assertThat(result.getSkillName()).isEqualTo("Rust");
-        assertThat(result.getNormalizedName()).isEqualTo("Rust");
+        assertThat(result.getSkillName()).isEqualTo("rust");
+        assertThat(result.getNormalizedName()).isEqualTo("rust");
         verify(taxonomyRepo).save(any());
+    }
+
+    @Test
+    void normalizeSkill_relatedSpellings_collapseToCanonical() {
+        when(taxonomyRepo.findBySkillNameIgnoreCase("java")).thenReturn(Optional.of(reactSkill));
+
+        SkillTaxonomy result = service.normalizeSkill("Java Programming");
+
+        assertThat(result).isSameAs(reactSkill);
+        verify(taxonomyRepo, never()).save(any());
     }
 
     @Test

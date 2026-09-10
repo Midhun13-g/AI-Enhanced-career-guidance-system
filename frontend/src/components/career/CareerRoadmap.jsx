@@ -38,6 +38,9 @@ export default function CareerRoadmap({ roadmap }) {
           const courses = Array.isArray(phase.recommendedCourses) ? phase.recommendedCourses : (Array.isArray(phase.recommended_courses) ? phase.recommended_courses : []);
           const projects = Array.isArray(phase.projects) ? phase.projects : [];
           const outcome = phase.expectedOutcome || phase.expected_outcome || null;
+          const duration = phase.duration || null;
+          const objective = phase.learningObjective || null;
+          const skillLinks = Array.isArray(phase.skillCourseLinks) ? phase.skillCourseLinks : [];
 
           return (
             <React.Fragment key={idx}>
@@ -53,8 +56,13 @@ export default function CareerRoadmap({ roadmap }) {
                         PHASE {phaseNum}
                       </span>
                       <h3 className="text-lg font-black text-slate-900">{title}</h3>
+                      <div className="mt-0.5 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-500">
+                        {duration && <span className="rounded-md bg-slate-100 px-2 py-0.5">⏱ {duration}</span>}
+                        {phase.courseCount != null && phase.courseCount > 0 && <span className="rounded-md bg-slate-100 px-2 py-0.5">{phase.courseCount} course{phase.courseCount === 1 ? '' : 's'}</span>}
+                      </div>
                     </div>
                   </div>
+                  {objective && <p className="text-xs text-slate-500 leading-relaxed">{objective}</p>}
                   {outcome && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
                       <Flag size={13} className="text-blue-600" /> {outcome}
@@ -121,6 +129,24 @@ export default function CareerRoadmap({ roadmap }) {
                     )}
                   </div>
                 </div>
+
+                {/* Skill → course traceability links (Step-9 skill_course_links) */}
+                {skillLinks.length > 0 && (
+                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 mb-2">Skill → course links</h4>
+                    <div className="space-y-1.5">
+                      {skillLinks.map((link, lIdx) => (
+                        <p key={lIdx} className="text-xs text-slate-600">
+                          <span className="font-bold text-slate-800">{link.skill}</span>
+                          <span className="text-slate-400"> → </span>
+                          {(link.courses || []).filter(Boolean).length > 0
+                            ? (link.courses || []).filter(Boolean).join(' • ')
+                            : <span className="italic text-slate-400">self-directed learning (no verified course)</span>}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Arrow connector between phases */}

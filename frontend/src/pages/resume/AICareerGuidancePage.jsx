@@ -32,6 +32,11 @@ import CourseRecommendations from '../../components/career/CourseRecommendations
 import RecommendationExplanation from '../../components/career/RecommendationExplanation';
 import CareerReadiness from '../../components/career/CareerReadiness';
 import CareerRoadmap from '../../components/career/CareerRoadmap';
+import PipelineInsights from '../../components/career/PipelineInsights';
+import CareerWhatIf from '../../components/career/CareerWhatIf';
+import InterviewPrep from '../../components/career/InterviewPrep';
+import AICounselorPanel from '../../components/career/AICounselorPanel';
+import RawModelOutput from '../../components/career/RawModelOutput';
 import AIAnalysisLoading from '../../components/career/AIAnalysisLoading';
 import ErrorState from '../../components/career/ErrorState';
 import { analyzeResumeAI, getAiAnalysis } from '../../services/resumeService';
@@ -55,6 +60,7 @@ export default function AICareerGuidancePage() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [showJsonModal, setShowJsonModal] = useState(false);
+  const [jsonView, setJsonView] = useState('raw');
   const [copied, setCopied] = useState(false);
 
   const normalized = normalizeAnalysisResponse(rawAnalysisData);
@@ -160,6 +166,15 @@ export default function AICareerGuidancePage() {
   }
 
   const { resume, jobMatches, career, skillGap, courses, explanations, roadmap, executionTime } = normalized;
+  const insights = {
+    actionPlan: normalized.actionPlan,
+    skillCoverage: normalized.skillCoverage,
+    dispositions: normalized.dispositions,
+    statistics: normalized.statistics,
+    validation: normalized.validation,
+    market: normalized.market,
+    learningTargets: normalized.learningTargets,
+  };
 
   const tabs = [
     { id: 'overview', label: 'Resume & Skills', icon: FiUser },
@@ -167,7 +182,19 @@ export default function AICareerGuidancePage() {
     { id: 'skills', label: 'Skill Gaps & Priorities', icon: FiTarget, count: skillGap?.gaps?.length || 0 },
     { id: 'courses', label: 'Courses & Explainability', icon: FiBookOpen, count: courses?.length || 0 },
     { id: 'roadmap', label: 'Career Roadmap', icon: FiCompass, count: roadmap?.length || 0 },
+    { id: 'insights', label: 'Insights & Market', icon: FiActivity },
+    { id: 'compare', label: 'What-If Compare', icon: FiZap },
+    { id: 'prepare', label: 'Interview & Projects', icon: FiCheck },
+    { id: 'raw', label: 'Raw Model JSON', icon: FiCode },
   ];
+
+  const fullRawText = (() => {
+    try {
+      const rawStr = rawAnalysisData?.raw_ai_response ?? rawAnalysisData?.rawAiResponse;
+      if (typeof rawStr === 'string' && rawStr.trim()) return JSON.stringify(JSON.parse(rawStr), null, 2);
+    } catch { /* fall through to mapped payload */ }
+    return JSON.stringify(rawAnalysisData, null, 2);
+  })();
 
   return (
     <AppLayout>
@@ -270,21 +297,21 @@ export default function AICareerGuidancePage() {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <ResumeOverview resume={resume} />
-              <SkillsAnalysis resume={resume} careerAnalysis={career} />
+              <SkillsAnalysis resume={resume} careerAnalysis={career} matchedSkills={jobMatches?.[0]?.matchedSkills} evidenceNote="✓ role = in resume and matched to your top role" />
               <CareerAnalysis career={career} />
             </div>
           )}
 
           {activeTab === 'jobs' && (
             <div className="space-y-6">
-              <CareerReadiness selectedRole={career.selectedRole} />
+              <CareerReadiness selectedRole={career.selectedRole} skillGaps={skillGap.gaps} />
               <JobMatches jobMatches={jobMatches} />
             </div>
           )}
 
           {activeTab === 'skills' && (
             <div className="space-y-6">
-              <SkillGapAnalysis skillGaps={skillGap.gaps} />
+              <SkillGapAnalysis skillGaps={skillGap.gaps} coverage={skillGap.coverage} summary={skillGap.summary} />
               <LearningPriorities learningPriorities={skillGap.priorities} />
             </div>
           )}
@@ -301,6 +328,39 @@ export default function AICareerGuidancePage() {
               <CareerRoadmap roadmap={roadmap} />
             </div>
           )}
+
+          {activeTab === 'insights' && (
+            <div className="space-y-6">
+              <PipelineInsights
+                actionPlan={insights.actionPlan}
+                skillCoverage={insights.skillCoverage}
+                dispositions={insights.dispositions}
+                statistics={insights.statistics}
+                validation={insights.validation}
+                market={insights.market}
+                learningTargets={insights.learningTargets}
+              />
+              <AICounselorPanel normalized={normalized} />
+            </div>
+          )}
+
+          {activeTab === 'compare' && (
+            <div className="space-y-6">
+              <CareerWhatIf jobMatches={jobMatches} courses={courses} />
+            </div>
+          )}
+
+          {activeTab === 'prepare' && (
+            <div className="space-y-6">
+              <InterviewPrep skillGap={skillGap} courses={courses} resume={resume} roleTitle={career.selectedRole?.title} />
+            </div>
+          )}
+
+          {activeTab === 'raw' && (
+            <div className="space-y-6">
+              <RawModelOutput rawData={normalized.raw} />
+            </div>
+          )}
         </div>
 
         {/* ── Raw JSON Inspection Modal ── */}
@@ -313,18 +373,35 @@ export default function AICareerGuidancePage() {
                 exit={{ opacity: 0, scale: 0.98 }}
                 className="w-full max-w-4xl max-h-[85vh] rounded-2xl bg-neutral-950 text-neutral-100 shadow-2xl flex flex-col border border-neutral-800 overflow-hidden"
               >
-                <div className="p-4 sm:p-5 border-b border-neutral-800 flex items-center justify-between">
+                <div className="p-4 sm:p-5 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <FiCode className="text-[#0038FF]" size={16} />
                     <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wider">
-                      Inference Telemetry Response
+                      Full Raw Model Response
                     </h3>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex rounded-lg overflow-hidden border border-neutral-700 text-[11px] font-mono font-bold">
+                      <button
+                        onClick={() => setJsonView('raw')}
+                        className={`px-3 py-1.5 transition-all ${jsonView === 'raw' ? 'bg-white text-neutral-950' : 'bg-neutral-800 text-neutral-300 hover:text-white'}`}
+                      >
+                        Raw model JSON
+                      </button>
+                      <button
+                        onClick={() => setJsonView('mapped')}
+                        className={`px-3 py-1.5 transition-all ${jsonView === 'mapped' ? 'bg-white text-neutral-950' : 'bg-neutral-800 text-neutral-300 hover:text-white'}`}
+                      >
+                        Mapped response
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2.5">
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(JSON.stringify(rawAnalysisData, null, 2));
+                        navigator.clipboard.writeText(jsonView === 'raw' ? fullRawText : JSON.stringify(rawAnalysisData, null, 2));
                         setCopied(true);
                         setTimeout(() => setCopied(false), 2000);
                       }}
@@ -344,7 +421,7 @@ export default function AICareerGuidancePage() {
                 </div>
 
                 <div className="p-6 overflow-y-auto font-mono text-xs text-emerald-400 bg-black/80 flex-1 leading-relaxed">
-                  <pre>{JSON.stringify(rawAnalysisData, null, 2)}</pre>
+                  <pre>{jsonView === 'raw' ? fullRawText : JSON.stringify(rawAnalysisData, null, 2)}</pre>
                 </div>
               </motion.div>
             </div>

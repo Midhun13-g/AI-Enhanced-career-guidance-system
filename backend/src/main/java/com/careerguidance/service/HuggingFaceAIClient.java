@@ -379,6 +379,19 @@ public class HuggingFaceAIClient {
                     }
                 }
             }
+            // Rank by strongest fit first: match score desc, then matched-skills
+            // count desc. A role with 1 matched skill must never outrank a role
+            // with 5 matched skills when its score is also lower.
+            matchesList.sort((a, b) -> {
+                int cmp = Double.compare(b.getMatchScore(), a.getMatchScore());
+                if (cmp != 0) return cmp;
+                int aMatched = a.getMatchedSkills() != null ? a.getMatchedSkills().size() : 0;
+                int bMatched = b.getMatchedSkills() != null ? b.getMatchedSkills().size() : 0;
+                return Integer.compare(bMatched, aMatched);
+            });
+            for (int i = 0; i < matchesList.size(); i++) {
+                matchesList.get(i).setRank(i + 1);
+            }
             response.setJobMatches(matchesList);
 
             // Map Skill Gaps
