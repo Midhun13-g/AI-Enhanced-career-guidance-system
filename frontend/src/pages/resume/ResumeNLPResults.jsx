@@ -17,7 +17,9 @@ import {
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
-import { getResumeEntities, getStudentSkills } from '../../services/resumeService';
+import { getResumeEntities, getStudentSkills, getAiAnalysisHistory, getAiAnalysis } from '../../services/resumeService';
+import { normalizeAnalysisResponse } from '../../utils/normalizeAnalysis';
+import useActiveResume from '../../hooks/useActiveResume';
 
 const TABS = [
   { id: 'Skills', label: 'Skills Taxonomy', icon: FiZap },
@@ -28,7 +30,14 @@ const TABS = [
 ];
 
 function ConfBadge({ value }) {
-  const pct = Math.round((value ?? 0) * 100);
+  if (value == null) {
+    return (
+      <span className="rounded px-1.5 py-0.5 text-[10px] font-mono font-bold border bg-indigo-50 text-indigo-700 border-indigo-200/80">
+        AI analysis
+      </span>
+    );
+  }
+  const pct = Math.round(value * 100);
   const isHigh = pct >= 85;
   const isMedium = pct >= 70;
 
@@ -65,29 +74,106 @@ function groupEntities(entities) {
   }, {});
 }
 
+function asText(item) {
+  if (typeof item === 'string') return item;
+  if (!item || typeof item !== 'object') return '';
+  return (
+    item.degree || item.role || item.position || item.title || item.name ||
+    [item.institution || item.school || item.company || item.organization, item.year || item.duration]
+      .filter(Boolean).join(' • ') ||
+    item.description || JSON.stringify(item)
+  );
+}
+
 export default function ResumeNLPResults() {
   const [tab, setTab] = useState('Skills');
   const [entities, setEntities] = useState({});
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // When the NLP entity store is empty for this resume, we show the latest
+  // AI analysis payload instead (real data from the same resume) and say so.
+  const [fallbackSource, setFallbackSource] = useState('');
+  const { resumeId, loading: resolving, error: resolveError } = useActiveResume();
 
   useEffect(() => {
-    const resumeId = sessionStorage.getItem('resumeId');
+    if (resolving) return;
     if (!resumeId) {
-      setError('No active resume record found. Please upload and process a resume first.');
+      setError(
+        resolveError === 'fetch-failed'
+          ? 'Unable to reach the resume service. Please check your connection and retry.'
+          : 'No resume records found. Please upload and process a resume first.'
+      );
       setLoading(false);
       return;
     }
 
+    let cancelled = false;
     Promise.all([getResumeEntities(resumeId), getStudentSkills()])
-      .then(([entRes, skillRes]) => {
-        setEntities(groupEntities(entRes?.data));
-        setSkills(skillRes?.data ?? []);
+      .then(async ([entRes, skillRes]) => {
+        const grouped = groupEntities(entRes?.data);
+        const skillList = skillRes?.data ?? [];
+        const emptyStore =
+          Object.values(grouped).every((l) => l.length === 0) && skillList.length === 0;
+        if (!emptyStore || cancelled) {
+          if (!cancelled) {
+            setEntities(grouped);
+            setSkills(skillList);
+          }
+          return;
+        }
+        // NLP store empty (pipeline never run for this resume): fall back to
+        // the latest completed AI analysis of the same resume history.
+        const { data: history } = await getAiAnalysisHistory();
+        const list = Array.isArray(history) ? history : [];
+        const latest = list.find((a) => a.status === 'COMPLETED' && (a.analysisId || a.id));
+        if (!latest || cancelled) {
+          if (!cancelled) {
+            setEntities(grouped);
+            setSkills(skillList);
+          }
+          return;
+        }
+        const { data: full } = await getAiAnalysis(latest.analysisId || latest.id);
+        if (cancelled) return;
+        const norm = normalizeAnalysisResponse(
+          full?.data && typeof full.data === 'object' ? full.data : full
+        );
+        if (!norm) {
+          setEntities(grouped);
+          setSkills(skillList);
+          return;
+        }
+        const r = norm.resume || {};
+        const toEntities = (arr, type) =>
+          (Array.isArray(arr) ? arr : []).map((x) => ({
+            entityType: type,
+            entityValue: asText(x),
+            confidenceScore: null,
+          })).filter((e) => e.entityValue);
+        setEntities({
+          EDUCATION: toEntities(r.education, 'EDUCATION'),
+          PROJECT: toEntities(r.projects, 'PROJECT'),
+          CERTIFICATION: toEntities(r.certifications, 'CERTIFICATION'),
+          EXPERIENCE: toEntities(r.experience, 'EXPERIENCE'),
+        });
+        setSkills(
+          (Array.isArray(r.skills) ? r.skills : []).map((s) => ({
+            normalizedName: typeof s === 'string' ? s : s.name || asText(s),
+            category: 'AI-extracted',
+            confidence: null,
+          }))
+        );
+        setFallbackSource(latest.originalFileName || 'latest analysis');
       })
-      .catch(() => setError('Failed to load named entity recognition extractions.'))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(() => {
+        if (!cancelled) setError('Failed to load named entity recognition extractions.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [resumeId, resolving, resolveError]);
 
   if (loading) {
     return (
@@ -162,6 +248,18 @@ export default function ResumeNLPResults() {
         </div>
 
         {/* ── Tab Selector Navigation ── */}
+        {fallbackSource && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-indigo-200/80 bg-indigo-50/60 px-4 py-3 text-xs">
+            <p className="text-indigo-900">
+              <span className="font-bold">Showing {fallbackSource}</span>
+              <span className="text-indigo-700"> — the NLP entity store is empty for this resume, so values come from your latest AI analysis. </span>
+            </p>
+            <Link to="/resume/parsing" className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-white border border-indigo-200 px-3 py-1.5 font-mono text-[11px] font-bold text-indigo-700 hover:bg-indigo-50 transition-colors">
+              <span>Run NLP parse for confidences</span>
+              <FiArrowRight size={11} />
+            </Link>
+          </div>
+        )}
         <div className="flex overflow-x-auto gap-1.5 bg-white p-1.5 rounded-xl border border-neutral-200/90 shadow-xs scrollbar-none">
           {TABS.map((t) => {
             const Icon = t.icon;
@@ -241,7 +339,7 @@ export default function ResumeNLPResults() {
                           {s.category || 'General'}
                         </p>
                       </div>
-                      <ConfBadge value={s.confidence ?? 0.92} />
+                      <ConfBadge value={s.confidence ?? null} />
                     </div>
                   ))
                 )}
@@ -276,7 +374,7 @@ export default function ResumeNLPResults() {
                           {e.entityValue}
                         </p>
                       </div>
-                      <ConfBadge value={e.confidenceScore ?? 0.88} />
+                      <ConfBadge value={e.confidenceScore ?? null} />
                     </div>
                   ))
                 )}
@@ -311,7 +409,7 @@ export default function ResumeNLPResults() {
                           {e.entityValue}
                         </p>
                       </div>
-                      <ConfBadge value={e.confidenceScore ?? 0.85} />
+                      <ConfBadge value={e.confidenceScore ?? null} />
                     </div>
                   ))
                 )}
@@ -346,7 +444,7 @@ export default function ResumeNLPResults() {
                           {e.entityValue}
                         </p>
                       </div>
-                      <ConfBadge value={e.confidenceScore ?? 0.9} />
+                      <ConfBadge value={e.confidenceScore ?? null} />
                     </div>
                   ))
                 )}
@@ -381,7 +479,7 @@ export default function ResumeNLPResults() {
                           {e.entityValue}
                         </p>
                       </div>
-                      <ConfBadge value={e.confidenceScore ?? 0.86} />
+                      <ConfBadge value={e.confidenceScore ?? null} />
                     </div>
                   ))
                 )}

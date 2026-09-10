@@ -16,6 +16,7 @@ import {
 } from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
 import { processResume } from '../../services/resumeService';
+import useActiveResume from '../../hooks/useActiveResume';
 
 const STEPS = [
   { label: 'Ingesting Document Stream', detail: 'Secure cryptographic transmission of source file...', icon: FiUploadCloud },
@@ -33,15 +34,20 @@ export default function ResumeParsing() {
   const [failed, setFailed] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const called = useRef(false);
+  const { resumeId, loading: resolving, error: resolveError } = useActiveResume();
 
   useEffect(() => {
+    if (resolving) return;
     if (called.current) return;
     called.current = true;
 
-    const resumeId = sessionStorage.getItem('resumeId');
     if (!resumeId) {
       setFailed(true);
-      setErrorMsg('No active resume record identifier found. Please upload a resume first.');
+      setErrorMsg(
+        resolveError === 'fetch-failed'
+          ? 'Unable to reach the resume service. Please check your connection and retry.'
+          : 'No resume records found. Please upload a resume first.'
+      );
       return;
     }
 
@@ -67,7 +73,7 @@ export default function ResumeParsing() {
       });
 
     return () => clearInterval(ticker);
-  }, [navigate]);
+  }, [navigate, resumeId, resolving, resolveError]);
 
   const progress = Math.round((Math.min(step, STEPS.length) / STEPS.length) * 100);
 

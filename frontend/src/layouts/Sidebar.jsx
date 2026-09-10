@@ -8,10 +8,8 @@ import {
   FiCheckSquare,
   FiCode,
   FiClock,
-  FiAward,
   FiCpu,
   FiTrendingUp,
-  FiTarget,
   FiBarChart2,
   FiFileText,
   FiUploadCloud,
@@ -39,7 +37,6 @@ const NAV_SECTIONS = [
       { to: '/assessment', label: 'Active Assessment', icon: FiCheckSquare, activePaths: ['/assessment', '/assessments/take/'] },
       { to: '/assessments/coding', label: 'Coding Practice', icon: FiCode },
       { to: '/assessments/history', label: 'Evaluation History', icon: FiClock },
-      { to: '/assessments/certificates', label: 'Accreditations', icon: FiAward },
     ],
   },
   {
@@ -47,8 +44,6 @@ const NAV_SECTIONS = [
     items: [
       { to: '/assessments/ai-analysis', label: 'Diagnostic Engine', icon: FiCpu },
       { to: '/assessments/skill-growth', label: 'Skill Trajectory', icon: FiTrendingUp },
-      { to: '/assessments/skill-gap', label: 'Gap Matrix', icon: FiTarget },
-      { to: '/assessments/result', label: 'Performance Vectors', icon: FiBarChart2 },
     ],
   },
   {

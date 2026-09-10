@@ -39,7 +39,8 @@ import AICounselorPanel from '../../components/career/AICounselorPanel';
 import RawModelOutput from '../../components/career/RawModelOutput';
 import AIAnalysisLoading from '../../components/career/AIAnalysisLoading';
 import ErrorState from '../../components/career/ErrorState';
-import { analyzeResumeAI, getAiAnalysis } from '../../services/resumeService';
+import { analyzeResumeAI, getAiAnalysis, getAiAnalysisHistory } from 
+'../../services/resumeService';
 import { normalizeAnalysisResponse } from '../../utils/normalizeAnalysis';
 
 function unwrapPayload(raw) {
@@ -56,6 +57,7 @@ export default function AICareerGuidancePage() {
 
   const [rawAnalysisData, setRawAnalysisData] = useState(() => unwrapPayload(location.state?.analysisData));
   const [filename, setFilename] = useState(location.state?.filename || 'Uploaded Resume');
+  const [isLatest, setIsLatest] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -85,6 +87,37 @@ export default function AICareerGuidancePage() {
     }
   }, [location.state?.analysisId]);
 
+  // No explicit record passed (e.g. opened from the sidebar): always show
+  // the LATEST completed analysis instead of a stale or empty view.
+  useEffect(() => {
+    if (location.state?.analysisId || location.state?.analysisData || rawAnalysisData) return;
+    let cancelled = false;
+    setLoading(true);
+    getAiAnalysisHistory()
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : [];
+        const latest = list.find((a) => a.status === 'COMPLETED' && (a.analysisId || a.id));
+        if (!latest) {
+          if (!cancelled) setLoading(false);
+          return null;
+        }
+        if (latest.originalFileName) setFilename(latest.originalFileName);
+        setIsLatest(true);
+        return getAiAnalysis(latest.analysisId || latest.id);
+      })
+      .then((res) => {
+        if (!cancelled && res) setRawAnalysisData(unwrapPayload(res.data));
+      })
+      .catch((err) => {
+        console.error('Failed to load latest analysis:', err);
+        if (!cancelled) setError('Failed to load the latest analysis. Please verify that the backend AI service is online.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [location.state, rawAnalysisData]);
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,6 +125,7 @@ export default function AICareerGuidancePage() {
     setLoading(true);
     setError(null);
     setFilename(file.name);
+    setIsLatest(false);
 
     try {
       const response = await analyzeResumeAI(file);
@@ -221,6 +255,11 @@ export default function AICareerGuidancePage() {
                 <FiFileText size={13} className="text-[#0038FF]" />
                 {filename}
               </span>
+              {isLatest && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[9px] font-bold font-mono uppercase tracking-wider">
+                  Latest analysis
+                </span>
+              )}
               {executionTime && (
                 <span className="inline-flex items-center gap-1 text-neutral-400">
                   <FiClock size={12} />

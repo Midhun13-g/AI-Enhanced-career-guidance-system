@@ -26,12 +26,9 @@ import AssessmentDetails from './pages/assessment/AssessmentDetails';
 import PublishedAssessmentQuiz from './pages/assessment/PublishedAssessmentQuiz';
 import PublishedAssessmentResult from './pages/assessment/PublishedAssessmentResult';
 import CodingAssessment from './pages/assessment/CodingAssessment';
-import ResultAnalysis from './pages/assessment/ResultAnalysis';
 import AIPerformanceAnalysis from './pages/assessment/AIPerformanceAnalysis';
 import SkillVectorGrowth from './pages/assessment/SkillVectorGrowth';
-import SkillGapAnalysis from './pages/assessment/SkillGapAnalysis';
 import AssessmentHistory from './pages/assessment/AssessmentHistory';
-import CertificatesBadges from './pages/assessment/CertificatesBadges';
 
 // Resume
 import ResumeDashboard from './pages/resume/ResumeDashboard';
@@ -114,12 +111,9 @@ function App() {
               <Route path="/assessments/quiz/:assessmentId" element={<ProtectedRoute><PublishedAssessmentQuiz /></ProtectedRoute>} />
               <Route path="/assessments/quiz/:assessmentId/result/:attemptId" element={<ProtectedRoute><PublishedAssessmentResult /></ProtectedRoute>} />
               <Route path="/assessments/coding" element={<ProtectedRoute><CodingAssessment /></ProtectedRoute>} />
-              <Route path="/assessments/result" element={<ProtectedRoute><ResultAnalysis /></ProtectedRoute>} />
               <Route path="/assessments/ai-analysis" element={<ProtectedRoute><AIPerformanceAnalysis /></ProtectedRoute>} />
               <Route path="/assessments/skill-growth" element={<ProtectedRoute><SkillVectorGrowth /></ProtectedRoute>} />
-              <Route path="/assessments/skill-gap" element={<ProtectedRoute><SkillGapAnalysis /></ProtectedRoute>} />
               <Route path="/assessments/history" element={<ProtectedRoute><AssessmentHistory /></ProtectedRoute>} />
-              <Route path="/assessments/certificates" element={<ProtectedRoute><CertificatesBadges /></ProtectedRoute>} />
 
               {/* Resume */}
               <Route path="/resume" element={<ProtectedRoute><ResumeDashboard /></ProtectedRoute>} />

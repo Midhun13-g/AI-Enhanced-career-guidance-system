@@ -122,29 +122,25 @@ const difficultyBadge = (val) => {
 export default function CodingAssessment() {
   const navigate = useNavigate();
   const assessment = useAssessment();
-  const [selectedFilter, setSelectedFilter] = useState('Identified Gaps Only');
+  const [selectedFilter, setSelectedFilter] = useState('All Recommended');
   const [completed, setCompleted] = useState({});
 
-  // Real or calibrated candidate skill scores from recent assessments
+  // Candidate skill scores ONLY from a real completed assessment result.
+  // No hardcoded fallback map: without evidence every problem is shown
+  // unflagged as a practice resource, with an honest notice.
   const candidateScores = useMemo(() => {
-    return (
-      assessment?.result?.technicalBySkill || {
-        'SQL Queries': 65,
-        'System Design': 45,
-        'Data Structures & Algorithms': 58,
-        'Hash Tables & Arrays': 70,
-        'Stacks & Queues': 88,
-        'Two Pointers & Optimization': 60,
-      }
-    );
+    return assessment?.result?.technicalBySkill || null;
   }, [assessment]);
 
-  // Tag problems dynamically with their personalized remediation priority
+  const hasEvidence = candidateScores && Object.keys(candidateScores).length > 0;
+
+  // Tag problems dynamically with their personalized remediation priority.
+  // Without real per-vector scores nothing is flagged as a "gap".
   const enrichedProblems = useMemo(() => {
     return CURATED_PROBLEM_BANK.map((problem) => {
-      const score = candidateScores[problem.skillVector] ?? 60;
-      const isGap = score < problem.benchmarkGapThreshold;
-      const delta = problem.benchmarkGapThreshold - score;
+      const score = candidateScores?.[problem.skillVector] ?? null;
+      const isGap = score != null && score < problem.benchmarkGapThreshold;
+      const delta = score != null ? problem.benchmarkGapThreshold - score : 0;
       return {
         ...problem,
         candidateScore: score,
@@ -194,7 +190,9 @@ export default function CodingAssessment() {
               Personalized Coding Practice
             </h1>
             <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
-              Algorithmic challenges dynamically selected to close your specific diagnostic assessment skill gaps.
+              {hasEvidence
+                ? 'Algorithmic challenges dynamically selected to close your specific diagnostic assessment skill gaps.'
+                : 'Curated practice library with real external problem links. Complete an assessment to personalize gap flags.'}
             </p>
           </div>
 
@@ -230,7 +228,7 @@ export default function CodingAssessment() {
                 {highPriorityGapsCount} <span className="text-sm font-normal text-neutral-400 font-sans">Priority Areas</span>
               </p>
               <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                Curated based on scores below benchmark
+                {hasEvidence ? 'Curated based on scores below benchmark' : 'No assessment evidence — showing full library'}
               </p>
             </div>
           </motion.div>
@@ -243,7 +241,7 @@ export default function CodingAssessment() {
           >
             <div className="flex items-center justify-between text-neutral-400">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
-                Remediated Challenges
+                Practice Completed
               </span>
               <div className="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
                 <FiCheckCircle size={14} />
@@ -254,7 +252,7 @@ export default function CodingAssessment() {
                 {solvedCount} <span className="text-sm font-normal text-neutral-400 font-sans">/ {enrichedProblems.length}</span>
               </p>
               <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                Verified external completions
+                Practice checklist (this device)
               </p>
             </div>
           </motion.div>
@@ -267,7 +265,7 @@ export default function CodingAssessment() {
           >
             <div className="flex items-center justify-between text-neutral-400">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 font-mono">
-                Remediation Index
+                Checklist Progress
               </span>
               <div className="h-7 w-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0038FF]">
                 <FiTarget size={14} />
@@ -278,7 +276,7 @@ export default function CodingAssessment() {
                 {masteryPercentage}%
               </p>
               <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                Progress towards standard readiness
+                Practice checklist progress
               </p>
             </div>
           </motion.div>

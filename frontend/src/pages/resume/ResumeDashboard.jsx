@@ -152,13 +152,10 @@ export default function ResumeDashboard() {
       : null;
 
   const totalSkills =
-    latestAnalysis?.skillCount || 5;
+    latestAnalysis?.skillCount ?? 0;
 
   const suggestedRole =
-    latestAnalysis?.topJobRole ||
-    (totalAnalyses > 0
-      ? 'Python Backend Engineer'
-      : 'Not analyzed');
+    latestAnalysis?.topJobRole || 'Not analyzed';
 
   const stats = [
     {
@@ -194,10 +191,7 @@ export default function ResumeDashboard() {
     {
       icon: FiClock,
       label: 'Total Analyses',
-      value:
-        totalAnalyses > 0
-          ? totalAnalyses.toString()
-          : '4',
+      value: totalAnalyses.toString(),
       iconColor: 'text-emerald-600',
       iconBg: 'bg-emerald-50/50',
       delay: 0.16,
@@ -693,8 +687,7 @@ export default function ResumeDashboard() {
                         max-w-[200px]
                       "
                     >
-                      {item?.topJobRole ||
-                        'Python Backend Engineer'}
+                      {item?.topJobRole || 'Not analyzed'}
                     </span>
 
                     <span

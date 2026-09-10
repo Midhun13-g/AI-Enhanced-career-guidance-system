@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -15,13 +15,64 @@ import {
   FiZap,
   FiCheckCircle,
   FiLayers,
+  FiAlertCircle,
+  FiActivity,
 } from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
+import { getResumeEntities, getResume } from '../../services/resumeService';
+import useActiveResume from '../../hooks/useActiveResume';
 
 export default function ResumePreview() {
   const navigate = useNavigate();
   const documentRef = useRef(null);
-  const fileName = sessionStorage.getItem('resumeFile') || 'Alex_Johnson_Resume.pdf';
+  const { resumeId, fileName: activeFileName, loading: resolving, error: resolveError } = useActiveResume();
+  const storedFile = sessionStorage.getItem('resumeFile');
+
+  // Real parsed data only: resume row + NLP entities for this resume.
+  const [fileName, setFileName] = useState(storedFile || 'Untitled resume');
+  const [entities, setEntities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (activeFileName && fileName === 'Untitled resume') setFileName(activeFileName);
+  }, [activeFileName, fileName]);
+
+  useEffect(() => {
+    if (resolving) return;
+    if (!resumeId) {
+      setError(
+        resolveError === 'fetch-failed'
+          ? 'Unable to reach the resume service. Please check your connection and retry.'
+          : ''
+      );
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    Promise.allSettled([getResume(resumeId), getResumeEntities(resumeId)]).then(([r, e]) => {
+      if (r.status === 'fulfilled' && r.value?.data) {
+        const d = r.value.data;
+        setFileName(d.fileName || d.originalFileName || storedFile || 'Untitled resume');
+      }
+      if (e.status === 'fulfilled') {
+        setEntities(Array.isArray(e.value?.data) ? e.value.data : []);
+      } else {
+        setError(e.reason?.response?.data?.message || 'Unable to load parsed entities for this resume.');
+      }
+      setLoading(false);
+    });
+  }, [resumeId, resolving, resolveError, storedFile]);
+
+  const grouped = useMemo(() => {
+    const map = new Map();
+    for (const en of entities) {
+      const type = (en.entityType || 'OTHER').toUpperCase();
+      if (!map.has(type)) map.set(type, []);
+      map.get(type).push(en);
+    }
+    return [...map.entries()];
+  }, [entities]);
 
   // Toolbar & Viewer States
   const [zoomLevel, setZoomLevel] = useState(1); // 1, 1.15, 1.3
@@ -48,35 +99,24 @@ export default function ResumePreview() {
   };
 
   const handleDownload = () => {
-    // Generates plain text representation download of the current parsed preview
-    const resumeText = `ALEX JOHNSON\nFrontend Developer · Bengaluru, India\nalex.johnson@email.com · +91 98765 43210 · linkedin.com/in/alexjohnson\n\nEXECUTIVE PROFILE\nAspiring software engineer with experience building responsive, accessible web applications and scalable backend microservices.\n\nCORE COMPETENCIES & TECH STACK\nJavaScript · TypeScript · React · Node.js · Python · SQL · Tailwind CSS · Docker · Git\n\nENGINEERING EXPERIENCE\nFrontend Developer Intern — TechLabs | Jun 2024 – Aug 2024\nBuilt reusable design system component interfaces and improved core page load latency by 32%.\n\nACADEMIC CREDENTIALS\nB.Tech in Computer Science & Engineering — National Institute of Technology | 2025`;
-    const blob = new Blob([resumeText], { type: 'text/plain;charset=utf-8' });
+    // Exports the REAL parsed entities for this resume — never demo text.
+    const lines = [`Parsed entities — ${fileName}`, ''];
+    if (grouped.length === 0) lines.push('No parsed entities available for this resume.');
+    for (const [type, list] of grouped) {
+      lines.push(`[${type}]`);
+      for (const en of list) {
+        lines.push(`- ${en.entityValue}${en.confidenceScore != null ? ` (confidence ${Math.round(Number(en.confidenceScore) * (Number(en.confidenceScore) <= 1 ? 100 : 1))}%)` : ''}`);
+      }
+      lines.push('');
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = fileName.replace(/\.pdf$/i, '') + '-parsed.txt';
+    link.download = fileName.replace(/\.[^.]+$/i, '') + '-parsed.txt';
     link.click();
     URL.revokeObjectURL(url);
   };
-
-  const resumeSections = [
-    {
-      title: 'EXECUTIVE PROFILE',
-      content: 'Aspiring software engineer with experience building responsive, accessible web applications, scalable backend microservices, and data-driven products.',
-    },
-    {
-      title: 'CORE COMPETENCIES & TECH STACK',
-      content: 'JavaScript · TypeScript · React · Node.js · Python · SQL · Tailwind CSS · Docker · Git',
-    },
-    {
-      title: 'ENGINEERING EXPERIENCE',
-      content: 'Frontend Developer Intern — TechLabs | Jun 2024 – Aug 2024\nBuilt reusable design system component interfaces and improved core page load latency by 32%.',
-    },
-    {
-      title: 'ACADEMIC CREDENTIALS',
-      content: 'B.Tech in Computer Science & Engineering — National Institute of Technology | 2025',
-    },
-  ];
 
   return (
     <AppLayout>
@@ -179,30 +219,68 @@ export default function ResumePreview() {
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="w-full max-w-[760px] bg-white p-8 sm:p-12 shadow-md border border-neutral-200/90 rounded-xl space-y-6 origin-center my-auto"
               >
-                {/* Candidate Resume Header */}
-                <div className="border-b-2 border-neutral-950 pb-5 space-y-1.5">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950 uppercase font-sans">
-                    Alex Johnson
-                  </h2>
-                  <p className="text-xs font-mono font-bold text-[#0038FF]">
-                    Frontend Developer · Bengaluru, India
-                  </p>
-                  <p className="text-[11px] font-mono text-neutral-400">
-                    alex.johnson@email.com · +91 98765 43210 · linkedin.com/in/alexjohnson
-                  </p>
-                </div>
-
-                {/* Structured Sections */}
-                {resumeSections.map(({ title, content }) => (
-                  <div key={title} className="space-y-1.5 pt-1">
-                    <h3 className="text-[10px] font-mono font-bold tracking-widest text-neutral-950 uppercase border-b border-neutral-100 pb-1">
-                      {title}
-                    </h3>
-                    <p className="whitespace-pre-line text-xs font-sans text-neutral-700 leading-relaxed pt-0.5">
-                      {content}
-                    </p>
+                {loading ? (
+                  <div className="py-16 text-center font-mono text-xs text-neutral-400">
+                    <FiActivity size={22} className="mx-auto animate-spin text-[#0038FF]" />
+                    <p className="mt-3">Loading parsed entities…</p>
                   </div>
-                ))}
+                ) : error ? (
+                  <div className="py-10 text-center">
+                    <FiAlertCircle size={22} className="mx-auto text-rose-500" />
+                    <p className="mt-2 text-xs font-bold text-rose-700 font-mono">{error}</p>
+                  </div>
+                ) : grouped.length === 0 ? (
+                  <div className="py-10 text-center space-y-3">
+                    <div className="mx-auto h-11 w-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0038FF]">
+                      <FiFileText size={18} />
+                    </div>
+                    <p className="text-sm font-bold text-neutral-900">No parsed entities yet</p>
+                    <p className="text-xs text-neutral-400 max-w-sm mx-auto">
+                      {resumeId
+                        ? 'This resume has no extracted entities. Run the NLP pipeline to parse it.'
+                        : 'No resume selected. Upload a resume first, then return to preview its parsed payload.'}
+                    </p>
+                    <button
+                      onClick={() => navigate(resumeId ? '/resume/parsing' : '/resume/upload')}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#0038FF] hover:bg-blue-700 text-white px-4 py-2 text-xs font-bold transition-all"
+                    >
+                      <span>{resumeId ? 'Parse Document with AI' : 'Upload Resume'}</span>
+                      <FiArrowRight size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Candidate header from real entities */}
+                    <div className="border-b-2 border-neutral-950 pb-5 space-y-1.5">
+                      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-950 uppercase font-sans">
+                        {(grouped.find(([t]) => ['NAME', 'PERSON', 'CANDIDATE'].includes(t))?.[1][0]?.entityValue) || fileName}
+                      </h2>
+                      <p className="text-[11px] font-mono text-neutral-400">
+                        {entities.length} extracted entit{entities.length === 1 ? 'y' : 'ies'} • {fileName}
+                      </p>
+                    </div>
+
+                    {/* Structured Sections from real entity groups */}
+                    {grouped.map(([type, list]) => (
+                      <div key={type} className="space-y-1.5 pt-1">
+                        <h3 className="text-[10px] font-mono font-bold tracking-widest text-neutral-950 uppercase border-b border-neutral-100 pb-1">
+                          {type.replaceAll('_', ' ')} ({list.length})
+                        </h3>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {list.map((en) => (
+                            <span
+                              key={en.id ?? `${type}-${en.entityValue}`}
+                              title={en.confidenceScore != null ? `Confidence ${Math.round(Number(en.confidenceScore) * (Number(en.confidenceScore) <= 1 ? 100 : 1))}%` : 'Parsed entity'}
+                              className="rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-sans text-neutral-700"
+                            >
+                              {en.entityValue}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </motion.div>
             </div>
 

@@ -39,6 +39,9 @@ export default function AssessmentCategories() {
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Missing skills from the student's latest AI resume analysis (real data).
+  // Used to rank must-do assessments first — never hardcoded.
+  const [missingSkills, setMissingSkills] = useState([]);
 
   useEffect(() => {
     api
@@ -48,13 +51,33 @@ export default function AssessmentCategories() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    // Latest completed AI analysis -> its skill gaps drive prioritization.
+    api
+      .get('/api/resumes/history')
+      .then(({ data }) => {
+        const list = Array.isArray(data) ? data : [];
+        const latest = list.find((a) => a.status === 'COMPLETED' && (a.analysisId || a.id));
+        if (!latest) return null;
+        return api.get(`/api/resumes/${latest.analysisId || latest.id}/skill-gaps`);
+      })
+      .then((res) => {
+        if (!res) return;
+        const gaps = res.data?.skillGaps || res.data?.skill_gaps || [];
+        setMissingSkills(
+          gaps.map((g) => (typeof g === 'string' ? g : g.skill || g.canonical_skill || '')).filter(Boolean)
+        );
+      })
+      .catch(() => { /* prioritization stays off; catalog order kept */ });
+  }, []);
+
   const categories = useMemo(() => {
     const set = new Set(assessments.map((a) => a.category).filter(Boolean));
     return ['ALL', ...Array.from(set)];
   }, [assessments]);
 
   const visible = useMemo(() => {
-    return assessments.filter((item) => {
+    const filtered = assessments.filter((item) => {
       const matchesSearch = `${item.title} ${item.description} ${item.category} ${item.difficulty}`
         .toLowerCase()
         .includes(query.toLowerCase());
@@ -63,7 +86,17 @@ export default function AssessmentCategories() {
         (item.category || '').toLowerCase() === activeCategory.toLowerCase();
       return matchesSearch && matchesCategory;
     });
-  }, [assessments, query, activeCategory]);
+    if (missingSkills.length === 0) return filtered;
+    // Must-do first: rank by overlap between the module text and the
+    // student's real missing skills from their latest resume analysis.
+    const scored = filtered.map((item) => {
+      const text = `${item.title || ''} ${item.description || ''} ${item.category || ''}`.toLowerCase();
+      const hits = missingSkills.filter((s) => s && text.includes(String(s).toLowerCase()));
+      return { item, hits };
+    });
+    scored.sort((a, b) => b.hits.length - a.hits.length);
+    return scored.map((s) => ({ ...s.item, _gapHits: s.hits }));
+  }, [assessments, query, activeCategory, missingSkills]);
 
   const openAssessment = (assessment) => {
     navigate('/assessments/details', {
@@ -103,7 +136,9 @@ export default function AssessmentCategories() {
               Diagnostic & Competency Assessments
             </h1>
             <p className="text-xs sm:text-sm text-neutral-500 max-w-2xl leading-relaxed">
-              Curated evaluations designed to validate technical proficiency, structural problem-solving, and domain readiness against academic criteria.
+              {missingSkills.length > 0
+                ? `Must-do modules first — ordered by your resume skill gaps (${missingSkills.slice(0, 4).join(', ')}${missingSkills.length > 4 ? ', …' : ''}).`
+                : 'Curated evaluations. Complete an AI resume analysis to get must-do ordering based on your skill gaps.'}
             </p>
           </div>
 
@@ -233,6 +268,11 @@ export default function AssessmentCategories() {
                       <h2 className="mt-4 text-base font-bold tracking-tight text-neutral-950 group-hover:text-[#0038FF] transition-colors leading-snug">
                         {assessment.title}
                       </h2>
+                      {(assessment._gapHits?.length > 0) && (
+                        <p className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-800">
+                          Must do • covers your missing: {assessment._gapHits.slice(0, 2).join(', ')}
+                        </p>
+                      )}
                       <p className="mt-2 line-clamp-2 text-xs text-neutral-500 leading-relaxed">
                         {assessment.description || 'Structured assessment benchmarking core domain proficiencies and algorithmic reasoning.'}
                       </p>

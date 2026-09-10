@@ -21,6 +21,7 @@ import {
 } from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
 import { getResume, updateResume } from '../../services/resumeService';
+import useActiveResume from '../../hooks/useActiveResume';
 import { useToast } from '../../context/ToastContext';
 
 const EMPTY_PROFILE = {
@@ -44,7 +45,7 @@ const FIELD_CONFIG = [
 export default function ResumeEditor() {
   const navigate = useNavigate();
   const toast = useToast();
-  const resumeId = sessionStorage.getItem('resumeId');
+  const { resumeId, loading: resolving, error: resolveError } = useActiveResume();
 
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [skills, setSkills] = useState([]);
@@ -54,8 +55,13 @@ export default function ResumeEditor() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (resolving) return;
     if (!resumeId) {
-      setError('No active resume record found. Please upload and parse a resume first.');
+      setError(
+        resolveError === 'fetch-failed'
+          ? 'Unable to reach the resume service. Please check your connection and retry.'
+          : 'No resume records found. Please upload and parse a resume first.'
+      );
       setLoading(false);
       return;
     }
@@ -75,7 +81,7 @@ export default function ResumeEditor() {
       })
       .catch(() => setError('Failed to load the extracted resume profile from the server.'))
       .finally(() => setLoading(false));
-  }, [resumeId]);
+  }, [resumeId, resolving, resolveError]);
 
   const setField = (event) =>
     setProfile({ ...profile, [event.target.name]: event.target.value });

@@ -30,26 +30,45 @@ function Counter({ to, suffix = '' }) {
   return <span className="font-mono">{val}{suffix}</span>;
 }
 
-const radarData = [
-  { subject: 'Technical', A: 88 },
-  { subject: 'Problem Solving', A: 72 },
-  { subject: 'System Design', A: 60 },
-  { subject: 'Leadership', A: 45 },
-  { subject: 'Communication', A: 78 },
-  { subject: 'Collaboration', A: 82 },
-];
-
 export default function DashboardPage() {
   const { user } = useAuth();
   const [completion, setCompletion] = useState({ profileCompletion: 100, missingFields: [] });
+  const [latestMatch, setLatestMatch] = useState(null);
+  const [skillsCount, setSkillsCount] = useState(null);
+  const [assessments, setAssessments] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    api.get('/api/profile/completion')
-      .then(res => setCompletion(res.data))
-      .catch(console.error)
-      .finally(() => setLoadingData(false));
+    // All independent real sources; a failure in one never blocks the others.
+    Promise.allSettled([
+      api.get('/api/profile/completion'),
+      api.get('/api/resumes/history'),
+      api.get('/api/student/resume/skills'),
+      api.get('/api/assessment/history'),
+    ]).then(([profile, analyses, skills, history]) => {
+      if (profile.status === 'fulfilled') setCompletion(profile.value.data);
+      if (analyses.status === 'fulfilled') {
+        const list = Array.isArray(analyses.value.data) ? analyses.value.data : [];
+        const done = list.filter((a) => a.status === 'COMPLETED');
+        setLatestMatch(done[0] || null);
+      }
+      if (skills.status === 'fulfilled') {
+        const s = skills.value.data;
+        setSkillsCount(Array.isArray(s) ? s.length : null);
+      }
+      if (history.status === 'fulfilled' && Array.isArray(history.value.data)) {
+        setAssessments(history.value.data);
+      }
+    }).finally(() => setLoadingData(false));
   }, []);
+
+  const latestResult = assessments[0] || null;
+  const radarData = latestResult ? [
+    { subject: 'Technical', A: Math.round(Number(latestResult.technicalScore ?? 0)) },
+    { subject: 'Aptitude', A: Math.round(Number(latestResult.aptitudeScore ?? 0)) },
+    { subject: 'Interest', A: Math.round(Number(latestResult.interestScore ?? 0)) },
+    { subject: 'Overall', A: Math.round(Number(latestResult.overallScore ?? 0)) },
+  ] : [];
 
   const fadeUp = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
 
@@ -88,8 +107,12 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="mt-3">
-                <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">94.2%</div>
-                <p className="text-[11px] text-neutral-400 font-mono mt-0.5">High confidence score</p>
+                <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">
+                  {latestMatch?.topMatchScore != null ? `${Math.round(Number(latestMatch.topMatchScore))}%` : '—'}
+                </div>
+                <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                  {latestMatch?.topJobRole || 'No AI analysis yet'}
+                </p>
               </div>
             </div>
 
@@ -101,8 +124,12 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="mt-3">
-                <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">12</div>
-                <p className="text-[11px] text-neutral-400 font-mono mt-0.5">Skills actively audited</p>
+                <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">
+                  {skillsCount ?? '—'}
+                </div>
+                <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                  {skillsCount == null ? 'No verified skills yet' : 'Skills actively audited'}
+                </p>
               </div>
             </div>
 
@@ -114,8 +141,10 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="mt-3">
-                <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">4</div>
-                <p className="text-[11px] text-neutral-400 font-mono mt-0.5">Evaluations pending</p>
+                <div className="text-2xl font-black text-neutral-950 font-mono tracking-tight">{assessments.length}</div>
+                <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                  {assessments.length === 0 ? 'No evaluations yet' : 'Evaluations completed'}
+                </p>
               </div>
             </div>
 
@@ -223,14 +252,14 @@ export default function DashboardPage() {
                   </div>
                 </Link>
 
-                <Link to="/assessments/skill-gap" className="group">
+                <Link to="/resume/ai-guidance" className="group">
                   <div className="p-5 rounded-2xl border border-neutral-200/90 bg-white hover:border-[#0038FF]/40 hover:shadow-md transition-all shadow-2xs flex items-start gap-4 h-full">
                     <div className="p-2.5 rounded-xl bg-neutral-50 border border-neutral-200/70 text-neutral-700 group-hover:bg-blue-50 group-hover:text-[#0038FF] group-hover:border-blue-100 transition-colors shrink-0">
                       <FiTrendingUp size={18} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-neutral-900 group-hover:text-[#0038FF] transition-colors">Skill Gap Matrix</p>
-                      <p className="text-xs text-neutral-500 mt-1 leading-relaxed">Audited benchmark variances and missing skills</p>
+                      <p className="text-xs text-neutral-500 mt-1 leading-relaxed">AI-computed gaps from your real resume analysis</p>
                     </div>
                     <FiArrowRight size={14} className="text-neutral-300 group-hover:text-[#0038FF] group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
                   </div>
@@ -282,6 +311,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="h-48 w-full">
+                  {radarData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={radarData} margin={{ top: 0, right: 10, bottom: 0, left: 10 }}>
                       <PolarGrid stroke="#E2E8F0" />
@@ -290,8 +320,16 @@ export default function DashboardPage() {
                       <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 11, padding: '4px 8px' }} />
                     </RadarChart>
                   </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center gap-1.5 px-4">
+                      <p className="text-xs font-bold text-neutral-700">No assessment data</p>
+                      <p className="text-[11px] text-neutral-400">Complete an assessment to calibrate your polygon.</p>
+                    </div>
+                  )}
                 </div>
-                <p className="text-[10px] text-neutral-400 text-center mt-1 font-mono">Calibrated against industry standards</p>
+                <p className="text-[10px] text-neutral-400 text-center mt-1 font-mono">
+                  {radarData.length > 0 ? 'Latest submitted assessment scores' : 'Awaiting first evaluation'}
+                </p>
               </div>
             </motion.div>
 
@@ -300,18 +338,21 @@ export default function DashboardPage() {
               <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 shadow-xs space-y-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 font-mono">Audit Pipeline Activity</span>
                 <div className="space-y-3 pt-1">
-                  {[
-                    { text: 'Profile initialized successfully', time: 'Just now' },
-                    { text: 'Trajectory baseline calibrated', time: '2 mins ago' },
-                  ].map((a, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#0038FF] shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-neutral-800">{a.text}</p>
-                        <p className="text-[10px] text-neutral-400 font-mono mt-0.5">{a.time}</p>
+                  {(() => {
+                    const items = [];
+                    if (latestMatch?.createdAt) items.push({ text: `AI analysis: ${latestMatch.topJobRole || 'resume'} (${Math.round(Number(latestMatch.topMatchScore ?? 0))}%)`, time: new Date(latestMatch.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) });
+                    if (assessments.length > 0) items.push({ text: `${assessments.length} assessment${assessments.length === 1 ? '' : 's'} submitted`, time: `latest ${latestResult?.overallScore != null ? Math.round(Number(latestResult.overallScore)) + '%' : ''}`.trim() });
+                    if (items.length === 0) items.push({ text: 'No activity yet — upload a resume or take an assessment', time: 'now' });
+                    return items.map((a, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#0038FF] shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-neutral-800">{a.text}</p>
+                          <p className="text-[10px] text-neutral-400 font-mono mt-0.5">{a.time}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
             </motion.div>

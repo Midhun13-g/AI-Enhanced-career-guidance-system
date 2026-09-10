@@ -14,7 +14,9 @@ import {
 } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
-import { getResumeReport, getStudentSkills } from '../../services/resumeService';
+import { getResumeReport, getStudentSkills } from 
+'../../services/resumeService';
+import useActiveResume from '../../hooks/useActiveResume';
 
 const PRIORITY_BADGE = {
   High: 'bg-rose-50 text-rose-700 border-rose-200/80',
@@ -90,11 +92,16 @@ export default function ResumeInsights() {
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { resumeId, loading: resolving, error: resolveError } = useActiveResume();
 
   useEffect(() => {
-    const resumeId = sessionStorage.getItem('resumeId');
+    if (resolving) return;
     if (!resumeId) {
-      setError('No active resume record found. Please upload and parse a resume first.');
+      setError(
+        resolveError === 'fetch-failed'
+          ? 'Unable to reach the resume service. Please check your connection and retry.'
+          : 'No resume records found. Please upload and parse a resume first.'
+      );
       setLoading(false);
       return;
     }
@@ -104,7 +111,7 @@ export default function ResumeInsights() {
       })
       .catch(() => setError('Failed to generate insights. Please ensure the backend AI pipeline is online.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [resumeId, resolving, resolveError]);
 
   if (loading) {
     return (

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   FiClock,
@@ -11,32 +12,11 @@ import {
   FiAlertCircle,
   FiBookOpen,
   FiArrowLeft,
-  FiArrowRight,
   FiPlay,
-  FiLayers,
-  FiCpu,
+  FiActivity,
 } from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
-
-const defaultAssessment = {
-  title: 'SQL & Relational Database Architecture',
-  category: 'Technical Systems',
-  description:
-    'A standardized evaluation covering relational database paradigms, SQL query writing, normalization forms, B-tree indexing mechanics, and ACID transaction safety. Calibrated for backend and data engineering tracks.',
-  duration: '30 minutes',
-  questions: 25,
-  difficulty: 'Intermediate',
-  passingScore: 60,
-  maxAttempts: 3,
-  skills: [
-    'Complex SQL Queries',
-    'Schema Normalization',
-    'Multi-Table JOINs',
-    'Query Execution Plans',
-    'ACID Transactions',
-    'Indexing Optimization',
-  ],
-};
+import api from '../../services/api';
 
 const rules = [
   { icon: FiClock, text: 'Complete the evaluation within the allocated timeframe. Auto-submission occurs on timeout.' },
@@ -68,29 +48,43 @@ const difficultyBadge = (val) => {
 export default function AssessmentDetails() {
   const navigate = useNavigate();
   const location = useLocation();
+  const passedId = location.state?.assessment?.id ?? null;
 
-  const assessment =
-    location.state?.assessment || location.state?.category
-      ? {
-          ...defaultAssessment,
-          ...(location.state?.assessment || {}),
-          title: location.state?.category?.name || defaultAssessment.title,
-        }
-      : defaultAssessment;
+  // Server truth only: GET /api/assessment/published/{id}.
+  // No hardcoded fallback assessment — a wrong default is what used to show
+  // the same SQL test (with mismatched text) no matter what was clicked.
+  const [assessment, setAssessment] = useState(() => {
+    const a = location.state?.assessment;
+    return a?.id ? null : (a || null);
+  });
+  const [loading, setLoading] = useState(!!passedId && !assessment);
+  const [error, setError] = useState('');
 
-  const infoItems = [
-    { icon: FiClock, label: 'Allocated Time', value: assessment.duration || '30 minutes' },
-    { icon: FiHelpCircle, label: 'Question Volume', value: `${assessment.questions || 25} Items` },
-    { icon: FiBarChart2, label: 'Standard Tier', value: assessment.difficulty || 'Intermediate' },
-    { icon: FiTarget, label: 'Passing Threshold', value: `${assessment.passingScore || 60}%` },
-    { icon: FiRotateCcw, label: 'Max Attempts', value: `${assessment.maxAttempts || 3} Allowed` },
-    { icon: FiBookOpen, label: 'Curriculum Track', value: assessment.category || 'Technical Systems' },
-  ];
+  useEffect(() => {
+    if (!passedId || assessment) return;
+    setLoading(true);
+    api
+      .get(`/api/assessment/published/${passedId}`)
+      .then(({ data }) => setAssessment(data))
+      .catch((err) =>
+        setError(err.response?.data?.message || 'Unable to load this assessment module.')
+      )
+      .finally(() => setLoading(false));
+  }, [passedId, assessment]);
+
+  const infoItems = assessment ? [
+    { icon: FiClock, label: 'Allocated Time', value: assessment.durationMinutes != null ? `${assessment.durationMinutes} minutes` : (assessment.duration || '—') },
+    { icon: FiHelpCircle, label: 'Question Volume', value: `${assessment.totalQuestions ?? assessment.questions ?? (assessment.questionsList?.length ?? '—')} Items` },
+    { icon: FiBarChart2, label: 'Standard Tier', value: assessment.difficulty || '—' },
+    { icon: FiTarget, label: 'Passing Threshold', value: assessment.passingPercentage != null ? `${assessment.passingPercentage}%` : (assessment.passingScore != null ? `${assessment.passingScore}%` : '—') },
+    { icon: FiRotateCcw, label: 'Max Attempts', value: assessment.maximumAttempts != null ? `${assessment.maximumAttempts} Allowed` : (assessment.maxAttempts != null ? `${assessment.maxAttempts} Allowed` : '—') },
+    { icon: FiBookOpen, label: 'Curriculum Track', value: assessment.category || '—' },
+  ] : [];
 
   return (
     <AppLayout>
       <div className="mx-auto max-w-5xl space-y-8 pb-12 antialiased selection:bg-[#0038FF] selection:text-white">
-        
+
         {/* ── Top Navigation & Back Link ── */}
         <motion.button
           initial={{ opacity: 0, x: -8 }}
@@ -102,6 +96,29 @@ export default function AssessmentDetails() {
           <span>Back to Assessment Directory</span>
         </motion.button>
 
+        {loading ? (
+          <div className="py-20 text-center font-mono text-xs text-neutral-400">
+            <FiActivity size={24} className="mx-auto animate-spin text-[#0038FF]" />
+            <p className="mt-3">Loading assessment module…</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center">
+            <FiAlertCircle size={22} className="mx-auto text-rose-500" />
+            <p className="mt-2 text-xs font-bold text-rose-700 font-mono">{error}</p>
+          </div>
+        ) : !assessment ? (
+          <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-12 text-center space-y-3">
+            <p className="text-sm font-bold text-neutral-900">No assessment selected</p>
+            <p className="text-xs text-neutral-400">Open a module from the Assessment Hub so its real details load here.</p>
+            <button
+              onClick={() => navigate('/assessments/categories')}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#0038FF] hover:bg-blue-700 text-white px-5 py-2.5 text-xs font-bold transition-all"
+            >
+              <span>Back to Assessment Directory</span>
+            </button>
+          </div>
+        ) : (
+        <>
         {/* ── Editorial Module Header Card ── */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -186,22 +203,16 @@ export default function AssessmentDetails() {
             >
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
-                  Curriculum Competencies
+                  Assessment Brief
                 </span>
-                <span className="text-[10px] font-mono text-neutral-400">Evaluated Vectors</span>
+                <span className="text-[10px] font-mono text-neutral-400">From the published module</span>
               </div>
 
-              <div className="flex flex-wrap gap-2 pt-1">
-                {(assessment.skills || defaultAssessment.skills).map((skill) => (
-                  <span
-                    key={skill}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-neutral-50/60 px-3 py-1.5 text-xs font-mono font-medium text-neutral-800"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#0038FF]" />
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              {assessment.instructions ? (
+                <p className="whitespace-pre-line text-xs text-neutral-700 leading-relaxed">{assessment.instructions}</p>
+              ) : (
+                <p className="text-xs text-neutral-400 italic">No additional instructions were published for this module.</p>
+              )}
             </motion.section>
 
             {/* Examination Rules & Integrity Protocols */}
@@ -253,9 +264,9 @@ export default function AssessmentDetails() {
 
                 <div className="space-y-2.5 font-mono text-xs">
                   {[
-                    `${assessment.questions || 25} standardized items to evaluate`,
-                    `${assessment.duration || '30 minutes'} strict runtime limit`,
-                    `Minimum ${assessment.passingScore || 60}% composite benchmark`,
+                    `${assessment.totalQuestions ?? assessment.questions ?? '—'} standardized items to evaluate`,
+                    `${assessment.durationMinutes != null ? `${assessment.durationMinutes} minutes` : (assessment.duration || '—')} strict runtime limit`,
+                    `Minimum ${assessment.passingPercentage ?? assessment.passingScore ?? '—'}% composite benchmark`,
                     'Instant telemetry & diagnostic synthesis',
                   ].map((item, idx) => (
                     <div key={idx} className="flex items-start gap-2.5 text-neutral-600 text-xs">
@@ -293,6 +304,8 @@ export default function AssessmentDetails() {
           </div>
 
         </div>
+        </>
+        )}
 
       </div>
     </AppLayout>

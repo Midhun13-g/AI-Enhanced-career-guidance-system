@@ -25,6 +25,7 @@ import {
 } from 'react-icons/fi';
 import AppLayout from '../../components/layout/AppLayout';
 import { getResumeAnalysis, getStudentSkills } from '../../services/resumeService';
+import useActiveResume from '../../hooks/useActiveResume';
 
 function CircleScore({ value, label, sublabel }) {
   const r = 44;
@@ -79,11 +80,16 @@ export default function ResumeAnalysis() {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { resumeId, loading: resolving, error: resolveError } = useActiveResume();
 
   useEffect(() => {
-    const resumeId = sessionStorage.getItem('resumeId');
+    if (resolving) return;
     if (!resumeId) {
-      setError('No active resume record found. Please upload and parse a resume first.');
+      setError(
+        resolveError === 'fetch-failed'
+          ? 'Unable to reach the resume service. Please check your connection and retry.'
+          : 'No resume records found. Please upload and parse a resume first.'
+      );
       setLoading(false);
       return;
     }
@@ -94,7 +100,7 @@ export default function ResumeAnalysis() {
       })
       .catch(() => setError('Failed to load quality analysis. Please ensure the backend AI pipeline is active.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [resumeId, resolving, resolveError]);
 
   if (loading) {
     return (

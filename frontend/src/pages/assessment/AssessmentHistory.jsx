@@ -17,37 +17,55 @@ import DataTable from '../../components/ui/DataTable';
 import api from '../../services/api';
 
 export default function AssessmentHistory() {
+  // Both attempt stores: published attempts + standard sessions.
   const [attempts, setAttempts] = useState([]);
+  const [standard, setStandard] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
-    api
-      .get('/api/assessment/published/history')
-      .then((response) => setAttempts(response.data || []))
-      .catch((requestError) =>
+    Promise.allSettled([
+      api.get('/api/assessment/published/history'),
+      api.get('/api/assessment/history'),
+    ]).then(([p, s]) => {
+      if (p.status === 'fulfilled') setAttempts(p.value.data || []);
+      if (s.status === 'fulfilled') setStandard(Array.isArray(s.value.data) ? s.value.data : []);
+      if (p.status === 'rejected' && s.status === 'rejected') {
         setError(
-          requestError.response?.data?.message ||
+          p.reason?.response?.data?.message ||
             'Unable to load standardized assessment history.'
-        )
-      )
-      .finally(() => setLoading(false));
+        );
+      }
+      setLoading(false);
+    });
   }, []);
 
-  const rows = useMemo(
-    () =>
-      attempts.map((item) => ({
-        ...item,
-        name: item.assessmentTitle || 'General Competency Module',
-        score: Math.round(item.percentage ?? 0),
-        date: item.submittedAt,
-        status: item.passed ? 'Passed' : 'Needs Review',
-        duration: item.durationMinutes ? `${item.durationMinutes}m` : '—',
-      })),
-    [attempts]
-  );
+  const rows = useMemo(() => {
+    const pub = attempts.map((item) => ({
+      ...item,
+      _source: 'published',
+      name: item.assessmentTitle || 'General Competency Module',
+      score: Math.round(item.percentage ?? 0),
+      date: item.submittedAt,
+      status: item.passed ? 'Passed' : 'Needs Review',
+      duration: item.durationMinutes ? `${item.durationMinutes}m` : '—',
+    }));
+    const std = standard.map((item) => ({
+      ...item,
+      _source: 'standard',
+      assessmentId: null,
+      attemptId: item.sessionId,
+      name: `Standard Assessment${item.sessionId ? ` #${item.sessionId}` : ''}`,
+      score: Math.round(item.overallScore ?? 0),
+      date: null,
+      status: 'Submitted',
+      passed: true,
+      duration: '—',
+    }));
+    return [...pub, ...std];
+  }, [attempts, standard]);
 
   const passedCount = useMemo(
     () => rows.filter((row) => row.passed).length,
@@ -139,22 +157,27 @@ export default function AssessmentHistory() {
       key: 'attemptId',
       label: 'Action',
       sortable: false,
-      render: (_, row) => (
-        <button
-          onClick={() =>
-            navigate(
-              `/assessments/quiz/${row.assessmentId}/result/${row.attemptId}`
-            )
-          }
-          className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white hover:border-[#0038FF] hover:text-[#0038FF] hover:bg-blue-50/40 text-neutral-700 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide transition-all shadow-2xs group"
-        >
-          <span>Audit Result</span>
-          <FiArrowRight
-            size={11}
-            className="text-neutral-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#0038FF]"
-          />
-        </button>
-      ),
+      render: (_, row) =>
+        row._source === 'published' && row.assessmentId ? (
+          <button
+            onClick={() =>
+              navigate(
+                `/assessments/quiz/${row.assessmentId}/result/${row.attemptId}`
+              )
+            }
+            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white hover:border-[#0038FF] hover:text-[#0038FF] hover:bg-blue-50/40 text-neutral-700 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-wide transition-all shadow-2xs group"
+          >
+            <span>Audit Result</span>
+            <FiArrowRight
+              size={11}
+              className="text-neutral-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#0038FF]"
+            />
+          </button>
+        ) : (
+          <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 border border-neutral-200 rounded-md px-2 py-1">
+            Standard session
+          </span>
+        ),
     },
   ];
 
