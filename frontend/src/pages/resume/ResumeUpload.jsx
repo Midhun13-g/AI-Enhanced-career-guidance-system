@@ -46,7 +46,20 @@ export default function ResumeUpload() {
       });
     } catch (err) {
       console.error('AI Upload error:', err);
-      const msg = err.response?.data?.message || 'AI pipeline processing failed. Please verify service connectivity.';
+      const responseData = err.response?.data;
+      const errorCode = responseData?.errorCode;
+      const retryAfter = responseData?.retryAfter;
+      
+      let msg = responseData?.message || 'AI pipeline processing failed. Please verify service connectivity.';
+      
+      // Provide user-friendly message for quota exceeded
+      if (errorCode === 'AI_QUOTA_EXCEEDED') {
+        msg = 'AI analysis is temporarily unavailable because the AI provider has reached its free processing limit. Please try again later.';
+        if (retryAfter) {
+          msg += ` Please try again in approximately ${retryAfter}.`;
+        }
+      }
+      
       toast?.(msg, 'error');
       setError(msg);
     } finally {

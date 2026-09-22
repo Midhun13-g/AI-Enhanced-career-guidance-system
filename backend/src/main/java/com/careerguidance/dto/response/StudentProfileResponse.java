@@ -9,6 +9,7 @@ public class StudentProfileResponse {
     private Long id;
     private Long userId;
     private String profileImage;
+    private String profileImageUrl;
     private String firstName;
     private String lastName;
     private String email;
@@ -57,6 +58,14 @@ public class StudentProfileResponse {
 
     public void setProfileImage(String profileImage) {
         this.profileImage = profileImage;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     public String getFirstName() {

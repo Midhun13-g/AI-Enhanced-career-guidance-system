@@ -53,6 +53,8 @@ public class AIServiceException extends RuntimeException {
             case "HF_BAD_GATEWAY" -> HttpStatus.BAD_GATEWAY;
             case "AI_SERVICE_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
             case "AI_GATEWAY_TIMEOUT" -> HttpStatus.GATEWAY_TIMEOUT;
+            case "AI_QUOTA_EXCEEDED" -> HttpStatus.TOO_MANY_REQUESTS;
+            case "PROVIDER_ERROR", "HF_AUTH_ERROR", "INVALID_AI_RESPONSE", "PARSE_ERROR", "GRADIO_UPLOAD_FAILED", "GRADIO_CALL_FAILED", "GRADIO_STREAM_EMPTY", "AI_PROCESSING_ERROR", "AI_SERVICE_ERROR" -> HttpStatus.BAD_GATEWAY;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }

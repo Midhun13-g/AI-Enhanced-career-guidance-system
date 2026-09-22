@@ -39,14 +39,16 @@ import AICounselorPanel from '../../components/career/AICounselorPanel';
 import RawModelOutput from '../../components/career/RawModelOutput';
 import AIAnalysisLoading from '../../components/career/AIAnalysisLoading';
 import ErrorState from '../../components/career/ErrorState';
-import { analyzeResumeAI, getAiAnalysis, getAiAnalysisHistory } from 
+import { analyzeResumeAI, getAiAnalysis, getAiAnalysisHistory, selectAiCareerRole, updateAiRoadmapStatus } from
 '../../services/resumeService';
 import { normalizeAnalysisResponse } from '../../utils/normalizeAnalysis';
 
 function unwrapPayload(raw) {
   if (!raw) return null;
   if (raw.data && typeof raw.data === 'object' && (raw.data.resume || raw.data.job_matches || raw.data.career_analysis)) {
-    return raw.data;
+    // Keep the persistent analysis identifier while unwrapping the API envelope.
+    // It is needed immediately after upload for role and roadmap-progress updates.
+    return { ...raw.data, analysisId: raw.analysisId ?? raw.analysis_id ?? raw.data.analysisId };
   }
   return raw;
 }
@@ -64,6 +66,8 @@ export default function AICareerGuidancePage() {
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [jsonView, setJsonView] = useState('raw');
   const [copied, setCopied] = useState(false);
+  const [savingRole, setSavingRole] = useState(false);
+  const [savingTaskKey, setSavingTaskKey] = useState(null);
 
   const normalized = normalizeAnalysisResponse(rawAnalysisData);
 
@@ -74,8 +78,18 @@ export default function AICareerGuidancePage() {
       setError(null);
       getAiAnalysis(analysisId)
         .then((res) => {
-          const payload = unwrapPayload(res.data);
-          setRawAnalysisData(payload);
+          const analysisResult = res.data;
+          // Check if analysis failed
+          if (analysisResult?.status === 'FAILED' || analysisResult?.success === false) {
+            const errorMsg = analysisResult?.data?.rawAiResponse 
+              || analysisResult?.message 
+              || 'AI analysis failed. Please try again.';
+            setError(errorMsg);
+            setRawAnalysisData(null);
+          } else {
+            const payload = unwrapPayload(analysisResult);
+            setRawAnalysisData(payload);
+          }
         })
         .catch((err) => {
           console.error('Failed to load analysis:', err);
@@ -133,7 +147,15 @@ export default function AICareerGuidancePage() {
       setRawAnalysisData(payload);
     } catch (err) {
       console.error('AI Analysis Error:', err);
-      const msg = err.response?.data?.message || 'Failed to analyze resume. Please check service connectivity.';
+      const responseData = err.response?.data;
+      let msg = responseData?.message || 'Failed to analyze resume. Please check service connectivity.';
+      const errorCode = responseData?.errorCode;
+      const retryAfter = responseData?.retryAfter;
+      
+      // Enhance message for quota exceeded with retry info
+      if (errorCode === 'AI_QUOTA_EXCEEDED' && retryAfter) {
+        msg = `AI analysis is temporarily unavailable because the AI processing quota has been reached. Please try again in ${retryAfter}.`;
+      }
       setError(msg);
     } finally {
       setLoading(false);
@@ -208,6 +230,37 @@ export default function AICareerGuidancePage() {
     validation: normalized.validation,
     market: normalized.market,
     learningTargets: normalized.learningTargets,
+  };
+
+  const analysisId = location.state?.analysisId || rawAnalysisData?.analysisId || rawAnalysisData?.analysis_id;
+  const applyUpdatedAnalysis = (response) => setRawAnalysisData(unwrapPayload(response.data));
+  const handleRoleSelection = async (roleId) => {
+    if (!analysisId) {
+      setError('Save an analysis before selecting a career role.');
+      return;
+    }
+    setSavingRole(true);
+    try {
+      applyUpdatedAnalysis(await selectAiCareerRole(analysisId, roleId));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to save the selected career role.');
+    } finally {
+      setSavingRole(false);
+    }
+  };
+  const handleRoadmapStatus = async (taskKey, status) => {
+    if (!analysisId) {
+      setError('Save an analysis before updating roadmap progress.');
+      return;
+    }
+    setSavingTaskKey(taskKey);
+    try {
+      applyUpdatedAnalysis(await updateAiRoadmapStatus(analysisId, taskKey, status));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to save roadmap progress.');
+    } finally {
+      setSavingTaskKey(null);
+    }
   };
 
   const tabs = [
@@ -344,7 +397,7 @@ export default function AICareerGuidancePage() {
           {activeTab === 'jobs' && (
             <div className="space-y-6">
               <CareerReadiness selectedRole={career.selectedRole} skillGaps={skillGap.gaps} />
-              <JobMatches jobMatches={jobMatches} />
+              <JobMatches jobMatches={jobMatches} selectedRoleId={career.selectedRole?.id} onSelectRole={handleRoleSelection} selectingRole={savingRole} />
             </div>
           )}
 
@@ -364,7 +417,7 @@ export default function AICareerGuidancePage() {
 
           {activeTab === 'roadmap' && (
             <div className="space-y-6">
-              <CareerRoadmap roadmap={roadmap} />
+              <CareerRoadmap roadmap={roadmap} onStatusChange={handleRoadmapStatus} savingTaskKey={savingTaskKey} />
             </div>
           )}
 

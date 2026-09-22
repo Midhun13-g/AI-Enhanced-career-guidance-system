@@ -97,7 +97,7 @@ public class HuggingFaceAIClient {
                     }
                 }
 
-                // First try direct POST endpoint
+// First try direct POST endpoint
                 try {
                     ByteArrayResource fileResource = new ByteArrayResource(fileBytes) {
                         @Override
@@ -116,9 +116,14 @@ public class HuggingFaceAIClient {
                             .retrieve()
                             .body(AIAnalysisResponse.class);
 
-                    if (response != null && (response.getJobMatches() != null || response.getCareerAnalysis() != null || response.getResume() != null)) {
+                    if (hasMeaningfulAnalysis(response)) {
                         logger.info("Successfully received direct AI response with request_id '{}'", response.getRequestId());
                         return response;
+                    }
+
+                    // Check if direct response contains provider error
+                    if (response != null && response.getRawAiResponse() != null) {
+                        checkAndThrowProviderError(response.getRawAiResponse());
                     }
                 } catch (RestClientResponseException ex) {
                     int statusCode = ex.getStatusCode().value();
@@ -170,15 +175,34 @@ public class HuggingFaceAIClient {
             MultiValueMap<String, Object> uploadBody = new LinkedMultiValueMap<>();
             uploadBody.add("files", fileResource);
 
-            List<String> uploadedPaths = restClient.post()
+            // Read response as bytes first to handle application/octet-stream content type
+            byte[] uploadResponseBytes = restClient.post()
                     .uri("/gradio_api/upload")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(uploadBody)
                     .retrieve()
-                    .body(new org.springframework.core.ParameterizedTypeReference<List<String>>() {});
+                    .body(byte[].class);
+
+            if (uploadResponseBytes == null || uploadResponseBytes.length == 0) {
+                throw new AIServiceException("GRADIO_UPLOAD_FAILED", "Gradio upload endpoint returned empty response");
+            }
+
+            String uploadResponseStr = new String(uploadResponseBytes, StandardCharsets.UTF_8);
+            logger.debug("Gradio upload response: {}", uploadResponseStr);
+
+            // Parse the JSON response (Gradio may return application/octet-stream for JSON)
+            List<String> uploadedPaths;
+            try {
+                uploadedPaths = objectMapper.readValue(uploadResponseStr, new TypeReference<List<String>>() {});
+            } catch (Exception ex) {
+                logger.error("Failed to parse Gradio upload response as JSON: {}", uploadResponseStr);
+                // Check if it's an error response
+                checkAndThrowProviderError(uploadResponseStr);
+                throw new AIServiceException("GRADIO_UPLOAD_FAILED", "Failed to parse upload response: " + ex.getMessage(), ex);
+            }
 
             if (uploadedPaths == null || uploadedPaths.isEmpty()) {
-                throw new AIServiceException("GRADIO_UPLOAD_FAILED", "Failed to upload file to Gradio API endpoint");
+                throw new AIServiceException("GRADIO_UPLOAD_FAILED", "Failed to upload file to Gradio API endpoint - no paths returned");
             }
 
             String remotePath = uploadedPaths.get(0);
@@ -195,12 +219,34 @@ public class HuggingFaceAIClient {
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("data", Collections.singletonList(fileData));
 
-            Map<String, Object> callResponse = restClient.post()
+            // Read call response as bytes first to handle application/octet-stream content type
+            byte[] callResponseBytes = restClient.post()
                     .uri("/gradio_api/call/analyze_resume")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(payload)
                     .retrieve()
-                    .body(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
+                    .body(byte[].class);
+
+            if (callResponseBytes == null || callResponseBytes.length == 0) {
+                throw new AIServiceException("GRADIO_CALL_FAILED", "Gradio call endpoint returned empty response");
+            }
+
+            String callResponseStr = new String(callResponseBytes, StandardCharsets.UTF_8);
+            logger.debug("Gradio call response: {}", callResponseStr);
+
+            Map<String, Object> callResponse;
+            try {
+                callResponse = objectMapper.readValue(callResponseStr, new TypeReference<Map<String, Object>>() {});
+            } catch (Exception ex) {
+                logger.error("Failed to parse Gradio call response as JSON: {}", callResponseStr);
+                checkAndThrowProviderError(callResponseStr);
+                throw new AIServiceException("GRADIO_CALL_FAILED", "Failed to parse call response: " + ex.getMessage(), ex);
+            }
+
+            // Check if call response contains provider error
+            if (callResponse != null) {
+                checkAndThrowProviderError(callResponse);
+            }
 
             if (callResponse == null || !callResponse.containsKey("event_id")) {
                 throw new AIServiceException("GRADIO_CALL_FAILED", "Failed to initiate Gradio analyze_resume execution");
@@ -216,6 +262,16 @@ public class HuggingFaceAIClient {
 
             if (streamBytes == null || streamBytes.length == 0) {
                 throw new AIServiceException("GRADIO_STREAM_EMPTY", "Gradio event stream returned empty response");
+            }
+
+            String rawStreamResponse = new String(streamBytes, StandardCharsets.UTF_8);
+            logger.debug("Raw Gradio SSE stream response: {}", rawStreamResponse);
+
+            // Check for provider errors in raw stream response BEFORE parsing
+            String providerError = detectProviderErrorInStream(rawStreamResponse);
+            if (providerError != null) {
+                logger.error("Hugging Face provider error detected in stream: {}", providerError);
+                throw new AIServiceException("AI_QUOTA_EXCEEDED", providerError);
             }
 
             String jsonPayload = extractJsonFromSseStream(streamBytes);
@@ -251,27 +307,76 @@ public class HuggingFaceAIClient {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    private String detectProviderErrorInStream(String rawStream) {
+        if (rawStream == null || rawStream.isBlank()) return null;
+
+        String lower = rawStream.toLowerCase();
+
+        // Check for ZeroGPU quota exceeded
+        if (lower.contains("zerogpu") || lower.contains("zero gpu")) {
+            if (lower.contains("quota") || lower.contains("exceeded")) {
+                // Extract retry time if present
+                String retryInfo = extractRetryTime(rawStream);
+                String baseMsg = "AI analysis is temporarily unavailable because the Hugging Face ZeroGPU quota has been exceeded.";
+                return retryInfo != null ? baseMsg + " Please try again in " + retryInfo + "." : baseMsg;
+            }
+        }
+
+        // Check for other common provider errors
+        if (lower.contains("rate limit") || lower.contains("too many requests")) {
+            return "AI provider rate limit exceeded. Please try again later.";
+        }
+
+        if (lower.contains("unauthorized") || lower.contains("forbidden") || lower.contains("authentication failed")) {
+            return "AI provider authentication failed. Please check service configuration.";
+        }
+
+        if (lower.contains("service unavailable") || lower.contains("503") || lower.contains("502")) {
+            return "AI provider service is temporarily unavailable. Please try again later.";
+        }
+
+        if (lower.contains("timeout") || lower.contains("timed out")) {
+            return "AI provider request timed out. Please try again.";
+        }
+
+        // Check for generic error patterns in the stream
+        if (lower.contains("error") && (lower.contains("quota") || lower.contains("limit") || lower.contains("exceeded"))) {
+            return "AI provider returned an error: quota or rate limit exceeded.";
+        }
+
+        return null;
+    }
+
+    private String extractRetryTime(String text) {
+        if (text == null) return null;
+        // Match patterns like "Try again in 3:34:23" or "try again in 5 minutes"
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?i)try again in\\s+([\\d:\\s]+(?:hours?|minutes?|seconds?)?)").matcher(text);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+        matcher = java.util.regex.Pattern.compile("(?i)retry after\\s+([\\d:\\s]+(?:hours?|minutes?|seconds?)?)").matcher(text);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+        return null;
+    }
+
+@SuppressWarnings("unchecked")
     private AIAnalysisResponse parseGradioOutputToResponse(String jsonStr) {
         try {
             logger.info("==============================\nFULL RAW HUGGING FACE RESPONSE\n==============================\n{}", jsonStr);
 
+            // First, check for Hugging Face / Gradio error responses before parsing
+            Map<String, Object> errorCheck = objectMapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
+            if (isProviderErrorResponse(errorCheck)) {
+                String errorCode = determineErrorCode(errorCheck);
+                String errorMessage = extractErrorMessage(errorCheck);
+                logger.error("Hugging Face provider returned error: code={}, message={}", errorCode, errorMessage);
+                throw new AIServiceException(errorCode, errorMessage);
+            }
+
             Object raw = objectMapper.readValue(jsonStr, Object.class);
-            Map<String, Object> rootMap = null;
-
-            if (raw instanceof List<?> list && !list.isEmpty()) {
-                if (list.get(0) instanceof Map<?, ?> m) {
-                    rootMap = (Map<String, Object>) m;
-                }
-            } else if (raw instanceof Map<?, ?> m) {
-                rootMap = (Map<String, Object>) m;
-            }
-
-            if (rootMap != null && rootMap.containsKey("data") && rootMap.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
-                if (dataList.get(0) instanceof Map<?, ?> dm) {
-                    rootMap = (Map<String, Object>) dm;
-                }
-            }
+            Map<String, Object> rootMap = unwrapGradioPayload(raw);
 
             if (rootMap == null) {
                 throw new AIServiceException("INVALID_AI_RESPONSE", "Gradio returned unparseable JSON payload");
@@ -642,6 +747,49 @@ public class HuggingFaceAIClient {
                 : Collections.emptyMap();
     }
 
+    /**
+     * Gradio's SSE result can be an object, an array, or a JSON string inside
+     * data[0].  Step 9 commonly uses the latter.  Normalize those transport
+     * wrappers before mapping the actual analysis payload.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> unwrapGradioPayload(Object payload) throws IOException {
+        Object current = payload;
+        for (int depth = 0; depth < 5 && current != null; depth++) {
+            if (current instanceof String text) {
+                if (text.isBlank()) return null;
+                current = objectMapper.readValue(text, Object.class);
+                continue;
+            }
+            if (current instanceof List<?> list) {
+                if (list.isEmpty()) return null;
+                current = list.get(0);
+                continue;
+            }
+            if (current instanceof Map<?, ?> rawMap) {
+                Map<String, Object> map = (Map<String, Object>) rawMap;
+                if (map.containsKey("final_result") || map.containsKey("top_5_roles") || map.containsKey("selected_role")) {
+                    return map;
+                }
+                Object data = map.get("data");
+                if (data instanceof List<?> dataList && !dataList.isEmpty()) {
+                    current = dataList.get(0);
+                    continue;
+                }
+                return map;
+            }
+            return null;
+        }
+        return null;
+    }
+
+    private boolean hasMeaningfulAnalysis(AIAnalysisResponse response) {
+        if (response == null) return false;
+        return (response.getJobMatches() != null && !response.getJobMatches().isEmpty())
+                || (response.getCareerAnalysis() != null && !response.getCareerAnalysis().isEmpty())
+                || (response.getResume() != null && !response.getResume().isEmpty());
+    }
+
     private List<?> asList(Object value) {
         return value instanceof List<?> list ? list : Collections.emptyList();
     }
@@ -658,5 +806,128 @@ public class HuggingFaceAIClient {
             if (text != null && !String.valueOf(text).isBlank()) result.add(String.valueOf(text));
         }
         return result;
+    }
+
+    private boolean isProviderErrorResponse(Map<String, Object> response) {
+        if (response == null) return false;
+
+        // Check for explicit error field
+        if (response.containsKey("error")) {
+            return true;
+        }
+
+        // Check for Gradio/Hugging Face error structure
+        Object title = response.get("title");
+        if (title instanceof String titleStr) {
+            String lowerTitle = titleStr.toLowerCase();
+            if (lowerTitle.contains("quota") || lowerTitle.contains("zero gpu") || lowerTitle.contains("zerogpu")
+                    || lowerTitle.contains("rate limit") || lowerTitle.contains("unavailable")
+                    || lowerTitle.contains("error") || lowerTitle.contains("failed")) {
+                return true;
+            }
+        }
+
+        // Check for visible error flag with error content
+        if (Boolean.TRUE.equals(response.get("visible")) && response.containsKey("error")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private String determineErrorCode(Map<String, Object> response) {
+        if (response == null) return "PROVIDER_ERROR";
+
+        Object title = response.get("title");
+        Object error = response.get("error");
+
+        String titleStr = title instanceof String ? ((String) title).toLowerCase() : "";
+        String errorStr = error instanceof String ? ((String) error).toLowerCase() : "";
+
+        // ZeroGPU quota exceeded - specific error code for frontend handling
+        if (titleStr.contains("zerogpu") || titleStr.contains("zero gpu")
+                || errorStr.contains("zerogpu") || errorStr.contains("zero gpu")
+                || errorStr.contains("quota")) {
+            return "AI_QUOTA_EXCEEDED";
+        }
+
+        // Rate limiting
+        if (titleStr.contains("rate limit") || errorStr.contains("rate limit")
+                || titleStr.contains("too many requests") || errorStr.contains("too many requests")) {
+            return "RATE_LIMITED";
+        }
+
+        // Authentication/authorization
+        if (titleStr.contains("unauthorized") || errorStr.contains("unauthorized")
+                || titleStr.contains("forbidden") || errorStr.contains("forbidden")
+                || titleStr.contains("authentication") || errorStr.contains("authentication")) {
+            return "HF_AUTH_ERROR";
+        }
+
+        // Timeout
+        if (titleStr.contains("timeout") || errorStr.contains("timeout")
+                || titleStr.contains("timed out") || errorStr.contains("timed out")) {
+            return "AI_TIMEOUT";
+        }
+
+        // Service unavailable
+        if (titleStr.contains("unavailable") || errorStr.contains("unavailable")
+                || titleStr.contains("service unavailable") || errorStr.contains("service unavailable")
+                || titleStr.contains("503") || errorStr.contains("503")
+                || titleStr.contains("502") || errorStr.contains("502")) {
+            return "AI_SERVICE_UNAVAILABLE";
+        }
+
+        // Generic provider error
+        return "PROVIDER_ERROR";
+    }
+
+    private String extractErrorMessage(Map<String, Object> response) {
+        if (response == null) return "AI provider returned an error";
+
+        Object error = response.get("error");
+        if (error instanceof String errorStr && !errorStr.isBlank()) {
+            return sanitizeProviderErrorMessage(errorStr);
+        }
+
+        Object title = response.get("title");
+        if (title instanceof String titleStr && !titleStr.isBlank()) {
+            return sanitizeProviderErrorMessage(titleStr);
+        }
+
+        return "AI analysis failed due to a provider error";
+    }
+
+    private String sanitizeProviderErrorMessage(String message) {
+        if (message == null) return "AI service processing failed.";
+        // Remove any potential sensitive information
+        String sanitized = message;
+        sanitized = sanitized.replaceAll("(?i)(hf_|bearer|token|api[_-]?key|secret)[\\s:=]+\\S+", "[REDACTED]");
+        return sanitized;
+    }
+
+    private void checkAndThrowProviderError(String jsonStr) {
+        try {
+            Map<String, Object> errorCheck = objectMapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
+            if (isProviderErrorResponse(errorCheck)) {
+                String errorCode = determineErrorCode(errorCheck);
+                String errorMessage = extractErrorMessage(errorCheck);
+                logger.error("Hugging Face provider returned error: code={}, message={}", errorCode, errorMessage);
+                throw new AIServiceException(errorCode, errorMessage);
+            }
+        } catch (AIServiceException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            logger.warn("Could not parse provider response for error checking: {}", ex.getMessage());
+        }
+    }
+
+    private void checkAndThrowProviderError(Map<String, Object> response) {
+        if (isProviderErrorResponse(response)) {
+            String errorCode = determineErrorCode(response);
+            String errorMessage = extractErrorMessage(response);
+            logger.error("Hugging Face provider returned error: code={}, message={}", errorCode, errorMessage);
+            throw new AIServiceException(errorCode, errorMessage);
+        }
     }
 }

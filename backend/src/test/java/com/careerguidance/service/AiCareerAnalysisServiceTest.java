@@ -174,4 +174,37 @@ public class AiCareerAnalysisServiceTest {
 
         verify(analysisRepository).delete(entity);
     }
+
+    @Test
+    void selectRole_PersistsOnlyARolePresentInSavedStep9Response() {
+        AiCareerAnalysis entity = ownedStep9Analysis(501L);
+        when(analysisRepository.findById(501L)).thenReturn(Optional.of(entity));
+
+        AiAnalysisResultDto result = service.selectRole(10L, 501L, "JOB-API");
+
+        assertEquals("JOB-API", entity.getSelectedRoleId());
+        assertEquals("JOB-API", result.getData().getSelectedRoleId());
+        verify(analysisRepository).save(entity);
+    }
+
+    @Test
+    void updateRoadmapStatus_PersistsAnAllowedStatus() throws Exception {
+        AiCareerAnalysis entity = ownedStep9Analysis(502L);
+        when(analysisRepository.findById(502L)).thenReturn(Optional.of(entity));
+
+        AiAnalysisResultDto result = service.updateRoadmapStatus(10L, 502L, "JOB-API:phase:1", "IN_PROGRESS");
+
+        assertEquals("IN_PROGRESS", objectMapper.readValue(entity.getRoadmapTaskStatuses(), Map.class).get("JOB-API:phase:1"));
+        assertEquals("IN_PROGRESS", result.getData().getRoadmapTaskStatuses().get("JOB-API:phase:1"));
+        verify(analysisRepository).save(entity);
+    }
+
+    private AiCareerAnalysis ownedStep9Analysis(Long id) {
+        AiCareerAnalysis entity = new AiCareerAnalysis();
+        entity.setId(id);
+        entity.setUser(testUser);
+        entity.setStatus(AnalysisStatus.COMPLETED);
+        entity.setRawAiResponse("[{\"final_result\":{\"top_5_roles\":[{\"job_id\":\"JOB-API\"}]}}]");
+        return entity;
+    }
 }

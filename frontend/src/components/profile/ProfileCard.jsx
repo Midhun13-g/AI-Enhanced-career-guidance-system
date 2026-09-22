@@ -18,8 +18,8 @@ export default function ProfileCard({ profile, onEdit }) {
         <div className="flex items-end justify-between -mt-10 mb-4">
           <motion.div whileHover={{ scale: 1.04 }} className="relative">
             <div className="h-20 w-20 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              {profile?.profileImage
-                ? <img src={profile.profileImage} alt="Profile" className="h-full w-full object-cover" />
+              {profile?.profileImageUrl
+                ? <img src={profile.profileImageUrl} alt="Profile" className="h-full w-full object-cover" />
                 : <span className="text-2xl font-extrabold text-white">{initials}</span>
               }
             </div>

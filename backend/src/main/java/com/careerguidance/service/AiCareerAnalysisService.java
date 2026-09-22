@@ -181,6 +181,37 @@ public class AiCareerAnalysisService {
     }
 
     @Transactional
+    public AiAnalysisResultDto selectRole(Long userId, Long analysisId, String roleId) {
+        if (roleId == null || roleId.isBlank()) {
+            throw new AIServiceException("INVALID_ROLE", "A recommended role must be selected.", HttpStatus.BAD_REQUEST);
+        }
+        AiCareerAnalysis entity = getOwnedAnalysis(userId, analysisId);
+        if (!roleExistsInRawResponse(entity.getRawAiResponse(), roleId)) {
+            throw new AIServiceException("INVALID_ROLE", "The selected role is not part of this analysis.", HttpStatus.BAD_REQUEST);
+        }
+        entity.setSelectedRoleId(roleId);
+        analysisRepository.save(entity);
+        return getFullAnalysis(userId, analysisId);
+    }
+
+    @Transactional
+    public AiAnalysisResultDto updateRoadmapStatus(Long userId, Long analysisId, String taskKey, String status) {
+        if (taskKey == null || taskKey.isBlank()) {
+            throw new AIServiceException("INVALID_ROADMAP_TASK", "A roadmap task key is required.", HttpStatus.BAD_REQUEST);
+        }
+        if (!Set.of("NOT_STARTED", "IN_PROGRESS", "COMPLETED").contains(status)) {
+            throw new AIServiceException("INVALID_ROADMAP_STATUS", "Status must be NOT_STARTED, IN_PROGRESS, or COMPLETED.", HttpStatus.BAD_REQUEST);
+        }
+        AiCareerAnalysis entity = getOwnedAnalysis(userId, analysisId);
+        Map<String, String> statuses = deserializeJson(entity.getRoadmapTaskStatuses(), new TypeReference<Map<String, String>>() {});
+        if (statuses == null) statuses = new LinkedHashMap<>();
+        statuses.put(taskKey, status);
+        entity.setRoadmapTaskStatuses(serializeJson(statuses));
+        analysisRepository.save(entity);
+        return getFullAnalysis(userId, analysisId);
+    }
+
+    @Transactional
     public void deleteAnalysis(Long userId, Long analysisId) {
         AiCareerAnalysis entity = getOwnedAnalysis(userId, analysisId);
         analysisRepository.delete(entity);
@@ -295,8 +326,33 @@ public class AiCareerAnalysisService {
             resp.setRoadmap(deserializeJson(entity.getRoadmap(), new TypeReference<List<RoadmapResponse>>() {}));
         }
         resp.setRawAiResponse(entity.getRawAiResponse());
+        resp.setSelectedRoleId(entity.getSelectedRoleId());
+        Map<String, String> statuses = deserializeJson(entity.getRoadmapTaskStatuses(), new TypeReference<Map<String, String>>() {});
+        resp.setRoadmapTaskStatuses(statuses != null ? statuses : Collections.emptyMap());
 
         return resp;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean roleExistsInRawResponse(String rawAiResponse, String roleId) {
+        if (rawAiResponse == null || rawAiResponse.isBlank()) return false;
+        try {
+            Object parsed = objectMapper.readValue(rawAiResponse, Object.class);
+            Object root = parsed instanceof List<?> list && !list.isEmpty() ? list.get(0) : parsed;
+            if (!(root instanceof Map<?, ?> rootMap) || !(rootMap.get("final_result") instanceof Map<?, ?> finalMap)) return false;
+            for (Object item : asObjectList(finalMap.get("top_5_roles"))) {
+                Map<String, Object> role = asObjectMap(item);
+                if (roleId.equals(String.valueOf(role.get("job_id")))) return true;
+            }
+            for (Object item : asObjectList(finalMap.get("role_guidance"))) {
+                Map<String, Object> job = asObjectMap(asObjectMap(item).get("job"));
+                if (roleId.equals(String.valueOf(job.get("job_id")))) return true;
+            }
+            return false;
+        } catch (Exception ex) {
+            logger.warn("Unable to validate selected role {}: {}", roleId, ex.getMessage());
+            return false;
+        }
     }
 
     private String serializeJson(Object obj) {
@@ -325,6 +381,15 @@ public class AiCareerAnalysisService {
             return "AI service authentication error.";
         }
         return msg;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> asObjectMap(Object value) {
+        return value instanceof Map<?, ?> map ? (Map<String, Object>) map : Collections.emptyMap();
+    }
+
+    private List<?> asObjectList(Object value) {
+        return value instanceof List<?> list ? list : Collections.emptyList();
     }
 
     @SuppressWarnings("unchecked")

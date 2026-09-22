@@ -59,6 +59,12 @@ public class AIAnalysisResponse {
     @JsonAlias({"raw_ai_response", "rawAiResponse"})
     private String rawAiResponse;
 
+    @JsonProperty("selected_role_id")
+    private String selectedRoleId;
+
+    @JsonProperty("roadmap_task_statuses")
+    private Map<String, String> roadmapTaskStatuses;
+
     public boolean isSuccess() { return success; }
     public void setSuccess(boolean success) { this.success = success; }
 
@@ -97,4 +103,10 @@ public class AIAnalysisResponse {
 
     public String getRawAiResponse() { return rawAiResponse; }
     public void setRawAiResponse(String rawAiResponse) { this.rawAiResponse = rawAiResponse; }
+
+    public String getSelectedRoleId() { return selectedRoleId; }
+    public void setSelectedRoleId(String selectedRoleId) { this.selectedRoleId = selectedRoleId; }
+
+    public Map<String, String> getRoadmapTaskStatuses() { return roadmapTaskStatuses; }
+    public void setRoadmapTaskStatuses(Map<String, String> roadmapTaskStatuses) { this.roadmapTaskStatuses = roadmapTaskStatuses; }
 }

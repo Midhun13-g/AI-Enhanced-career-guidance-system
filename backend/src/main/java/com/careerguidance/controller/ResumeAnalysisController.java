@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -123,6 +124,24 @@ public class ResumeAnalysisController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable Long analysisId) {
         return ResponseEntity.ok(analysisService.getRoadmap(userDetails.getId(), analysisId));
+    }
+
+    @PostMapping("/analyses/{analysisId}/selected-role")
+    @Operation(summary = "Persist a recommended career role selected by the user")
+    public ResponseEntity<AiAnalysisResultDto> selectRole(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long analysisId,
+            @RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(analysisService.selectRole(userDetails.getId(), analysisId, request.get("roleId")));
+    }
+
+    @PostMapping("/analyses/{analysisId}/roadmap-status")
+    @Operation(summary = "Persist a roadmap task status")
+    public ResponseEntity<AiAnalysisResultDto> updateRoadmapStatus(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long analysisId,
+            @RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(analysisService.updateRoadmapStatus(userDetails.getId(), analysisId, request.get("taskKey"), request.get("status")));
     }
 
     @DeleteMapping(value = {"/analyses/{analysisId}", "/{analysisId}/ai"})

@@ -25,6 +25,8 @@ export const getAiCourses = (analysisId) => api.get(`/api/resumes/${analysisId}/
 export const getAiExplanations = (analysisId) => api.get(`/api/resumes/${analysisId}/explanations`);
 export const getAiCareerGuidance = (analysisId) => api.get(`/api/resumes/${analysisId}/career-guidance`);
 export const getAiRoadmap = (analysisId) => api.get(`/api/resumes/${analysisId}/roadmap`);
+export const selectAiCareerRole = (analysisId, roleId) => api.post(`/api/resumes/analyses/${analysisId}/selected-role`, { roleId });
+export const updateAiRoadmapStatus = (analysisId, taskKey, status) => api.post(`/api/resumes/analyses/${analysisId}/roadmap-status`, { taskKey, status });
 
 export const getResumeHistory = ()         => api.get('/api/resumes');
 export const getResume        = (id)       => api.get(`/api/resumes/${id}`);

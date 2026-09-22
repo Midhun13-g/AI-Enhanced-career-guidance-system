@@ -40,10 +40,17 @@ function readPipelineResult(rawResponse) {
 // that payload here so saved analyses remain fully usable without re-running
 // a limited daily resume analysis.
 function hydrateStep9Data(data) {
-  const step9 = readPipelineResult(data.raw_ai_response || data.rawAiResponse);
+  // Accept both the persisted provider envelope and a direct Step 9 output.
+  // The latter makes imported/test pipeline results behave exactly like saved analyses.
+  const step9 = data?.step === 9 && Array.isArray(data?.top_5_roles)
+    ? data
+    : readPipelineResult(data.raw_ai_response || data.rawAiResponse);
   if (!step9) return data;
 
-  const selectedRole = step9.selected_role || step9.default_selected_role || {};
+  const persistedRoleId = data.selected_role_id || data.selectedRoleId;
+  const selectedRole = (persistedRoleId
+    ? toArray(step9.role_guidance).find((role) => role?.job?.job_id === persistedRoleId)
+    : null) || step9.selected_role || step9.default_selected_role || {};
   const courseExplanations = toArray(selectedRole.recommended_courses)
     .map((item) => item?.explanation)
     .filter(Boolean);
@@ -80,7 +87,11 @@ function hydrateStep9Data(data) {
       ? selectedRole.recommended_courses
       : data.course_recommendations,
     explanations: courseExplanations.length > 0 ? courseExplanations : data.explanations,
-    roadmap: toArray(step9.roadmap_phases).length > 0 ? step9.roadmap_phases : data.roadmap,
+    roadmap: toArray(selectedRole.roadmap || selectedRole.roadmap_phases).length > 0
+      ? (selectedRole.roadmap || selectedRole.roadmap_phases)
+      : (toArray(step9.roadmap_phases).length > 0 ? step9.roadmap_phases : data.roadmap),
+    selected_role_id: persistedRoleId || selectedRole?.job?.job_id || null,
+    roadmap_task_statuses: data.roadmap_task_statuses || data.roadmapTaskStatuses || {},
   };
 }
 
@@ -303,6 +314,8 @@ export function normalizeAnalysisResponse(raw) {
   const normalizedRoadmap = roadmap.map((phase) => ({
     ...phase,
     title: phase.skillsToLearn.length > 0 ? `Phase ${phase.phase}: Learn ${phase.skillsToLearn.join(', ')}` : phase.title,
+    taskKey: `${data.selected_role_id || data.selectedRoleId || selectedRole.job?.job_id || 'default'}:phase:${phase.phase}`,
+    status: (data.roadmap_task_statuses || data.roadmapTaskStatuses || {})[`${data.selected_role_id || data.selectedRoleId || selectedRole.job?.job_id || 'default'}:phase:${phase.phase}`] || 'NOT_STARTED',
   }));
   const roleFit = selectedRole.career_fit || {};
   const selectedJob = selectedRole.job || {};
@@ -342,6 +355,7 @@ export function normalizeAnalysisResponse(raw) {
       domainExplanation: careerProfile.domain_explanation || null,
       recommendedRoles,
       selectedRole: {
+        id: data.selected_role_id || data.selectedRoleId || selectedJob.job_id || null,
         title: selectedJob.job_title || selectedRole.job_title || jobMatches[0]?.jobTitle || '',
         readiness: normalizeScore(roleFit.career_readiness_percentage),
         skillGap: normalizeScore(roleFit.overall_skill_gap_percentage),
@@ -363,6 +377,7 @@ export function normalizeAnalysisResponse(raw) {
     courses,
     explanations,
     roadmap: normalizedRoadmap,
+    roadmapStatuses: data.roadmap_task_statuses || data.roadmapTaskStatuses || {},
     learningTargets: toArray(selectedRole.learning_targets),
     actionPlan: selectedRole.action_plan || data.action_plan || null,
     skillCoverage: selectedRole.skill_coverage_summary || null,

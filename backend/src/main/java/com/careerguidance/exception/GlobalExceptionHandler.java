@@ -89,7 +89,30 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
         body.put("errorCode", ex.getErrorCode());
         body.put("timestamp", LocalDateTime.now().toString());
+
+        // Add retryAfter for quota exceeded errors
+        if ("AI_QUOTA_EXCEEDED".equals(ex.getErrorCode())) {
+            String retryAfter = extractRetryAfter(ex.getMessage());
+            if (retryAfter != null) {
+                body.put("retryAfter", retryAfter);
+            }
+        }
+
         return ResponseEntity.status(status).body(body);
+    }
+
+    private String extractRetryAfter(String message) {
+        if (message == null) return null;
+        // Try to extract retry time from messages like "Try again in 4:35:33" or "try again in 5 minutes"
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?i)try again in\\s+(\\d+[:\\d]*)").matcher(message);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        matcher = java.util.regex.Pattern.compile("(?i)retry after\\s+(\\d+[:\\d]*)").matcher(message);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     private ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {

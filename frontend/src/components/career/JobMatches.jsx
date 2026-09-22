@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Briefcase, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Sparkles, Building2 } from 'lucide-react';
 
-export default function JobMatches({ jobMatches }) {
+export default function JobMatches({ jobMatches, selectedRoleId, onSelectRole, selectingRole }) {
   const matches = (Array.isArray(jobMatches) ? [...jobMatches] : []).sort((a, b) => {
     const scoreA = a.matchScore ?? Math.round((a.match_score ?? 0) * (a.match_score <= 1 ? 100 : 1));
     const scoreB = b.matchScore ?? Math.round((b.match_score ?? 0) * (b.match_score <= 1 ? 100 : 1));
@@ -48,12 +48,15 @@ export default function JobMatches({ jobMatches }) {
           const matchedSkills = Array.isArray(job.matchedSkills) ? job.matchedSkills : (Array.isArray(job.matched_skills) ? job.matched_skills : []);
           const missingSkills = Array.isArray(job.missingSkills) ? job.missingSkills : (Array.isArray(job.missing_skills) ? job.missing_skills : []);
           const isExpanded = expandedIndex === idx;
+          const isSelected = selectedRoleId && selectedRoleId === job.jobId;
 
           return (
             <div
               key={idx}
               className={`rounded-2xl border transition-all duration-200 ${
-                rank === 1
+                isSelected
+                  ? 'border-emerald-300 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 shadow-md'
+                  : rank === 1
                   ? 'border-blue-200 bg-gradient-to-br from-blue-50/40 via-white to-indigo-50/30 shadow-md'
                   : 'border-slate-100 bg-white hover:border-slate-200'
               }`}
@@ -73,7 +76,11 @@ export default function JobMatches({ jobMatches }) {
                   <div>
                     <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
                       {title}
-                      {rank === 1 && (
+                      {isSelected ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                          <CheckCircle2 size={10} /> Selected role
+                        </span>
+                      ) : rank === 1 && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
                           <Sparkles size={10} /> Top Match
                         </span>
@@ -102,6 +109,16 @@ export default function JobMatches({ jobMatches }) {
                   >
                     {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </button>
+                  {onSelectRole && job.jobId && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectRole(job.jobId)}
+                      disabled={selectingRole || isSelected}
+                      className={`rounded-xl px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${isSelected ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    >
+                      {isSelected ? 'Selected' : 'Choose role'}
+                    </button>
+                  )}
                 </div>
               </div>
 

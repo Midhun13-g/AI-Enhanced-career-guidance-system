@@ -49,8 +49,7 @@ public class GroqAssessmentServiceImpl implements GroqAssessmentService {
             Map<String, Object> requestBody = Map.of(
                     "model", model,
                     "temperature", 0.4,
-                    "messages", List.of(Map.of("role", "user", "content", prompt)),
-                    "response_format", Map.of("type", "json_object")
+                    "messages", List.of(Map.of("role", "user", "content", prompt))
             );
             String raw = RestClient.create("https://api.groq.com/openai/v1")
                     .post().uri("/chat/completions")

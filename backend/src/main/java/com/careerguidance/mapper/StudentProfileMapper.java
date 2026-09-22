@@ -70,6 +70,16 @@ public class StudentProfileMapper {
         response.setId(profile.getId());
         response.setUserId(profile.getUser().getId());
         response.setProfileImage(profile.getProfileImage());
+        // Construct the image URL for frontend (served via /uploads/** on backend)
+        String profileImage = profile.getProfileImage();
+        if (profileImage != null && !profileImage.isBlank()) {
+            // Convert file path to URL path: uploads/profile-images/... -> /uploads/profile-images/...
+            String urlPath = profileImage.replace("\\", "/");
+            if (!urlPath.startsWith("/")) {
+                urlPath = "/" + urlPath;
+            }
+            response.setProfileImageUrl(urlPath);
+        }
         response.setFirstName(profile.getFirstName());
         response.setLastName(profile.getLastName());
         response.setEmail(profile.getEmail());

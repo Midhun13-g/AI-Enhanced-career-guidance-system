@@ -68,6 +68,12 @@ public class AiCareerAnalysis {
     @Column(name = "raw_ai_response", columnDefinition = "TEXT")
     private String rawAiResponse;
 
+    @Column(name = "selected_role_id", length = 120)
+    private String selectedRoleId;
+
+    @Column(name = "roadmap_task_statuses", columnDefinition = "TEXT")
+    private String roadmapTaskStatuses;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -236,6 +242,12 @@ public class AiCareerAnalysis {
     public void setRawAiResponse(String rawAiResponse) {
         this.rawAiResponse = rawAiResponse;
     }
+
+    public String getSelectedRoleId() { return selectedRoleId; }
+    public void setSelectedRoleId(String selectedRoleId) { this.selectedRoleId = selectedRoleId; }
+
+    public String getRoadmapTaskStatuses() { return roadmapTaskStatuses; }
+    public void setRoadmapTaskStatuses(String roadmapTaskStatuses) { this.roadmapTaskStatuses = roadmapTaskStatuses; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

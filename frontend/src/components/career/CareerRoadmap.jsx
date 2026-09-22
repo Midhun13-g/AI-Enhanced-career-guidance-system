@@ -1,7 +1,7 @@
 import React from 'react';
 import { Map, CheckCircle2, ArrowDown, BookOpen, Code2, Target, Flag } from 'lucide-react';
 
-export default function CareerRoadmap({ roadmap }) {
+export default function CareerRoadmap({ roadmap, onStatusChange, savingTaskKey }) {
   const phases = Array.isArray(roadmap) ? roadmap : [];
 
   if (phases.length === 0) {
@@ -41,6 +41,7 @@ export default function CareerRoadmap({ roadmap }) {
           const duration = phase.duration || null;
           const objective = phase.learningObjective || null;
           const skillLinks = Array.isArray(phase.skillCourseLinks) ? phase.skillCourseLinks : [];
+          const status = phase.status || 'NOT_STARTED';
 
           return (
             <React.Fragment key={idx}>
@@ -68,6 +69,19 @@ export default function CareerRoadmap({ roadmap }) {
                       <Flag size={13} className="text-blue-600" /> {outcome}
                     </span>
                   )}
+                  <label className="text-xs font-bold text-slate-600">
+                    Status
+                    <select
+                      value={status}
+                      disabled={!onStatusChange || savingTaskKey === phase.taskKey}
+                      onChange={(event) => onStatusChange(phase.taskKey, event.target.value)}
+                      className="ml-2 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-700 disabled:opacity-60"
+                    >
+                      <option value="NOT_STARTED">Not Started</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="COMPLETED">Completed</option>
+                    </select>
+                  </label>
                 </div>
 
                 {/* Grid for Skills, Courses, Projects */}
