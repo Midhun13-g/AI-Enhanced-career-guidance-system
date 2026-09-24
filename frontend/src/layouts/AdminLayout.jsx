@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import {
   FiGrid, FiUsers, FiUserCheck, FiBookOpen, FiFileText,
   FiBarChart2, FiCpu, FiBriefcase, FiLayers, FiSettings,
-  FiLogOut, FiMenu, FiX, FiShield, FiPlusSquare, FiDatabase,
+  FiLogOut, FiMenu, FiX, FiPlusSquare, FiDatabase,
   FiTrendingUp, FiCheckSquare
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,6 @@ const SECTIONS = [
       { label: 'User Directory', to: '/admin/users', icon: FiUsers },
       { label: 'Student Profiles', to: '/admin/students', icon: FiUserCheck },
       { label: 'Manage Mentors', to: '/admin/mentors/manage', icon: FiUsers },
-      { label: 'Advisor Verifications', to: '/admin/mentors', icon: FiShield },
     ],
   },
   {
