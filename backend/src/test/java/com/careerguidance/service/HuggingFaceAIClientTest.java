@@ -36,6 +36,8 @@ public class HuggingFaceAIClientTest {
         properties = new HuggingFaceProperties();
         properties.getSpace().setUrl("https://test-space.hf.space");
         properties.getSpace().setAnalyzeEndpoint("/api/resume/analyze");
+        // Existing unit tests exercise the retained self-hosted FastAPI compatibility path.
+        properties.getSpace().setApiMode("direct");
         properties.getRetry().setMaxAttempts(2);
         properties.getRetry().setBackoffMs(50);
 
@@ -75,7 +77,7 @@ public class HuggingFaceAIClientTest {
         when(responseSpec.body(any(org.springframework.core.ParameterizedTypeReference.class))).thenThrow(new ResourceAccessException("Connection timed out"));
 
         AIServiceException ex = assertThrows(AIServiceException.class, () -> client.analyzeResume(file));
-        assertEquals("AI_TIMEOUT", ex.getErrorCode());
+        assertEquals("SPACE_TIMEOUT", ex.getErrorCode());
         verify(restClient, times(2)).post();
     }
 }

@@ -52,12 +52,17 @@ export default function ResumeUpload() {
       
       let msg = responseData?.message || 'AI pipeline processing failed. Please verify service connectivity.';
       
-      // Provide user-friendly message for quota exceeded
-      if (errorCode === 'AI_QUOTA_EXCEEDED') {
-        msg = 'AI analysis is temporarily unavailable because the AI provider has reached its free processing limit. Please try again later.';
-        if (retryAfter) {
-          msg += ` Please try again in approximately ${retryAfter}.`;
-        }
+      const safeMessages = {
+        PROVIDER_RATE_LIMITED: 'AI analysis is temporarily busy. Please try again in a few minutes.',
+        PROVIDER_QUOTA_EXCEEDED: 'AI analysis has temporarily reached its processing limit. Please try again later.',
+        SPACE_UNAVAILABLE: 'AI analysis service is temporarily unavailable. Please try again.',
+        SPACE_TIMEOUT: 'AI analysis took too long to complete. Please try again.',
+        INVALID_RESPONSE: 'The AI service returned an unexpected response. Please try again.',
+        GRADIO_ERROR: 'The AI service could not process this resume. Please try again.',
+      };
+      if (safeMessages[errorCode]) msg = safeMessages[errorCode];
+      if (retryAfter && (errorCode === 'PROVIDER_RATE_LIMITED' || errorCode === 'PROVIDER_QUOTA_EXCEEDED')) {
+        msg += ` Please try again in approximately ${retryAfter}.`;
       }
       
       toast?.(msg, 'error');

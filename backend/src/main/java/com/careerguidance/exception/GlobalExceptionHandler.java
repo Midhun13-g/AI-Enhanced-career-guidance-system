@@ -91,7 +91,8 @@ public class GlobalExceptionHandler {
         body.put("timestamp", LocalDateTime.now().toString());
 
         // Add retryAfter for quota exceeded errors
-        if ("AI_QUOTA_EXCEEDED".equals(ex.getErrorCode())) {
+        if ("AI_QUOTA_EXCEEDED".equals(ex.getErrorCode()) || "PROVIDER_QUOTA_EXCEEDED".equals(ex.getErrorCode())
+                || "PROVIDER_RATE_LIMITED".equals(ex.getErrorCode())) {
             String retryAfter = extractRetryAfter(ex.getMessage());
             if (retryAfter != null) {
                 body.put("retryAfter", retryAfter);

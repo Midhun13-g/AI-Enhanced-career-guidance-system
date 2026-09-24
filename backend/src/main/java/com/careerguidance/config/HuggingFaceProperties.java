@@ -15,6 +15,8 @@ public class HuggingFaceProperties {
     public static class Space {
         private String id;
         private String url = "https://midhun-2542-career-guidance-system.hf.space";
+        /** Production Space is Gradio; "direct" is retained only for self-hosted legacy deployments. */
+        private String apiMode = "gradio";
         private String analyzeEndpoint = "/api/resume/analyze";
 
         public String getId() {
@@ -41,6 +43,9 @@ public class HuggingFaceProperties {
         public void setUrl(String url) {
             this.url = url;
         }
+
+        public String getApiMode() { return apiMode; }
+        public void setApiMode(String apiMode) { this.apiMode = apiMode; }
 
         public String getAnalyzeEndpoint() {
             return analyzeEndpoint;

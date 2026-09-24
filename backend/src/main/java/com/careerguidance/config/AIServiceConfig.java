@@ -9,9 +9,11 @@ import org.springframework.web.client.RestClient;
 public class AIServiceConfig {
 
     private final HuggingFaceProperties hfProperties;
+    private final AIServiceProperties aiServiceProperties;
 
-    public AIServiceConfig(HuggingFaceProperties hfProperties) {
+    public AIServiceConfig(HuggingFaceProperties hfProperties, AIServiceProperties aiServiceProperties) {
         this.hfProperties = hfProperties;
+        this.aiServiceProperties = aiServiceProperties;
     }
 
     @Bean(name = "huggingFaceRestClient")
@@ -41,5 +43,10 @@ public class AIServiceConfig {
         }
 
         return builder.build();
+    }
+
+    @Bean(name = "localAiRestClient")
+    public RestClient localAiRestClient() {
+        return RestClient.builder().baseUrl(aiServiceProperties.getBaseUrl()).build();
     }
 }

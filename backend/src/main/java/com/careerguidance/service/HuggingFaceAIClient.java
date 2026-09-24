@@ -26,6 +26,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.careerguidance.config.HuggingFaceProperties;
+import com.careerguidance.config.AIServiceProperties;
 import com.careerguidance.dto.AIAnalysisResponse;
 import com.careerguidance.dto.CareerGuidanceResponse;
 import com.careerguidance.dto.CourseRecommendationResponse;
@@ -45,30 +46,35 @@ public class HuggingFaceAIClient {
     private final RestClient restClient;
     private final HuggingFaceProperties hfProperties;
     private final ObjectMapper objectMapper;
+    private final LocalAIServiceClient localAIServiceClient;
+    private final AIServiceProperties aiServiceProperties;
 
     public HuggingFaceAIClient(@Qualifier("huggingFaceRestClient") RestClient restClient,
                                HuggingFaceProperties hfProperties) {
-        this(restClient, hfProperties, new ObjectMapper());
+        this(restClient, hfProperties, new ObjectMapper(), null, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
     public HuggingFaceAIClient(@Qualifier("huggingFaceRestClient") RestClient restClient,
                                HuggingFaceProperties hfProperties,
                                ObjectMapper objectMapper) {
+        this(restClient, hfProperties, objectMapper, null, null);
+    }
+
+    public HuggingFaceAIClient(@Qualifier("huggingFaceRestClient") RestClient restClient,
+                               HuggingFaceProperties hfProperties,
+                               ObjectMapper objectMapper,
+                               LocalAIServiceClient localAIServiceClient,
+                               AIServiceProperties aiServiceProperties) {
         this.restClient = restClient;
         this.hfProperties = hfProperties;
         this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
+        this.localAIServiceClient = localAIServiceClient;
+        this.aiServiceProperties = aiServiceProperties;
     }
 
     public AIAnalysisResponse analyzeResume(MultipartFile file) {
-        String endpoint = hfProperties.getSpace().getAnalyzeEndpoint();
-        if (endpoint == null || endpoint.isBlank()) {
-            endpoint = "/api/resume/analyze";
-        }
-
-        String spaceUrl = hfProperties.getSpace().getUrl();
-        logger.info("Forwarding resume '{}' (size: {} bytes) to Hugging Face AI Space at '{}{}'",
-                file.getOriginalFilename(), file.getSize(), spaceUrl, endpoint);
+        logger.info("Starting resume AI analysis with Hugging Face {} provider", hfProperties.getSpace().getApiMode());
 
         int maxAttempts = Math.max(1, hfProperties.getRetry().getMaxAttempts());
         long baseBackoffMs = Math.max(500, hfProperties.getRetry().getBackoffMs());
@@ -96,75 +102,85 @@ public class HuggingFaceAIClient {
                         throw new AIServiceException("AI_SERVICE_ERROR", "Execution was interrupted during retry backoff", ie);
                     }
                 }
-
-// First try direct POST endpoint
-                try {
-                    ByteArrayResource fileResource = new ByteArrayResource(fileBytes) {
-                        @Override
-                        public String getFilename() {
-                            return originalFilename;
-                        }
-                    };
-
-                    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-                    body.add("file", fileResource);
-
-                    AIAnalysisResponse response = restClient.post()
-                            .uri(endpoint)
-                            .contentType(MediaType.MULTIPART_FORM_DATA)
-                            .body(body)
-                            .retrieve()
-                            .body(AIAnalysisResponse.class);
-
-                    if (hasMeaningfulAnalysis(response)) {
-                        logger.info("Successfully received direct AI response with request_id '{}'", response.getRequestId());
-                        return response;
-                    }
-
-                    // Check if direct response contains provider error
-                    if (response != null && response.getRawAiResponse() != null) {
-                        checkAndThrowProviderError(response.getRawAiResponse());
-                    }
-                } catch (RestClientResponseException ex) {
-                    int statusCode = ex.getStatusCode().value();
-                    logger.warn("Direct POST to {} returned status {}. Attempting Gradio API fallback flow...", endpoint, statusCode);
-                } catch (Exception ex) {
-                    logger.warn("Direct POST to {} failed: {}. Attempting Gradio API fallback flow...", endpoint, ex.getMessage());
-                }
-
-                // Fallback: Gradio 6 API protocol (/gradio_api/upload -> /gradio_api/call/analyze_resume)
-                AIAnalysisResponse gradioResponse = executeGradioApiFlow(fileBytes, originalFilename);
+                AIAnalysisResponse gradioResponse = "direct".equalsIgnoreCase(hfProperties.getSpace().getApiMode())
+                        ? executeLegacyDirectFlow(fileBytes, originalFilename)
+                        : executeGradioApiFlow(fileBytes, originalFilename);
                 if (gradioResponse != null) {
+                    logger.info("AI analysis completed successfully using Hugging Face");
                     return gradioResponse;
                 }
 
             } catch (ResourceAccessException ex) {
                 logger.warn("Attempt {}/{} failed due to connection error or read timeout: {}", attempt, maxAttempts, ex.getMessage());
-                lastException = new AIServiceException("AI_TIMEOUT",
+                lastException = new AIServiceException("SPACE_TIMEOUT",
                         "Resume analysis timed out or could not connect to Hugging Face AI service. Please try again.",
                         HttpStatus.REQUEST_TIMEOUT, ex);
 
-                if (attempt == maxAttempts) {
-                    throw lastException;
-                }
+            } catch (RestClientResponseException ex) {
+                lastException = fromHttpException(ex);
+                if (!isTransient(lastException) || attempt == maxAttempts) break;
             } catch (AIServiceException ex) {
-                throw ex;
+                lastException = ex;
+                if (!isTransient(ex) || attempt == maxAttempts) break;
             } catch (Exception ex) {
                 logger.error("Unexpected error during Hugging Face AI analysis: {}", ex.getMessage(), ex);
                 throw new AIServiceException("AI_PROCESSING_ERROR", "An unexpected error occurred during AI analysis", ex);
             }
         }
 
-        if (lastException != null) {
-            throw lastException;
-        }
+        AIServiceException failure = lastException != null ? lastException
+                : new AIServiceException("SPACE_UNAVAILABLE", "AI analysis service is temporarily unavailable. Please try again.");
+        return attemptLocalFallback(fileBytes, originalFilename, failure);
+    }
 
-        throw new AIServiceException("AI_SERVICE_UNAVAILABLE", "Hugging Face AI service is currently unavailable");
+    private AIAnalysisResponse executeLegacyDirectFlow(byte[] bytes, String filename) {
+        String endpoint = hfProperties.getSpace().getAnalyzeEndpoint();
+        ByteArrayResource resource = new ByteArrayResource(bytes) { @Override public String getFilename() { return filename; } };
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>(); body.add("file", resource);
+        AIAnalysisResponse response = restClient.post().uri(endpoint).contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(body).retrieve().body(AIAnalysisResponse.class);
+        if (!hasMeaningfulAnalysis(response)) throw new AIServiceException("INVALID_RESPONSE", "The AI service returned an unexpected response.");
+        return response;
+    }
+
+    private AIAnalysisResponse attemptLocalFallback(byte[] bytes, String filename, AIServiceException primaryFailure) {
+        if (!isFallbackEligible(primaryFailure) || aiServiceProperties == null || !aiServiceProperties.isFallbackEnabled()
+                || localAIServiceClient == null) throw primaryFailure;
+        logger.warn("Hugging Face AI failed with {}; attempting local AI fallback", primaryFailure.getErrorCode());
+        try { return localAIServiceClient.analyzeResume(bytes, filename); }
+        catch (AIServiceException fallbackFailure) {
+            logger.error("Both primary and local AI services failed: primary={}, fallback={}", primaryFailure.getErrorCode(), fallbackFailure.getErrorCode());
+            throw primaryFailure;
+        }
+    }
+
+    private boolean isFallbackEligible(AIServiceException ex) {
+        return switch (ex.getErrorCode()) {
+            case "PROVIDER_RATE_LIMITED", "PROVIDER_QUOTA_EXCEEDED", "SPACE_UNAVAILABLE", "SPACE_TIMEOUT",
+                    "GRADIO_ERROR", "GRADIO_UPLOAD_FAILED", "GRADIO_CALL_FAILED", "GRADIO_STREAM_EMPTY" -> true;
+            default -> false;
+        };
+    }
+
+    private boolean isTransient(AIServiceException ex) {
+        return switch (ex.getErrorCode()) {
+            case "SPACE_UNAVAILABLE", "SPACE_TIMEOUT" -> true;
+            default -> false;
+        };
+    }
+
+    private AIServiceException fromHttpException(RestClientResponseException ex) {
+        int status = ex.getStatusCode().value();
+        HttpStatus upstreamStatus = HttpStatus.valueOf(status);
+        if (status == 429) return new AIServiceException("PROVIDER_RATE_LIMITED", "AI analysis service is currently busy. Please retry in a few minutes.", upstreamStatus, ex);
+        if (status == 401 || status == 403) return new AIServiceException("AUTHENTICATION_ERROR", "AI service authentication failed.", upstreamStatus, ex);
+        if (status == 502 || status == 503 || status == 504) return new AIServiceException("SPACE_UNAVAILABLE", "AI analysis service is temporarily unavailable. Please try again.", upstreamStatus, ex);
+        return new AIServiceException("GRADIO_ERROR", "The AI service could not process this resume.", upstreamStatus, ex);
     }
 
     private AIAnalysisResponse executeGradioApiFlow(byte[] fileBytes, String originalFilename) {
         try {
-            logger.info("Executing Gradio API flow: Step 1 - Uploading file to /gradio_api/upload...");
+            logger.info("Using Hugging Face Gradio provider: uploading resume");
             ByteArrayResource fileResource = new ByteArrayResource(fileBytes) {
                 @Override
                 public String getFilename() {
@@ -188,7 +204,6 @@ public class HuggingFaceAIClient {
             }
 
             String uploadResponseStr = new String(uploadResponseBytes, StandardCharsets.UTF_8);
-            logger.debug("Gradio upload response: {}", uploadResponseStr);
 
             // Parse the JSON response (Gradio may return application/octet-stream for JSON)
             List<String> uploadedPaths;
@@ -206,9 +221,9 @@ public class HuggingFaceAIClient {
             }
 
             String remotePath = uploadedPaths.get(0);
-            logger.info("Uploaded file to Gradio Space remote path: {}", remotePath);
+            logger.info("Gradio upload completed");
 
-            logger.info("Executing Gradio API flow: Step 2 - Initiating /gradio_api/call/analyze_resume...");
+            logger.info("Creating Gradio analysis event");
             Map<String, Object> fileData = new LinkedHashMap<>();
             fileData.put("path", remotePath);
             Map<String, Object> meta = new LinkedHashMap<>();
@@ -232,7 +247,6 @@ public class HuggingFaceAIClient {
             }
 
             String callResponseStr = new String(callResponseBytes, StandardCharsets.UTF_8);
-            logger.debug("Gradio call response: {}", callResponseStr);
 
             Map<String, Object> callResponse;
             try {
@@ -253,7 +267,7 @@ public class HuggingFaceAIClient {
             }
 
             String eventId = String.valueOf(callResponse.get("event_id"));
-            logger.info("Gradio execution event_id: {}. Step 3 - Fetching event result...", eventId);
+            logger.info("Gradio event created; processing started");
 
             byte[] streamBytes = restClient.get()
                     .uri("/gradio_api/call/analyze_resume/" + eventId)
@@ -265,29 +279,22 @@ public class HuggingFaceAIClient {
             }
 
             String rawStreamResponse = new String(streamBytes, StandardCharsets.UTF_8);
-            logger.debug("Raw Gradio SSE stream response: {}", rawStreamResponse);
-
-            // Check for provider errors in raw stream response BEFORE parsing
-            String providerError = detectProviderErrorInStream(rawStreamResponse);
-            if (providerError != null) {
-                logger.error("Hugging Face provider error detected in stream: {}", providerError);
-                throw new AIServiceException("AI_QUOTA_EXCEEDED", providerError);
-            }
-
             String jsonPayload = extractJsonFromSseStream(streamBytes);
             if (jsonPayload == null || jsonPayload.isBlank()) {
-                throw new AIServiceException("INVALID_AI_RESPONSE", "Could not parse valid JSON from Gradio AI event stream");
+                throw new AIServiceException("INVALID_RESPONSE", "The AI service returned an unexpected response.");
             }
-
+            checkAndThrowProviderError(jsonPayload);
+            logger.info("Gradio processing completed");
             return parseGradioOutputToResponse(jsonPayload);
 
         } catch (Exception ex) {
-            logger.error("Gradio API flow failed: {}", ex.getMessage(), ex);
+            logger.warn("Gradio AI processing failed: {}", ex.getMessage());
             if (ex instanceof AIServiceException aiEx) throw aiEx;
             if (ex instanceof ResourceAccessException rae) {
-                throw new AIServiceException("AI_TIMEOUT", "Resume analysis timed out or could not connect to Hugging Face AI service.", HttpStatus.REQUEST_TIMEOUT, rae);
+                throw new AIServiceException("SPACE_TIMEOUT", "AI analysis took too long to complete. Please try again.", HttpStatus.REQUEST_TIMEOUT, rae);
             }
-            throw new AIServiceException("AI_SERVICE_ERROR", "Gradio AI analysis failed: " + ex.getMessage(), ex);
+            if (ex instanceof RestClientResponseException responseException) throw fromHttpException(responseException);
+            throw new AIServiceException("GRADIO_ERROR", "The AI service could not process this resume.", ex);
         }
     }
 
@@ -324,7 +331,7 @@ public class HuggingFaceAIClient {
 
         // Check for other common provider errors
         if (lower.contains("rate limit") || lower.contains("too many requests")) {
-            return "AI provider rate limit exceeded. Please try again later.";
+            return "AI analysis service is currently busy. Please retry in a few minutes.";
         }
 
         if (lower.contains("unauthorized") || lower.contains("forbidden") || lower.contains("authentication failed")) {
@@ -341,7 +348,7 @@ public class HuggingFaceAIClient {
 
         // Check for generic error patterns in the stream
         if (lower.contains("error") && (lower.contains("quota") || lower.contains("limit") || lower.contains("exceeded"))) {
-            return "AI provider returned an error: quota or rate limit exceeded.";
+            return "AI analysis has temporarily reached its processing limit. Please try again later.";
         }
 
         return null;
@@ -364,7 +371,8 @@ public class HuggingFaceAIClient {
 @SuppressWarnings("unchecked")
     private AIAnalysisResponse parseGradioOutputToResponse(String jsonStr) {
         try {
-            logger.info("==============================\nFULL RAW HUGGING FACE RESPONSE\n==============================\n{}", jsonStr);
+            // Results can contain personal resume data. Log only metadata, never the payload.
+            logger.debug("Parsing Gradio result payload ({} bytes)", jsonStr.length());
 
             // First, check for Hugging Face / Gradio error responses before parsing
             Map<String, Object> errorCheck = objectMapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
@@ -379,7 +387,7 @@ public class HuggingFaceAIClient {
             Map<String, Object> rootMap = unwrapGradioPayload(raw);
 
             if (rootMap == null) {
-                throw new AIServiceException("INVALID_AI_RESPONSE", "Gradio returned unparseable JSON payload");
+                throw new AIServiceException("INVALID_RESPONSE", "The AI service returned an unexpected response.");
             }
 
             AIAnalysisResponse response = new AIAnalysisResponse();
@@ -848,26 +856,26 @@ public class HuggingFaceAIClient {
         if (titleStr.contains("zerogpu") || titleStr.contains("zero gpu")
                 || errorStr.contains("zerogpu") || errorStr.contains("zero gpu")
                 || errorStr.contains("quota")) {
-            return "AI_QUOTA_EXCEEDED";
+            return "PROVIDER_QUOTA_EXCEEDED";
         }
 
         // Rate limiting
         if (titleStr.contains("rate limit") || errorStr.contains("rate limit")
                 || titleStr.contains("too many requests") || errorStr.contains("too many requests")) {
-            return "RATE_LIMITED";
+            return "PROVIDER_RATE_LIMITED";
         }
 
         // Authentication/authorization
         if (titleStr.contains("unauthorized") || errorStr.contains("unauthorized")
                 || titleStr.contains("forbidden") || errorStr.contains("forbidden")
                 || titleStr.contains("authentication") || errorStr.contains("authentication")) {
-            return "HF_AUTH_ERROR";
+            return "AUTHENTICATION_ERROR";
         }
 
         // Timeout
         if (titleStr.contains("timeout") || errorStr.contains("timeout")
                 || titleStr.contains("timed out") || errorStr.contains("timed out")) {
-            return "AI_TIMEOUT";
+            return "SPACE_TIMEOUT";
         }
 
         // Service unavailable
@@ -875,11 +883,11 @@ public class HuggingFaceAIClient {
                 || titleStr.contains("service unavailable") || errorStr.contains("service unavailable")
                 || titleStr.contains("503") || errorStr.contains("503")
                 || titleStr.contains("502") || errorStr.contains("502")) {
-            return "AI_SERVICE_UNAVAILABLE";
+            return "SPACE_UNAVAILABLE";
         }
 
         // Generic provider error
-        return "PROVIDER_ERROR";
+        return "GRADIO_ERROR";
     }
 
     private String extractErrorMessage(Map<String, Object> response) {
